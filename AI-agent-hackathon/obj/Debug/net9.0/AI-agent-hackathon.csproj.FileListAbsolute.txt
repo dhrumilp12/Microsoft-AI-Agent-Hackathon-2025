@@ -1,0 +1,15 @@
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\bin\Debug\net9.0\AI-agent-hackathon.exe
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\bin\Debug\net9.0\AI-agent-hackathon.deps.json
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\bin\Debug\net9.0\AI-agent-hackathon.runtimeconfig.json
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\bin\Debug\net9.0\AI-agent-hackathon.dll
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\bin\Debug\net9.0\AI-agent-hackathon.pdb
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.GeneratedMSBuildEditorConfig.editorconfig
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.AssemblyInfoInputs.cache
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.AssemblyInfo.cs
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.csproj.CoreCompileInputs.cache
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.sourcelink.json
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.dll
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\refint\AI-agent-hackathon.dll
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.pdb
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\AI-agent-hackathon.genruntimeconfig.cache
+E:\Microsoft-AI-Agent-Hackathon-2025\AI-agent-hackathon\obj\Debug\net9.0\ref\AI-agent-hackathon.dll

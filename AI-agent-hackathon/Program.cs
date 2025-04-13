@@ -18,15 +18,15 @@ namespace VocabularyBank
     {
         static async Task Main(string[] args)
         {
+            // Load environment variables from .env file (ensure this is at the top)
+            DotNetEnv.Env.Load();
+
             // Set up console display
             Console.Title = "Vocabulary Bank & Flashcards Generator";
             Console.ForegroundColor = ConsoleColor.White;
             Console.Clear();
             
             DisplayBanner();
-            
-            // Load environment variables from .env file
-            DotNetEnv.Env.Load();
             
             // Setup configuration and services
             var services = ConfigureServices();
@@ -69,7 +69,7 @@ namespace VocabularyBank
                 Console.WriteLine($"✓ Created {flashcards.Count} flashcards.");
                 
                 // Export flashcards with options
-                string outputPath = await PromptForExportOptions(transcriptPath);
+                string outputPath = await PromptForExportOptions(transcriptPath, serviceProvider, flashcards);
                 DisplayProcessingStage("Exporting flashcards", outputPath);
                 
                 var exportService = serviceProvider.GetService<IExportService>();
@@ -230,8 +230,10 @@ namespace VocabularyBank
         /// Prompts the user for export options including format and file location
         /// </summary>
         /// <param name="transcriptPath">The path to the original transcript file</param>
+        /// <param name="serviceProvider">The service provider for dependency injection</param>
+        /// <param name="flashcards">The list of flashcards to export</param>
         /// <returns>The chosen output file path</returns>
-        private static Task<string> PromptForExportOptions(string transcriptPath)
+        private static async Task<string> PromptForExportOptions(string transcriptPath, ServiceProvider serviceProvider, List<Flashcard> flashcards)
         {
             // Default output path
             string defaultPath = Path.Combine(
@@ -242,9 +244,71 @@ namespace VocabularyBank
             Console.WriteLine("\nSelect export format:");
             Console.WriteLine("  1. JSON format (default)");
             Console.WriteLine("  2. CSV format");
+            Console.WriteLine("  3. Export to Microsoft 365");
             
-            Console.Write("Enter your choice (1-2): ");
+            Console.Write("Enter your choice (1-3): ");
             string formatChoice = Console.ReadLine().Trim();
+            
+            // Handle M365 export option
+            if (formatChoice == "3")
+            {
+                var exportService = serviceProvider.GetService<IExportService>();
+                
+                if (exportService.IsM365ExportAvailable())
+                {
+                    Console.Write("\nEnter your email address for M365 sharing: ");
+                    string userEmail = Console.ReadLine().Trim();
+                    
+                    if (!string.IsNullOrEmpty(userEmail) && userEmail.Contains("@"))
+                    {
+                        try
+                        {
+                            string m365Url = await exportService.ExportToM365Async(flashcards, userEmail);
+                            
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"\n✓ Flashcards successfully exported to Microsoft 365!");
+                            Console.WriteLine($"Access your flashcards at: {m365Url}");
+                            Console.ResetColor();
+                            
+                            // Also save locally as a backup
+                            string localPath = Path.ChangeExtension(defaultPath, ".json");
+                            await exportService.ExportFlashcardsAsync(flashcards, localPath);
+                            Console.WriteLine($"\nA local backup copy has been saved to: {localPath}");
+                            
+                            return localPath; // Return the local file path
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"\nError exporting to Microsoft 365: {ex.Message}");
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Falling back to local export...");
+                            Console.ResetColor();
+                            
+                            // Fall back to JSON format
+                            formatChoice = "1";
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid email address. Falling back to local export.");
+                        formatChoice = "1";
+                    }
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("\nMicrosoft 365 export is not available. Please check your configuration.");
+                    Console.WriteLine("To enable Microsoft 365 export, add the following to your appsettings.json or environment variables:");
+                    Console.WriteLine("  - M365:ClientId");
+                    Console.WriteLine("  - M365:TenantId");
+                    Console.WriteLine("  - M365:ClientSecret");
+                    Console.WriteLine("\nFalling back to local export...");
+                    Console.ResetColor();
+                    
+                    formatChoice = "1";
+                }
+            }
             
             string extension = formatChoice == "2" ? ".csv" : ".json";
             string outputPath = Path.ChangeExtension(defaultPath, extension);
@@ -265,7 +329,7 @@ namespace VocabularyBank
             // Ensure directory exists
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
             
-            return Task.FromResult(outputPath);
+            return outputPath;
         }
         
         /// <summary>
@@ -323,6 +387,7 @@ Deep learning is part of a broader family of machine learning methods based on a
             services.AddTransient<IVocabularyExtractorService, VocabularyExtractorService>();
             services.AddTransient<IDefinitionGeneratorService, DefinitionGeneratorService>();
             services.AddTransient<IFlashcardGeneratorService, FlashcardGeneratorService>();
+            services.AddTransient<M365ExportService>();
             services.AddTransient<IExportService, ExportService>();
             
             return services;

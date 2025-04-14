@@ -28,108 +28,95 @@ namespace VocabularyBank.Services
             InitializeGraphClient();
         }
         
-    private void InitializeGraphClient()
-{
-    try
-    {
-        // Load .env file once at the start - using absolute path to ensure correct location
-        string envPath = Path.GetFullPath(".env");
-        Console.WriteLine($"Loading environment variables from: {envPath}");
-        DotNetEnv.Env.Load(envPath);
-        DotNetEnv.Env.TraversePath().Load();
-        
-        // Force reload environment variables into current process
-        foreach (var key in new[] { "M365_CLIENT_ID", "M365_TENANT_ID", "M365_CLIENT_SECRET" })
+        private void InitializeGraphClient()
         {
-            var value = DotNetEnv.Env.GetString(key);
-            if (!string.IsNullOrEmpty(value))
+            try
             {
-                Environment.SetEnvironmentVariable(key, value);
-                Console.WriteLine($"Set environment variable: {key}");
+                // Load .env file once at the start - using absolute path to ensure correct location
+                string envPath = Path.GetFullPath(".env");
+                DotNetEnv.Env.Load(envPath);
+                DotNetEnv.Env.TraversePath().Load();
+                
+                // Force reload environment variables into current process
+                foreach (var key in new[] { "M365_CLIENT_ID", "M365_TENANT_ID", "M365_CLIENT_SECRET" })
+                {
+                    var value = DotNetEnv.Env.GetString(key);
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        Environment.SetEnvironmentVariable(key, value);
+                    }
+                }
+                
+                // Get credentials directly from environment after ensuring they're loaded
+                string? clientId = Environment.GetEnvironmentVariable("M365_CLIENT_ID");
+                string? tenantId = Environment.GetEnvironmentVariable("M365_TENANT_ID");
+                string? clientSecret = Environment.GetEnvironmentVariable("M365_CLIENT_SECRET");
+                
+                if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientSecret))
+                {
+                    Console.WriteLine("❌ M365 authentication details are missing. Export to M365 will not be available.");
+                    _isM365Available = false;
+                    return;
+                }
+                
+                // Initialize the MSAL client
+                IConfidentialClientApplication msalClient = ConfidentialClientApplicationBuilder
+                    .Create(clientId)
+                    .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
+                    .WithClientSecret(clientSecret)
+                    .Build();
+                
+                // Test token acquisition
+                try {
+                    string[] scopes = new[] { "https://graph.microsoft.com/.default" };
+                    var result = msalClient.AcquireTokenForClient(scopes).ExecuteAsync().GetAwaiter().GetResult();
+                }
+                catch (Exception tokenEx) {
+                    Console.WriteLine($"❌ Failed to acquire token: {tokenEx.Message}");
+                    
+                    if (tokenEx.Message.Contains("AADSTS7000215") || tokenEx.Message.Contains("Invalid client secret")) {
+                        Console.WriteLine();
+                        Console.WriteLine("=====================================================");
+                        Console.WriteLine("ERROR: INVALID CLIENT SECRET");
+                        Console.WriteLine("=====================================================");
+                        Console.WriteLine("The client secret in your .env file appears to be invalid.");
+                        Console.WriteLine("It looks like you might be using the Client Secret ID rather");
+                        Console.WriteLine("than the actual Client Secret Value.");
+                        Console.WriteLine();
+                        Console.WriteLine("To fix this:");
+                        Console.WriteLine("1. Go to the Azure Portal: https://portal.azure.com");
+                        Console.WriteLine("2. Navigate to Azure Active Directory > App Registrations");
+                        Console.WriteLine("3. Select your app (ID: a61cb602-a128-4937-ade6-c134aff3e217)");
+                        Console.WriteLine("4. Click on 'Certificates & secrets'");
+                        Console.WriteLine("5. Create a new client secret");
+                        Console.WriteLine("6. COPY THE VALUE (not the ID) of the new secret");
+                        Console.WriteLine("7. Update your .env file with this new value");
+                        Console.WriteLine("=====================================================");
+                    }
+                    
+                    if (tokenEx.InnerException != null) {
+                        Console.WriteLine($"  Inner exception: {tokenEx.InnerException.Message}");
+                    }
+                    _isM365Available = false;
+                    return;
+                }
+                
+                // Create Graph client
+                var authProvider = new MicrosoftAuthenticationProvider(msalClient);
+                _graphClient = new GraphServiceClient(authProvider);
+                _isM365Available = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error initializing Microsoft Graph client: {ex.GetType().Name} - {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"  Inner exception: {ex.InnerException.Message}");
+                }
+                _graphClient = null;
+                _isM365Available = false;
             }
         }
-        
-        // Get credentials directly from environment after ensuring they're loaded
-        string? clientId = Environment.GetEnvironmentVariable("M365_CLIENT_ID");
-        string? tenantId = Environment.GetEnvironmentVariable("M365_TENANT_ID");
-        string? clientSecret = Environment.GetEnvironmentVariable("M365_CLIENT_SECRET");
-        
-        Console.WriteLine("Final M365 credentials check:");
-        Console.WriteLine($"  - ClientId: {(string.IsNullOrEmpty(clientId) ? "Missing" : clientId.Substring(0, 5) + "...")}");
-        Console.WriteLine($"  - TenantId: {(string.IsNullOrEmpty(tenantId) ? "Missing" : tenantId.Substring(0, 5) + "...")}");
-        Console.WriteLine($"  - ClientSecret: {(string.IsNullOrEmpty(clientSecret) ? "Missing" : "Provided (hidden)")}");
-        
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientSecret))
-        {
-            Console.WriteLine("❌ M365 authentication details are missing. Export to M365 will not be available.");
-            _isM365Available = false;
-            return;
-        }
-        
-        Console.WriteLine("Creating MSAL client with provided credentials...");
-        
-        // Initialize the MSAL client
-        IConfidentialClientApplication msalClient = ConfidentialClientApplicationBuilder
-            .Create(clientId)
-            .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
-            .WithClientSecret(clientSecret)
-            .Build();
-        
-        // Test token acquisition
-try {
-    Console.WriteLine("Testing token acquisition...");
-    string[] scopes = new[] { "https://graph.microsoft.com/.default" };
-    var result = msalClient.AcquireTokenForClient(scopes).ExecuteAsync().GetAwaiter().GetResult();
-    Console.WriteLine($"✓ Successfully acquired authentication token: {result.AccessToken.Substring(0, 10)}...");
-}
-catch (Exception tokenEx) {
-    Console.WriteLine($"❌ Failed to acquire token: {tokenEx.Message}");
-    
-    if (tokenEx.Message.Contains("AADSTS7000215") || tokenEx.Message.Contains("Invalid client secret")) {
-        Console.WriteLine();
-        Console.WriteLine("=====================================================");
-        Console.WriteLine("ERROR: INVALID CLIENT SECRET");
-        Console.WriteLine("=====================================================");
-        Console.WriteLine("The client secret in your .env file appears to be invalid.");
-        Console.WriteLine("It looks like you might be using the Client Secret ID rather");
-        Console.WriteLine("than the actual Client Secret Value.");
-        Console.WriteLine();
-        Console.WriteLine("To fix this:");
-        Console.WriteLine("1. Go to the Azure Portal: https://portal.azure.com");
-        Console.WriteLine("2. Navigate to Azure Active Directory > App Registrations");
-        Console.WriteLine("3. Select your app (ID: a61cb602-a128-4937-ade6-c134aff3e217)");
-        Console.WriteLine("4. Click on 'Certificates & secrets'");
-        Console.WriteLine("5. Create a new client secret");
-        Console.WriteLine("6. COPY THE VALUE (not the ID) of the new secret");
-        Console.WriteLine("7. Update your .env file with this new value");
-        Console.WriteLine("=====================================================");
-    }
-    
-    if (tokenEx.InnerException != null) {
-        Console.WriteLine($"  Inner exception: {tokenEx.InnerException.Message}");
-    }
-    _isM365Available = false;
-    return;
-}
-        
-        // Create Graph client
-        var authProvider = new MicrosoftAuthenticationProvider(msalClient);
-        _graphClient = new GraphServiceClient(authProvider);
-        _isM365Available = true;
-        
-        Console.WriteLine("✓ Microsoft 365 Graph client initialized successfully!");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"❌ Error initializing Microsoft Graph client: {ex.GetType().Name} - {ex.Message}");
-        if (ex.InnerException != null)
-        {
-            Console.WriteLine($"  Inner exception: {ex.InnerException.Message}");
-        }
-        _graphClient = null;
-        _isM365Available = false;
-    }
-}
         
         public bool IsM365Available()
         {
@@ -264,7 +251,11 @@ catch (Exception tokenEx) {
                 var driveId = drives[0].Id;
                 
                 // Prepare content for different file formats
-                var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+                var jsonOptions = new JsonSerializerOptions 
+                { 
+                    WriteIndented = true,
+                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Don't escape Unicode characters
+                };
                 string jsonContent = JsonSerializer.Serialize(flashcards, jsonOptions);
                 string csvContent = ConvertFlashcardsToCsv(flashcards);
                 string htmlContent = ConvertFlashcardsToHtml(flashcards);
@@ -298,10 +289,15 @@ catch (Exception tokenEx) {
         {
             try
             {
+                if (_graphClient == null)
+                {
+                    throw new InvalidOperationException("Graph client is not initialized");
+                }
+                
                 using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 
                 // Upload using Microsoft Graph v4 API style but with specific drive
-                await _graphClient.Drives[driveId].Items[folderId].ItemWithPath(fileName).Content
+                var requestResult = await _graphClient.Drives[driveId].Items[folderId].ItemWithPath(fileName).Content
                     .Request()
                     .PutAsync<DriveItem>(stream);
                 
@@ -321,6 +317,11 @@ catch (Exception tokenEx) {
         {
             try
             {
+                if (_graphClient == null)
+                {
+                    throw new InvalidOperationException("Graph client is not initialized");
+                }
+                
                 // First find which drive we're working with
                 var drives = await _graphClient.Drives
                     .Request()
@@ -373,7 +374,11 @@ catch (Exception tokenEx) {
             System.IO.Directory.CreateDirectory(folderPath);
             
             // Create JSON, CSV, and HTML files
-            var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+            var jsonOptions = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Don't escape Unicode characters 
+            };
             string jsonContent = JsonSerializer.Serialize(flashcards, jsonOptions);
             await System.IO.File.WriteAllTextAsync(Path.Combine(folderPath, "flashcards.json"), jsonContent);
             
@@ -417,7 +422,7 @@ catch (Exception tokenEx) {
             return sb.ToString();
         }
         
-        private string ConvertFlashcardsToHtml(List<Flashcard> flashcards)
+        private string ConvertFlashcardsToHtml(List<Flashcard> flashcards, List<Flashcard>? translatedFlashcards = null, string? translatedLanguage = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("<!DOCTYPE html>");
@@ -425,33 +430,81 @@ catch (Exception tokenEx) {
             sb.AppendLine("<head>");
             sb.AppendLine("  <meta charset=\"UTF-8\">");
             sb.AppendLine("  <title>Vocabulary Flashcards</title>");
+            sb.AppendLine("  <link rel=\"stylesheet\" href=\"../styles.css\">");
             sb.AppendLine("  <style>");
             sb.AppendLine("    body { font-family: Arial, sans-serif; margin: 20px; }");
             sb.AppendLine("    h1 { color: #2c3e50; }");
-            sb.AppendLine("    .flashcard { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; }");
+            sb.AppendLine("    h2 { color: #3498db; margin-top: 30px; }");
+            sb.AppendLine("    .flashcard-container { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px; }");
+            sb.AppendLine("    .flashcard { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px; width: 300px; }");
             sb.AppendLine("    .term { font-size: 1.2em; color: #3498db; font-weight: bold; }");
             sb.AppendLine("    .definition { margin-top: 10px; }");
             sb.AppendLine("    .example { margin-top: 10px; font-style: italic; color: #555; }");
             sb.AppendLine("    .context { margin-top: 5px; color: #777; font-size: 0.9em; }");
             sb.AppendLine("    .date { color: #999; font-size: 0.8em; text-align: right; }");
+            sb.AppendLine("    .language-indicator { display: inline-block; padding: 2px 6px; font-size: 0.8em; border-radius: 3px; margin-left: 10px; }");
+            sb.AppendLine("    .original { background-color: #e8f4f8; color: #3498db; }");
+            sb.AppendLine("    .translated { background-color: #f8e8f4; color: #9b59b6; }");
             sb.AppendLine("  </style>");
             sb.AppendLine("</head>");
             sb.AppendLine("<body>");
             sb.AppendLine("  <h1>Vocabulary Flashcards</h1>");
 
+            bool hasBothLanguages = translatedFlashcards != null && translatedFlashcards.Count > 0;
+            
+            // For original flashcards
+            if (hasBothLanguages)
+            {
+                sb.AppendLine("  <h2>Original Language (English)</h2>");
+            }
+            
+            sb.AppendLine("  <div class=\"flashcard-container\">");
             foreach (var card in flashcards)
             {
-                sb.AppendLine("  <div class=\"flashcard\">");
-                sb.AppendLine($"    <div class=\"term\">{HtmlEncode(card.Term)}</div>");
-                sb.AppendLine($"    <div class=\"definition\">{HtmlEncode(card.Definition)}</div>");
+                sb.AppendLine("    <div class=\"flashcard\">");
+                sb.AppendLine($"      <div class=\"term\">{HtmlEncode(card.Term)}");
+                if (hasBothLanguages)
+                {
+                    sb.AppendLine($"      <span class=\"language-indicator original\">EN</span>");
+                }
+                sb.AppendLine("      </div>");
+                sb.AppendLine($"      <div class=\"definition\">{HtmlEncode(card.Definition)}</div>");
                 
                 if (!string.IsNullOrEmpty(card.Example))
-                    sb.AppendLine($"    <div class=\"example\">Example: {HtmlEncode(card.Example)}</div>");
+                    sb.AppendLine($"      <div class=\"example\">Example: {HtmlEncode(card.Example)}</div>");
                     
                 if (!string.IsNullOrEmpty(card.Context))
-                    sb.AppendLine($"    <div class=\"context\">Context: {HtmlEncode(card.Context)}</div>");
+                    sb.AppendLine($"      <div class=\"context\">Context: {HtmlEncode(card.Context)}</div>");
                     
-                sb.AppendLine($"    <div class=\"date\">{card.CreatedDate:yyyy-MM-dd}</div>");
+                sb.AppendLine($"      <div class=\"date\">{card.CreatedDate:yyyy-MM-dd}</div>");
+                sb.AppendLine("    </div>");
+            }
+            sb.AppendLine("  </div>");
+            
+            // For translated flashcards
+            if (hasBothLanguages)
+            {
+                sb.AppendLine($"  <h2>Translated Language ({translatedLanguage})</h2>");
+                sb.AppendLine("  <div class=\"flashcard-container\">");
+                
+                foreach (var card in translatedFlashcards)
+                {
+                    sb.AppendLine("    <div class=\"flashcard\">");
+                    sb.AppendLine($"      <div class=\"term\">{HtmlEncode(card.Term)}");
+                    sb.AppendLine($"      <span class=\"language-indicator translated\">{translatedLanguage}</span>");
+                    sb.AppendLine("      </div>");
+                    sb.AppendLine($"      <div class=\"definition\">{HtmlEncode(card.Definition)}</div>");
+                    
+                    if (!string.IsNullOrEmpty(card.Example))
+                        sb.AppendLine($"      <div class=\"example\">Example: {HtmlEncode(card.Example)}</div>");
+                        
+                    if (!string.IsNullOrEmpty(card.Context))
+                        sb.AppendLine($"      <div class=\"context\">Context: {HtmlEncode(card.Context)}</div>");
+                        
+                    sb.AppendLine($"      <div class=\"date\">{card.CreatedDate:yyyy-MM-dd}</div>");
+                    sb.AppendLine("    </div>");
+                }
+                
                 sb.AppendLine("  </div>");
             }
             

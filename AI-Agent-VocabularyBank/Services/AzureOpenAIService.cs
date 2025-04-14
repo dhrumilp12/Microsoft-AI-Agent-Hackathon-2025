@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using VocabularyBank.Helpers;
 
 namespace VocabularyBank.Services
 {
@@ -20,6 +21,8 @@ namespace VocabularyBank.Services
         private readonly string _deploymentName;
         private readonly string _apiVersion;
         private readonly bool _debug;
+        private readonly int _maxRetries;
+        private readonly int _initialRetryDelay;
         
         /// <summary>
         /// Initializes a new instance of AzureOpenAIService with configuration settings.
@@ -50,18 +53,23 @@ namespace VocabularyBank.Services
             _apiVersion = configuration["AzureOpenAI:ApiVersion"] ?? "2024-12-01-preview";
             _debug = configuration.GetSection("AzureOpenAI").GetValue<bool>("Debug", false);
             
+            // Get retry configuration from settings or use defaults
+            _maxRetries = configuration.GetSection("AzureOpenAI").GetValue<int>("MaxRetries", 3);
+            _initialRetryDelay = configuration.GetSection("AzureOpenAI").GetValue<int>("InitialRetryDelayMs", 2000);
+            
             // Remove trailing slash if it exists for proper URL construction
             if (endpoint?.EndsWith('/') == true)
             {
                 endpoint = endpoint.TrimEnd('/');
             }
             
-            // Log connection details if in debug mode
-            if (_debug)
+            // Only log connection details if in debug mode
+            if (_debug && false) // Disable debug output completely
             {
                 Console.WriteLine($"Debug: Using endpoint: {endpoint}");
                 Console.WriteLine($"Debug: Using deployment: {_deploymentName}");
                 Console.WriteLine($"Debug: Using API version: {_apiVersion}");
+                Console.WriteLine($"Debug: Max retries: {_maxRetries}, Initial delay: {_initialRetryDelay}ms");
             }
             
             // Initialize HTTP client for API communication
@@ -80,7 +88,7 @@ namespace VocabularyBank.Services
         /// <param name="temperature">Controls randomness. Lower is more deterministic.</param>
         /// <param name="maxTokens">Maximum number of tokens to generate</param>
         /// <returns>Generated text from the model</returns>
-        public async Task<string> GetCompletionAsync(string prompt, double temperature = 0.3, int maxTokens = 500)
+        public async Task<string> GetCompletionAsync(string prompt, double temperature = 0.3, int maxTokens = 1000)
         {
             try
             {
@@ -94,6 +102,11 @@ namespace VocabularyBank.Services
             }
             catch (HttpRequestException ex)
             {
+                if (ex.Message.Contains("429"))
+                {
+                    return "Error: Azure OpenAI service is currently rate limited. Your request has been queued and will be processed shortly. Please try again in a few moments.";
+                }
+                
                 Console.WriteLine($"HTTP request error: {ex.Message}");
                 throw;
             }
@@ -114,12 +127,24 @@ namespace VocabularyBank.Services
         /// <returns>Generated text from the model</returns>
         public async Task<string> GetChatCompletionAsync(string prompt, double temperature = 0.3, int maxTokens = 1000)
         {
+            return await RetryHelper.ExecuteWithRetryAsync(
+                async () => await ExecuteChatCompletionRequestAsync(prompt, temperature, maxTokens),
+                _maxRetries,
+                _initialRetryDelay
+            );
+        }
+
+        /// <summary>
+        /// Executes the actual API request to the Azure OpenAI Chat Completions API
+        /// </summary>
+        private async Task<string> ExecuteChatCompletionRequestAsync(string prompt, double temperature, int maxTokens)
+        {
             try
             {
                 // Construct the API URL with deployment name and API version
                 var requestUrl = $"openai/deployments/{_deploymentName}/chat/completions?api-version={_apiVersion}";
                 
-                if (_debug)
+                if (_debug && false) // Disable debug output completely
                 {
                     Console.WriteLine($"Debug: Full request URL: {_httpClient.BaseAddress}{requestUrl}");
                 }
@@ -139,7 +164,7 @@ namespace VocabularyBank.Services
                 var jsonContent = JsonSerializer.Serialize(requestBody);
                 var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
                 
-                if (_debug)
+                if (_debug && false) // Disable debug output completely
                 {
                     Console.WriteLine($"Debug: Request payload: {jsonContent}");
                 }
@@ -153,12 +178,13 @@ namespace VocabularyBank.Services
                 // Handle API errors
                 if (!response.IsSuccessStatusCode)
                 {
+                    // Keep error messages as they're important for troubleshooting
                     Console.WriteLine($"API Error: {(int)response.StatusCode} {response.StatusCode}");
                     Console.WriteLine($"Response details: {responseContent}");
                     throw new HttpRequestException($"Azure OpenAI API returned {(int)response.StatusCode}: {responseContent}");
                 }
                 
-                if (_debug)
+                if (_debug && false) // Disable debug output completely
                 {
                     Console.WriteLine($"Debug: API Response: {responseContent}");
                 }
@@ -173,7 +199,7 @@ namespace VocabularyBank.Services
                     // If content is empty but we got a successful response, check the finish reason
                     string finishReason = responseJson.RootElement.GetProperty("choices")[0].TryGetProperty("finish_reason", out var finishReasonElement) ? 
                         finishReasonElement.GetString() : "unknown";
-                        
+                    
                     Console.WriteLine($"Warning: Received empty content with finish reason: {finishReason}");
                     
                     if (finishReason == "length")
@@ -188,7 +214,7 @@ namespace VocabularyBank.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Chat completion error: {ex.Message}");
+                Console.WriteLine($"Error in API request: {ex.Message}");
                 throw;
             }
         }

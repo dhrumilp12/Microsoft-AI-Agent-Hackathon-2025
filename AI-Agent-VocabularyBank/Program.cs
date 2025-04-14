@@ -2,8 +2,10 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using VocabularyBank.Models;
 using VocabularyBank.Services;
+using VocabularyBank.Helpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -42,11 +44,29 @@ namespace VocabularyBank
                 var transcriptProcessor = serviceProvider.GetService<ITranscriptProcessorService>();
                 string transcript = await transcriptProcessor.LoadTranscriptAsync(transcriptPath);
                 
+                // Offer translation option
+                TranslatedContent translatedContent = await PromptForTranslationAsync(transcript, transcriptPath, serviceProvider);
+                if (translatedContent != null)
+                {
+                    // Process both original and translated text for vocabulary extraction
+                    DisplayProcessingStage("Processing both original and translated text");
+                }
+                
                 // Extract vocabulary terms with progress indicator
                 DisplayProcessingStage("Extracting key vocabulary terms");
                 var vocabularyExtractor = serviceProvider.GetService<IVocabularyExtractorService>();
-                var vocabularyTerms = await vocabularyExtractor.ExtractVocabularyAsync(transcript);
-                Console.WriteLine($"✓ Successfully extracted {vocabularyTerms.Count} key terms.");
+                
+                List<string> vocabularyTerms;
+                using (var extractionProgressBar = new ConsoleProgressBar("Analyzing text for key terms..."))
+                {
+                    vocabularyTerms = await vocabularyExtractor.ExtractVocabularyAsync(
+                        transcript,
+                        (percent, message) => extractionProgressBar.Report(percent, message));
+                        
+                    extractionProgressBar.Complete();
+                }
+                
+                Console.WriteLine($"✓ Successfully extracted {vocabularyTerms.Count} key terms from original text.");
                 
                 // Display extracted terms
                 if (vocabularyTerms.Count > 0)
@@ -54,41 +74,145 @@ namespace VocabularyBank
                     DisplayExtractedTerms(vocabularyTerms);
                 }
                 
+                // If we have translated content, extract vocabulary from it too
+                List<string> translatedVocabularyTerms = null;
+                if (translatedContent != null)
+                {
+                    DisplayProcessingStage($"Extracting key vocabulary terms from translated text ({translatedContent.TargetLanguageDisplayName})");
+                    
+                    using (var translatedExtractionProgressBar = new ConsoleProgressBar($"Analyzing {translatedContent.TargetLanguageDisplayName} text for key terms..."))
+                    {
+                        translatedVocabularyTerms = await vocabularyExtractor.ExtractVocabularyAsync(
+                            translatedContent.TranslatedText,
+                            (percent, message) => translatedExtractionProgressBar.Report(percent, message));
+                            
+                        translatedExtractionProgressBar.Complete();
+                    }
+                    
+                    Console.WriteLine($"✓ Successfully extracted {translatedVocabularyTerms.Count} key terms from translated text.");
+                    
+                    if (translatedVocabularyTerms.Count > 0)
+                    {
+                        Console.WriteLine($"\nExtracted key terms from {translatedContent.TargetLanguageDisplayName} text:");
+                        DisplayExtractedTerms(translatedVocabularyTerms);
+                    }
+                }
+                
                 // Generate definitions and examples with progress indicator
-                DisplayProcessingStage("Generating definitions and examples");
+                DisplayProcessingStage("Generating definitions and examples for original text");
                 var definitionGenerator = serviceProvider.GetService<IDefinitionGeneratorService>();
                 
                 Console.WriteLine("Fetching definitions from AI service (this may take a moment)...");
-                var termsWithDefinitions = await definitionGenerator.GenerateDefinitionsAsync(vocabularyTerms, transcript);
-                Console.WriteLine($"✓ Successfully generated {termsWithDefinitions.Count} term definitions.");
                 
-                // Create flashcards with progress indicator
-                DisplayProcessingStage("Creating flashcards");
-                var flashcardGenerator = serviceProvider.GetService<IFlashcardGeneratorService>();
-                var flashcards = flashcardGenerator.CreateFlashcards(termsWithDefinitions);
-                Console.WriteLine($"✓ Created {flashcards.Count} flashcards.");
-                
-                // Export flashcards with options
-                string outputPath = await PromptForExportOptions(transcriptPath, serviceProvider, flashcards);
-                DisplayProcessingStage("Exporting flashcards", outputPath);
-                
-                var exportService = serviceProvider.GetService<IExportService>();
-                await exportService.ExportFlashcardsAsync(flashcards, outputPath);
-                
-                // Display success message with highlighted output path
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"\n✓ Flashcards successfully exported to: {outputPath}");
-                Console.ResetColor();
-                
-                // Offer to open the output file
-                if (File.Exists(outputPath))
+                // Create and initialize progress bar
+                using (var progressBar = new ConsoleProgressBar("Initializing..."))
                 {
-                    Console.Write("\nWould you like to open the exported file? (Y/N): ");
-                    var key = Console.ReadKey().Key;
-                    if (key == ConsoleKey.Y)
+                    // Generate definitions with progress bar
+                    var termsWithDefinitions = await definitionGenerator.GenerateDefinitionsAsync(
+                        vocabularyTerms, 
+                        transcript,
+                        (percent, message) => progressBar.Report(percent, message));
+                    
+                    // Mark the progress as complete
+                    progressBar.Complete();
+                    
+                    Console.WriteLine($"✓ Successfully generated {termsWithDefinitions.Count} term definitions for original text.");
+                
+                    // Generate definitions for translated terms if available
+                    List<VocabularyTerm> translatedTermsWithDefinitions = null;
+                    if (translatedContent != null && translatedVocabularyTerms != null && translatedVocabularyTerms.Count > 0)
                     {
-                        Console.WriteLine();
-                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{outputPath}\"");
+                        DisplayProcessingStage($"Generating definitions and examples for {translatedContent.TargetLanguageDisplayName} text");
+                        Console.WriteLine("Fetching definitions from AI service for translated terms...");
+                        
+                        using (var translatedProgressBar = new ConsoleProgressBar("Initializing..."))
+                        {
+                            translatedTermsWithDefinitions = await definitionGenerator.GenerateDefinitionsAsync(
+                                translatedVocabularyTerms, 
+                                translatedContent.TranslatedText,
+                                (percent, message) => translatedProgressBar.Report(percent, message));
+                                
+                            translatedProgressBar.Complete();
+                        }
+                        
+                        Console.WriteLine($"✓ Successfully generated {translatedTermsWithDefinitions.Count} term definitions for translated text.");
+                    }
+                    
+                    // Create flashcards with progress indicator
+                    DisplayProcessingStage("Creating flashcards for original text");
+                    var flashcardGenerator = serviceProvider.GetService<IFlashcardGeneratorService>();
+                    
+                    List<Flashcard> flashcards;
+                    using (var flashcardProgressBar = new ConsoleProgressBar("Creating flashcards..."))
+                    {
+                        flashcards = flashcardGenerator.CreateFlashcards(
+                            termsWithDefinitions,
+                            (percent, message) => flashcardProgressBar.Report(percent, message));
+                            
+                        flashcardProgressBar.Complete();
+                    }
+                    
+                    Console.WriteLine($"✓ Created {flashcards.Count} flashcards for original text.");
+                    
+                    // Create flashcards for translated terms if available
+                    List<Flashcard> translatedFlashcards = null;
+                    if (translatedTermsWithDefinitions != null)
+                    {
+                        DisplayProcessingStage($"Creating flashcards for {translatedContent.TargetLanguageDisplayName} text");
+                        
+                        using (var translatedFlashcardProgressBar = new ConsoleProgressBar("Creating translated flashcards..."))
+                        {
+                            translatedFlashcards = flashcardGenerator.CreateFlashcards(
+                                translatedTermsWithDefinitions,
+                                (percent, message) => translatedFlashcardProgressBar.Report(percent, message));
+                                
+                            translatedFlashcardProgressBar.Complete();
+                        }
+                        
+                        Console.WriteLine($"✓ Created {translatedFlashcards.Count} flashcards for translated text.");
+                    }
+                    
+                    // Export flashcards with options
+                    string outputPath = await PromptForExportOptions(
+                        transcriptPath, 
+                        serviceProvider, 
+                        flashcards,
+                        translatedFlashcards,
+                        translatedContent?.TargetLanguageDisplayName);
+                    
+                    DisplayProcessingStage("Exporting flashcards", outputPath);
+                    
+                    var exportService = serviceProvider.GetService<IExportService>();
+                    if (translatedFlashcards != null && translatedFlashcards.Count > 0)
+                    {
+                        // Export both original and translated flashcards
+                        await exportService.ExportCombinedFlashcardsAsync(
+                            flashcards, 
+                            translatedFlashcards, 
+                            translatedContent.TargetLanguageDisplayName, 
+                            outputPath);
+                    }
+                    else
+                    {
+                        // Export only original flashcards
+                        await exportService.ExportFlashcardsAsync(flashcards, outputPath);
+                    }
+                    
+                    // Display success message with highlighted output path
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"\n✓ Flashcards successfully exported to: {outputPath}");
+                    Console.ResetColor();
+                    
+                    // Offer to open the output file
+                    if (File.Exists(outputPath))
+                    {
+                        Console.Write("\nWould you like to open the exported file? (Y/N): ");
+                        var key = Console.ReadKey().Key;
+                        if (key == ConsoleKey.Y)
+                        {
+                            Console.WriteLine();
+                            System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{outputPath}\"");
+                        }
                     }
                 }
             }
@@ -232,9 +356,18 @@ namespace VocabularyBank
         /// <param name="transcriptPath">The path to the original transcript file</param>
         /// <param name="serviceProvider">The service provider for dependency injection</param>
         /// <param name="flashcards">The list of flashcards to export</param>
+        /// <param name="translatedFlashcards">The list of translated flashcards (optional)</param>
+        /// <param name="targetLanguageName">Name of the target language (if translation was performed)</param>
         /// <returns>The chosen output file path</returns>
-        private static async Task<string> PromptForExportOptions(string transcriptPath, ServiceProvider serviceProvider, List<Flashcard> flashcards)
+        private static async Task<string> PromptForExportOptions(
+            string transcriptPath, 
+            ServiceProvider serviceProvider, 
+            List<Flashcard> flashcards,
+            List<Flashcard> translatedFlashcards = null,
+            string targetLanguageName = null)
         {
+            bool hasTranslatedCards = translatedFlashcards != null && translatedFlashcards.Count > 0;
+            
             // Default output path
             string defaultPath = Path.Combine(
                 Path.GetDirectoryName(transcriptPath), 
@@ -244,13 +377,78 @@ namespace VocabularyBank
             Console.WriteLine("\nSelect export format:");
             Console.WriteLine("  1. JSON format (default)");
             Console.WriteLine("  2. CSV format");
-            Console.WriteLine("  3. Export to Microsoft 365");
+            Console.WriteLine("  3. HTML format");
+            Console.WriteLine("  4. Export to Microsoft 365");
             
-            Console.Write("Enter your choice (1-3): ");
+            Console.Write("Enter your choice (1-4): ");
             string formatChoice = Console.ReadLine().Trim();
             
+            // If we have translated flashcards, ask about export options
+            if (hasTranslatedCards)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"\nYou have flashcards in both original language and {targetLanguageName}.");
+                Console.WriteLine("How would you like to export them?");
+                Console.ResetColor();
+                Console.WriteLine("  1. Combined in one file (default)");
+                Console.WriteLine("  2. As separate files");
+                
+                Console.Write("Enter your choice (1-2): ");
+                string exportChoice = Console.ReadLine().Trim();
+                
+                if (exportChoice == "2")
+                {
+                    // Handle separate files
+                    string outputPathOriginal = defaultPath;
+                    string outputPathTranslated = Path.Combine(
+                        Path.GetDirectoryName(defaultPath),
+                        $"{Path.GetFileNameWithoutExtension(defaultPath)}_{targetLanguageName.ToLower()}{Path.GetExtension(defaultPath)}"
+                    );
+                    
+                    Console.WriteLine($"\nExporting original flashcards to: {outputPathOriginal}");
+                    Console.WriteLine($"Exporting {targetLanguageName} flashcards to: {outputPathTranslated}");
+                    
+                    // Allow customizing paths
+                    Console.Write($"\nOutput file path for original flashcards [{outputPathOriginal}]: ");
+                    string customPathOriginal = Console.ReadLine().Trim();
+                    if (!string.IsNullOrEmpty(customPathOriginal))
+                    {
+                        outputPathOriginal = customPathOriginal;
+                    }
+                    
+                    Console.Write($"Output file path for {targetLanguageName} flashcards [{outputPathTranslated}]: ");
+                    string customPathTranslated = Console.ReadLine().Trim();
+                    if (!string.IsNullOrEmpty(customPathTranslated))
+                    {
+                        outputPathTranslated = customPathTranslated;
+                    }
+                    
+                    // Apply correct extensions
+                    string fileExtension = formatChoice == "2" ? ".csv" : formatChoice == "3" ? ".html" : ".json";
+                    if (!Path.HasExtension(outputPathOriginal))
+                    {
+                        outputPathOriginal = Path.ChangeExtension(outputPathOriginal, fileExtension);
+                    }
+                    if (!Path.HasExtension(outputPathTranslated))
+                    {
+                        outputPathTranslated = Path.ChangeExtension(outputPathTranslated, fileExtension);
+                    }
+                    
+                    // Ensure directories exist
+                    Directory.CreateDirectory(Path.GetDirectoryName(outputPathOriginal));
+                    Directory.CreateDirectory(Path.GetDirectoryName(outputPathTranslated));
+                    
+                    // Export both sets of flashcards separately
+                    var exportService = serviceProvider.GetService<IExportService>();
+                    await exportService.ExportFlashcardsAsync(flashcards, outputPathOriginal);
+                    await exportService.ExportFlashcardsAsync(translatedFlashcards, outputPathTranslated);
+                    
+                    return outputPathOriginal; // Return the original path for the success message
+                }
+            }
+            
             // Handle M365 export option
-            if (formatChoice == "3")
+            if (formatChoice == "4")
             {
                 var exportService = serviceProvider.GetService<IExportService>();
                 
@@ -310,7 +508,19 @@ namespace VocabularyBank
                 }
             }
             
-            string extension = formatChoice == "2" ? ".csv" : ".json";
+            string extension;
+            switch (formatChoice)
+            {
+                case "2":
+                    extension = ".csv";
+                    break;
+                case "3":
+                    extension = ".html";
+                    break;
+                default:
+                    extension = ".json";
+                    break;
+            }
             string outputPath = Path.ChangeExtension(defaultPath, extension);
             
             Console.Write($"\nOutput file path [{outputPath}]: ");
@@ -389,8 +599,160 @@ Deep learning is part of a broader family of machine learning methods based on a
             services.AddTransient<IFlashcardGeneratorService, FlashcardGeneratorService>();
             services.AddTransient<M365ExportService>();
             services.AddTransient<IExportService, ExportService>();
+            services.AddTransient<ITranslationService, AzureTranslationService>(); // Add translation service
             
             return services;
+        }
+
+        /// <summary>
+        /// Prompts the user if they want to translate the transcript and handles the translation process.
+        /// </summary>
+        /// <param name="transcript">The original transcript text</param>
+        /// <param name="transcriptPath">The path to the original transcript file</param>
+        /// <param name="serviceProvider">The service provider for dependency injection</param>
+        /// <returns>TranslatedContent if translation was performed, null otherwise</returns>
+        private static async Task<TranslatedContent> PromptForTranslationAsync(string transcript, string transcriptPath, ServiceProvider serviceProvider)
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\nWould you like to translate the text to another language?");
+            Console.ResetColor();
+            Console.WriteLine("  1. Yes, translate the text");
+            Console.WriteLine("  2. No, keep original language only");
+            
+            Console.Write("\nEnter your choice (1-2): ");
+            string choice = Console.ReadLine().Trim();
+            
+            if (choice != "1")
+            {
+                // User chose not to translate
+                return null;
+            }
+            
+            // User wants to translate, get the translation service
+            var translationService = serviceProvider.GetService<ITranslationService>();
+            
+            // First, detect the source language
+            DisplayProcessingStage("Detecting source language");
+            string detectedLanguage = await translationService.DetectLanguageAsync(transcript);
+            
+            // Get available languages
+            DisplayProcessingStage("Retrieving available languages");
+            var languages = await translationService.GetAvailableLanguagesAsync();
+            
+            // Display language options in columns
+            Console.WriteLine("\nAvailable target languages:");
+            DisplayLanguageOptions(languages, detectedLanguage);
+            
+            // Prompt for target language
+            Console.Write("\nEnter the language code to translate to: ");
+            string targetLanguage = Console.ReadLine().Trim();
+            
+            // Validate the language code
+            if (!languages.ContainsKey(targetLanguage))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Warning: Language code '{targetLanguage}' not recognized. Using 'en' (English) as default.");
+                Console.ResetColor();
+                targetLanguage = "en";
+            }
+            
+            // Perform the translation
+            DisplayProcessingStage($"Translating text to {languages[targetLanguage]}");
+            Console.WriteLine("This may take a moment for larger texts...");
+            
+            string translatedText = await translationService.TranslateTextAsync(transcript, targetLanguage);
+            
+            if (string.IsNullOrEmpty(translatedText))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Translation failed. Continuing with original text only.");
+                Console.ResetColor();
+                return null;
+            }
+            
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"✓ Text successfully translated to {languages[targetLanguage]}!");
+            Console.ResetColor();
+            
+            // Get the directory of the transcript file to save the translated file in the same location
+            string outputDirectory = Path.GetDirectoryName(transcriptPath);
+
+            // Save the translated text to a file in the same location as the transcript
+            string translatedFilePath = await SaveTranslatedTextAsync(translatedText, targetLanguage, languages[targetLanguage], outputDirectory);
+            Console.WriteLine($"Translated text saved to: {translatedFilePath}");
+            
+            // Return the translated content
+            return new TranslatedContent
+            {
+                OriginalText = transcript,
+                OriginalLanguage = detectedLanguage,
+                TranslatedText = translatedText,
+                TargetLanguage = targetLanguage,
+                TargetLanguageDisplayName = languages[targetLanguage]
+            };
+        }
+        
+        /// <summary>
+        /// Displays available language options in a formatted multi-column layout.
+        /// </summary>
+        /// <param name="languages">Dictionary of language codes and names</param>
+        /// <param name="detectedLanguage">The detected source language to highlight</param>
+        private static void DisplayLanguageOptions(Dictionary<string, string> languages, string detectedLanguage)
+        {
+            const int columns = 3;
+            var sortedLanguages = languages.OrderBy(l => l.Value).ToList();
+            
+            for (int i = 0; i < sortedLanguages.Count; i += columns)
+            {
+                for (int j = 0; j < columns && i + j < sortedLanguages.Count; j++)
+                {
+                    var language = sortedLanguages[i + j];
+                    string display = $"{language.Key}: {language.Value}";
+                    
+                    // Highlight detected source language
+                    if (language.Key == detectedLanguage)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.Write($"{display.PadRight(30)} (detected) ");
+                        Console.ResetColor();
+                    }
+                    else
+                    {
+                        Console.Write(display.PadRight(30));
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+        
+        /// <summary>
+        /// Saves translated text to a file.
+        /// </summary>
+        /// <param name="translatedText">The translated text</param>
+        /// <param name="languageCode">The language code</param>
+        /// <param name="languageName">The display name of the language</param>
+        /// <param name="outputDirectory">The directory where the file should be saved</param>
+        /// <returns>Path to the saved file</returns>
+        private static async Task<string> SaveTranslatedTextAsync(
+            string translatedText, 
+            string languageCode, 
+            string languageName, 
+            string outputDirectory = null)
+        {
+            string fileName = $"translated_{languageCode}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+            
+            // If no output directory is specified, use the current directory
+            if (string.IsNullOrEmpty(outputDirectory))
+            {
+                outputDirectory = Directory.GetCurrentDirectory();
+            }
+            
+            // Ensure the directory exists
+            Directory.CreateDirectory(outputDirectory);
+            
+            string filePath = Path.Combine(outputDirectory, fileName);
+            await File.WriteAllTextAsync(filePath, translatedText);
+            return filePath;
         }
     }
 }

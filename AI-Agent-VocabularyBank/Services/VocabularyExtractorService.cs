@@ -36,16 +36,34 @@ namespace VocabularyBank.Services
         /// Extracts vocabulary terms from a provided transcript.
         /// </summary>
         /// <param name="transcript">The text transcript to analyze</param>
+        /// <param name="progressCallback">Optional callback to report progress</param>
         /// <returns>A list of key vocabulary terms</returns>
-        public async Task<List<string>> ExtractVocabularyAsync(string transcript)
+        public async Task<List<string>> ExtractVocabularyAsync(
+            string transcript, 
+            Action<int, string> progressCallback = null)
         {
+            // Report initial progress
+            progressCallback?.Invoke(0, "Starting vocabulary extraction...");
+            
             // First extract potential key terms using basic NLP techniques
+            progressCallback?.Invoke(10, "Identifying potential terms...");
             var basicTerms = ExtractBasicTerms(transcript);
             Console.WriteLine($"Initial extraction found {basicTerms.Count} potential terms");
             
+            // Update progress
+            progressCallback?.Invoke(40, $"Found {basicTerms.Count} potential terms");
+            
             // Then use Azure OpenAI to refine the list to the most relevant terms
+            progressCallback?.Invoke(50, "Refining terms using AI...");
             Console.WriteLine("Refining terms using AI...");
-            return await RefineTermsWithAzureOpenAIAsync(basicTerms, transcript);
+            
+            // Get refined terms
+            var refinedTerms = await RefineTermsWithAzureOpenAIAsync(basicTerms, transcript);
+            
+            // Report completion
+            progressCallback?.Invoke(100, $"Extracted {refinedTerms.Count} key vocabulary terms");
+            
+            return refinedTerms;
         }
         
         /// <summary>

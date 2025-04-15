@@ -1,0 +1,21 @@
+# Visual Studio and .NET artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.dll
+*.exe
+*.pdb
+
+# Environment variables - never commit real API keys
+.env
+
+# Capture folder - don't commit actual capture images
+Captures/
+
+# Tesseract data files can be large
+tessdata/
+
+# Logs
+*.log

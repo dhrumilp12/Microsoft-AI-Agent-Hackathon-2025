@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using System.IO;
 using Microsoft.CognitiveServices.Speech.Audio;
+using System.Collections.Generic;
 
 namespace SpeechTranslator.Services
 {
@@ -85,6 +86,35 @@ namespace SpeechTranslator.Services
             }
 
             return audioFilePath;
+        }
+
+        public async IAsyncEnumerable<string> GetSpeechStreamAsync()
+        {
+            var speechRecognizer = new SpeechRecognizer(_speechConfig);
+
+            while (!Console.KeyAvailable || Console.ReadKey(true).Key != ConsoleKey.Enter)
+            {
+                var result = await speechRecognizer.RecognizeOnceAsync();
+
+                if (result.Reason == ResultReason.RecognizedSpeech)
+                {
+                    yield return result.Text;
+                }
+                else if (result.Reason == ResultReason.NoMatch)
+                {
+                    Console.WriteLine("No speech recognized.");
+                }
+                else if (result.Reason == ResultReason.Canceled)
+                {
+                    var cancellation = CancellationDetails.FromResult(result);
+                    Console.WriteLine($"Speech recognition canceled: {cancellation.Reason}");
+                    if (cancellation.Reason == CancellationReason.Error)
+                    {
+                        Console.WriteLine($"Error details: {cancellation.ErrorDetails}");
+                    }
+                    yield break;
+                }
+            }
         }
     }
 }

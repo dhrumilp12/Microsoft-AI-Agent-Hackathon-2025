@@ -1,6 +1,9 @@
 # Vocabulary Bank & Flashcards Generator
 
 ![Vocabulary Bank Banner](https://img.shields.io/badge/Microsoft-AI%20Agent%20Hackathon%202025-blue)
+![.NET 9.0](https://img.shields.io/badge/.NET-9.0-512BD4)
+![Azure OpenAI](https://img.shields.io/badge/Azure-OpenAI-0078D4)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ## Project Description
 
@@ -17,13 +20,33 @@ The Vocabulary Bank & Flashcards Generator is an AI-powered educational tool des
 ### Key Features
 
 - **Intelligent term extraction** using Azure OpenAI to identify important vocabulary
+  - Employs frequency analysis and AI filtering to identify domain-specific terminology
+  - Balances technical terms and contextually important concepts
+  - Eliminates common words and focuses on educationally valuable vocabulary
 - **Automatic definition generation** with examples and contextual information
+  - Utilizes Azure OpenAI to create accurate, context-aware definitions
+  - Generates authentic usage examples from original content
+  - Provides subject-specific context for better understanding
 - **Multi-language support** with translation capabilities
+  - Supports 100+ languages through Azure Translator integration
+  - Maintains terminology relationships across languages
+  - Enables bilingual flashcard creation for language learning
 - **Multiple export formats**: JSON, CSV, HTML
+  - Structured JSON for integration with other applications
+  - CSV format for easy import into spreadsheets and databases
+  - Interactive HTML flashcards with built-in styling
 - **Microsoft 365 integration** for direct export to cloud storage
+  - Seamless OneDrive integration for cloud-based access
+  - Automatic file sharing with configurable permissions
+  - Direct access through Microsoft 365 ecosystem
 - **Interactive console interface** with progress visualization
+  - Real-time progress tracking with visual indicators
+  - Clear workflow guidance through complex processes
+  - Intuitive error handling and recovery options
 
-## Getting Started
+## Technical Architecture
+
+The application follows a modular, service-based architecture designed for extensibility and maintainability:
 
 ### Prerequisites
 

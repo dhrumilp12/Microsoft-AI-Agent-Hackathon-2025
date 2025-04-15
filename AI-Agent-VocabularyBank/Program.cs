@@ -614,30 +614,39 @@ Deep learning is part of a broader family of machine learning methods based on a
         private static async Task<TranslatedContent> PromptForTranslationAsync(string transcript, string transcriptPath, ServiceProvider serviceProvider)
         {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("\nWould you like to translate the text to another language?");
+            Console.WriteLine("\nHow would you like to handle translation?");
             Console.ResetColor();
-            Console.WriteLine("  1. Yes, translate the text");
-            Console.WriteLine("  2. No, keep original language only");
+            Console.WriteLine("  1. Translate the text automatically");
+            Console.WriteLine("  2. Upload an existing translated file");
+            Console.WriteLine("  3. No translation, keep original language only");
             
-            Console.Write("\nEnter your choice (1-2): ");
+            Console.Write("\nEnter your choice (1-3): ");
             string choice = Console.ReadLine().Trim();
             
-            if (choice != "1")
+            // User chose not to translate
+            if (choice == "3")
             {
-                // User chose not to translate
                 return null;
             }
             
-            // User wants to translate, get the translation service
+            // Get the translation service
             var translationService = serviceProvider.GetService<ITranslationService>();
             
-            // First, detect the source language
+            // Detect the source language of the original text
             DisplayProcessingStage("Detecting source language");
             string detectedLanguage = await translationService.DetectLanguageAsync(transcript);
             
             // Get available languages
-            DisplayProcessingStage("Retrieving available languages");
             var languages = await translationService.GetAvailableLanguagesAsync();
+            
+            // Handle option to upload an existing translation
+            if (choice == "2")
+            {
+                return await LoadExistingTranslationAsync(transcript, detectedLanguage, languages);
+            }
+            
+            // Proceed with automatic translation
+            DisplayProcessingStage("Retrieving available languages");
             
             // Display language options in columns
             Console.WriteLine("\nAvailable target languages:");
@@ -690,6 +699,87 @@ Deep learning is part of a broader family of machine learning methods based on a
                 TargetLanguage = targetLanguage,
                 TargetLanguageDisplayName = languages[targetLanguage]
             };
+        }
+        
+        /// <summary>
+        /// Handles loading an existing translation file provided by the user
+        /// </summary>
+        /// <param name="originalText">The original untranslated text</param>
+        /// <param name="originalLanguage">The detected language of the original text</param>
+        /// <param name="availableLanguages">Dictionary of available languages</param>
+        /// <returns>TranslatedContent if successful, null otherwise</returns>
+        private static async Task<TranslatedContent> LoadExistingTranslationAsync(
+            string originalText, 
+            string originalLanguage, 
+            Dictionary<string, string> availableLanguages)
+        {
+            Console.WriteLine("\nPlease provide the path to your translated text file:");
+            Console.Write("> ");
+            string translatedFilePath = Console.ReadLine().Trim('"', ' ');
+            
+            if (string.IsNullOrEmpty(translatedFilePath) || !File.Exists(translatedFilePath))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error: File not found at '{translatedFilePath}'");
+                Console.WriteLine("Translation process cancelled. Continuing with original text only.");
+                Console.ResetColor();
+                return null;
+            }
+            
+            try
+            {
+                // Load the translated text
+                string translatedText = await File.ReadAllTextAsync(translatedFilePath);
+                
+                if (string.IsNullOrWhiteSpace(translatedText))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Error: The translated file is empty.");
+                    Console.WriteLine("Translation process cancelled. Continuing with original text only.");
+                    Console.ResetColor();
+                    return null;
+                }
+                
+                // Ask user to specify the language of the translation
+                Console.WriteLine("\nWhat language is the translated text in?");
+                
+                // Show the full list of available languages using the same display method as for automatic translation
+                Console.WriteLine("Available target languages:");
+                DisplayLanguageOptions(availableLanguages, originalLanguage);
+                
+                Console.Write("\nEnter the language code: ");
+                string targetLanguage = Console.ReadLine().Trim();
+                
+                // Validate the language code
+                if (!availableLanguages.ContainsKey(targetLanguage))
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Warning: Language code '{targetLanguage}' not recognized. Using 'en' (English) as default.");
+                    Console.ResetColor();
+                    targetLanguage = "en";
+                }
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"✓ Successfully loaded translated text in {availableLanguages[targetLanguage]}!");
+                Console.ResetColor();
+                
+                return new TranslatedContent
+                {
+                    OriginalText = originalText,
+                    OriginalLanguage = originalLanguage,
+                    TranslatedText = translatedText,
+                    TargetLanguage = targetLanguage,
+                    TargetLanguageDisplayName = availableLanguages[targetLanguage]
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error loading translated file: {ex.Message}");
+                Console.WriteLine("Translation process cancelled. Continuing with original text only.");
+                Console.ResetColor();
+                return null;
+            }
         }
         
         /// <summary>

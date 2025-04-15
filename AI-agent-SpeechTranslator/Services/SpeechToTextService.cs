@@ -91,6 +91,7 @@ namespace SpeechTranslator.Services
         public async IAsyncEnumerable<string> GetSpeechStreamAsync(string sourceLanguage, string targetLanguage)
         {
             var speechRecognizer = new SpeechRecognizer(_speechConfig);
+            var speechSynthesizer = new SpeechSynthesizer(_speechConfig);
 
             var recognizedTexts = new Queue<string>();
 
@@ -111,6 +112,9 @@ namespace SpeechTranslator.Services
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Interim): {translatedText}");
+
+                        // Speak the translated text
+                        await speechSynthesizer.SpeakTextAsync(translatedText);
                     }
                 }
             };
@@ -124,6 +128,9 @@ namespace SpeechTranslator.Services
                     {
                         Console.WriteLine($"Translated (Final): {translatedText}");
                         recognizedTexts.Enqueue(translatedText);
+
+                        // Speak the translated text
+                        await speechSynthesizer.SpeakTextAsync(translatedText);
                     }
                 }
             };

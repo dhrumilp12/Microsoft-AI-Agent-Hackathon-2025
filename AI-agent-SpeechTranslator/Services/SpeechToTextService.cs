@@ -88,32 +88,66 @@ namespace SpeechTranslator.Services
             return audioFilePath;
         }
 
-        public async IAsyncEnumerable<string> GetSpeechStreamAsync()
+        public async IAsyncEnumerable<string> GetSpeechStreamAsync(string sourceLanguage, string targetLanguage)
         {
             var speechRecognizer = new SpeechRecognizer(_speechConfig);
 
+            var recognizedTexts = new Queue<string>();
+
+            // Invoke the translation service for interim results
+            var translationService = new TranslationService(
+                Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
+                "https://api.cognitive.microsofttranslator.com/",
+                Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
+            );
+
+            speechRecognizer.Recognizing += async (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Result.Text))
+                {
+                    Console.WriteLine($"Interim Recognized: {e.Result.Text}");
+
+                    var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    await foreach (var translatedText in translationStream)
+                    {
+                        Console.WriteLine($"Translated (Interim): {translatedText}");
+                    }
+                }
+            };
+
+            speechRecognizer.Recognized += async (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(e.Result.Text))
+                {
+                    var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    await foreach (var translatedText in translationStream)
+                    {
+                        Console.WriteLine($"Translated (Final): {translatedText}");
+                        recognizedTexts.Enqueue(translatedText);
+                    }
+                }
+            };
+
+            await speechRecognizer.StartContinuousRecognitionAsync();
+
             while (!Console.KeyAvailable || Console.ReadKey(true).Key != ConsoleKey.Enter)
             {
-                var result = await speechRecognizer.RecognizeOnceAsync();
+                while (recognizedTexts.Count > 0)
+                {
+                    yield return recognizedTexts.Dequeue();
+                }
 
-                if (result.Reason == ResultReason.RecognizedSpeech)
-                {
-                    yield return result.Text;
-                }
-                else if (result.Reason == ResultReason.NoMatch)
-                {
-                    Console.WriteLine("No speech recognized.");
-                }
-                else if (result.Reason == ResultReason.Canceled)
-                {
-                    var cancellation = CancellationDetails.FromResult(result);
-                    Console.WriteLine($"Speech recognition canceled: {cancellation.Reason}");
-                    if (cancellation.Reason == CancellationReason.Error)
-                    {
-                        Console.WriteLine($"Error details: {cancellation.ErrorDetails}");
-                    }
-                    yield break;
-                }
+                await Task.Delay(30); // Allow recognition to continue
+            }
+
+            await speechRecognizer.StopContinuousRecognitionAsync();
+
+            yield break;
+
+            static async IAsyncEnumerable<string> GetSingleTextStream(string text)
+            {
+                yield return text;
+                await Task.CompletedTask;
             }
         }
     }

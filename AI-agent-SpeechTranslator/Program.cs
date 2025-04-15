@@ -31,22 +31,23 @@ namespace SpeechTranslator
 
                 Console.WriteLine("Start speaking. Press Enter to stop.");
 
-                var speechStream = speechService.GetSpeechStreamAsync(); // Assuming this method streams speech-to-text
+                var speechStream = speechService.GetSpeechStreamAsync(sourceLanguage, targetLanguage);
+
                 await foreach (var recognizedText in speechStream)
                 {
-                    Console.WriteLine($"Recognized: {recognizedText}");
-
-                    var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, speechStream);
-                    await foreach (var translatedText in translationStream)
-                    {
-                        Console.WriteLine($"Translated: {translatedText}");
-                    }
+                    Console.WriteLine($"Final Recognized: {recognizedText}");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
+        }
+
+        static async IAsyncEnumerable<string> GetSingleTextStream(string text)
+        {
+            yield return text;
+            await Task.CompletedTask;
         }
     }
 }

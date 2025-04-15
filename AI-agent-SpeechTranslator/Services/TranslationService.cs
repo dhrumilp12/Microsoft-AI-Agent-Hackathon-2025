@@ -23,7 +23,7 @@ namespace SpeechTranslator.Services
                 return text;
             }
 
-            var response = await _client.TranslateAsync(new[] { targetLanguage }, new[] { text }, sourceLanguage: sourceLang);
+            var response = await _client.TranslateAsync([targetLanguage], [text], sourceLanguage: sourceLang);
             return response.Value[0].Translations[0].Text;
         }
 
@@ -37,7 +37,7 @@ namespace SpeechTranslator.Services
                 }
                 else
                 {
-                    var response = await _client.TranslateAsync(new[] { targetLanguage }, new[] { text }, sourceLanguage: sourceLang);
+                    var response = await _client.TranslateAsync([targetLanguage], [text], sourceLanguage: sourceLang);
                     yield return response.Value[0].Translations[0].Text;
                 }
             }

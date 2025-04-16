@@ -1,0 +1,64 @@
+/* Flashcard styling for HTML exports */
+.flashcard-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.flashcard {
+    width: 300px;
+    min-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    background-color: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.flashcard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flashcard-term {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.flashcard-definition {
+    font-size: 15px;
+    margin-bottom: 15px;
+    color: #34495e;
+}
+
+.flashcard-example {
+    font-size: 14px;
+    font-style: italic;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+.flashcard-context {
+    font-size: 13px;
+    color: #95a5a6;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+h1 {
+    color: #3498db;
+    font-size: 28px;
+}
+
+body {
+    background-color: #f9f9f9;
+    padding: 20px;
+}

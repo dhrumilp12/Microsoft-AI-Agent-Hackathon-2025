@@ -14,12 +14,8 @@ namespace SpeechTranslator
 
             string speechKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY");
             string speechRegion = Environment.GetEnvironmentVariable("SPEECH_REGION");
-            string translatorKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY");
-            string translatorRegion = Environment.GetEnvironmentVariable("TRANSLATOR_REGION");
-            string translatorEndpoint = "https://api.cognitive.microsofttranslator.com/";
 
             var speechService = new SpeechToTextService(speechKey, speechRegion);
-            var translationService = new TranslationService(translatorKey, translatorEndpoint, translatorRegion);
 
             try
             {
@@ -42,12 +38,6 @@ namespace SpeechTranslator
             {
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
-        }
-
-        static async IAsyncEnumerable<string> GetSingleTextStream(string text)
-        {
-            yield return text;
-            await Task.CompletedTask;
         }
     }
 }

@@ -11,9 +11,16 @@ namespace SpeechTranslator.Services
     {
         private readonly SpeechConfig _speechConfig;
 
+        private readonly TranslationService _translationService;
+
         public SpeechToTextService(string speechKey, string speechRegion)
         {
             _speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
+            _translationService = new TranslationService(
+                Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
+                "https://api.cognitive.microsofttranslator.com/",
+                Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
+            );
         }
 
         public async Task<string> ConvertSpeechToTextAsync()
@@ -96,19 +103,13 @@ namespace SpeechTranslator.Services
             var recognizedTexts = new Queue<string>();
 
             // Invoke the translation service for interim results
-            var translationService = new TranslationService(
-                Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
-                "https://api.cognitive.microsofttranslator.com/",
-                Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
-            );
-
             speechRecognizer.Recognizing += async (s, e) =>
             {
                 if (!string.IsNullOrWhiteSpace(e.Result.Text))
                 {
                     Console.WriteLine($"Interim Recognized: {e.Result.Text}");
 
-                    var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Interim): {translatedText}");
@@ -123,7 +124,7 @@ namespace SpeechTranslator.Services
             {
                 if (!string.IsNullOrWhiteSpace(e.Result.Text))
                 {
-                    var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Final): {translatedText}");

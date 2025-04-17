@@ -16,9 +16,9 @@ namespace AI_Agent_Orchestrator.Services
             _kernel = kernelService.GetKernel();
 
             // Register skills
-            _kernel.Plugins.Add(new KernelPluginWrapper("SpeechToText", new SpeechToTextSkill(new SpeechToTextService("YourSpeechKey", "YourSpeechRegion"))));
-            _kernel.Plugins.Add(new KernelPluginWrapper("Translation", new TranslationSkill(new TranslationService("YourTranslatorKey", "YourTranslatorEndpoint", "YourTranslatorRegion"))));
-            _kernel.Plugins.Add(new KernelPluginWrapper("Vocabulary", new VocabularySkill(new VocabularyExtractorService(configuration, openAIService))));
+            _kernel.Plugins.Add(new KernelPluginWrapper("SpeechToText", new SpeechToTextService("YourSpeechKey", "YourSpeechRegion")));
+            _kernel.Plugins.Add(new KernelPluginWrapper("Translation", new TranslationService("YourTranslatorKey", "YourTranslatorEndpoint", "YourTranslatorRegion")));
+            _kernel.Plugins.Add(new KernelPluginWrapper("Vocabulary", new VocabularyExtractorService(configuration, openAIService)));
             _kernel.Plugins.Add(new KernelPluginWrapper("FlashcardGenerator", new FlashcardGeneratorService()));
             _kernel.Plugins.Add(new KernelPluginWrapper("VocabTranslator", new AzureTranslationService(configuration)));
             _kernel.Plugins.Add(new KernelPluginWrapper("DefinitionGenerator", new DefinitionGeneratorService(openAIService, new AzureTranslationService(configuration))));
@@ -75,6 +75,19 @@ namespace AI_Agent_Orchestrator.Services
                             {
                                 var definitionResult = await _kernel.InvokeAsync(generateDefinitionsFunction, new KernelArguments { { "terms", vocabularyTerms } });
                                 Console.WriteLine($"Generated Definitions: {definitionResult.GetValue<string>()}");
+                            }
+
+                            // Step 6: Translate vocabulary terms
+                            if (_kernel.Plugins.TryGetPlugin("VocabTranslator", out var vocabTranslatorPlugin) &&
+                                vocabTranslatorPlugin.TryGetFunction("TranslateVocabulary", out var translateVocabularyFunction))
+                            {
+                                var vocabTranslationResult = await _kernel.InvokeAsync(translateVocabularyFunction, new KernelArguments
+                                    {
+                                        { "sourceLanguage", sourceLanguage },
+                                        { "targetLanguage", targetLanguage },
+                                        { "terms", vocabularyTerms }
+                                    });
+                                Console.WriteLine($"Translated Vocabulary Terms: {vocabTranslationResult.GetValue<string>()}");
                             }
                         }
                     }

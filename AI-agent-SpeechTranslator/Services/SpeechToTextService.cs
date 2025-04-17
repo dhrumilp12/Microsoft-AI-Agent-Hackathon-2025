@@ -18,7 +18,7 @@ namespace SpeechTranslator.Services
             _speechConfig = SpeechConfig.FromEndpoint(new Uri(speechEndpoint), speechKey);
             _translationService = new TranslationService(
                 Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
-                "https://api.cognitive.microsofttranslator.com/",
+                Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT"),
                 Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
             );
         }

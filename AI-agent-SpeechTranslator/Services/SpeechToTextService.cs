@@ -13,14 +13,21 @@ namespace SpeechTranslator.Services
 
         private readonly TranslationService _translationService;
 
-        public SpeechToTextService(string speechKey, string speechRegion)
+        public SpeechToTextService(string speechEndpoint, string speechKey)
         {
-            _speechConfig = SpeechConfig.FromSubscription(speechKey, speechRegion);
+            _speechConfig = SpeechConfig.FromEndpoint(new Uri(speechEndpoint), speechKey);
             _translationService = new TranslationService(
                 Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
                 "https://api.cognitive.microsofttranslator.com/",
                 Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
             );
+
+            // Set the endpoint explicitly
+            string speechEndpointEnv = Environment.GetEnvironmentVariable("SPEECH_ENDPOINT");
+            if (!string.IsNullOrWhiteSpace(speechEndpointEnv))
+            {
+                _speechConfig.SetProperty("SpeechServiceConnection_Endpoint", speechEndpointEnv);
+            }
         }
 
         public async Task<string> ConvertSpeechToTextAsync()

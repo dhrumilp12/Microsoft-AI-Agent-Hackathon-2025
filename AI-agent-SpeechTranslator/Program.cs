@@ -12,10 +12,10 @@ namespace SpeechTranslator
             // Explicitly specify the path to the .env file
             DotEnv.Load(new DotEnvOptions(envFilePaths: ["./.env"]));
 
+            string speechEndpoint = Environment.GetEnvironmentVariable("SPEECH_ENDPOINT");
             string speechKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY");
-            string speechRegion = Environment.GetEnvironmentVariable("SPEECH_REGION");
 
-            var speechService = new SpeechToTextService(speechKey, speechRegion);
+            var speechService = new SpeechToTextService(speechEndpoint, speechKey);
 
             try
             {

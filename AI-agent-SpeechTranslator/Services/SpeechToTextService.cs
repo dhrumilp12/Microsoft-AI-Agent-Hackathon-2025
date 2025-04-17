@@ -21,13 +21,6 @@ namespace SpeechTranslator.Services
                 "https://api.cognitive.microsofttranslator.com/",
                 Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
             );
-
-            // Set the endpoint explicitly
-            string speechEndpointEnv = Environment.GetEnvironmentVariable("SPEECH_ENDPOINT");
-            if (!string.IsNullOrWhiteSpace(speechEndpointEnv))
-            {
-                _speechConfig.SetProperty("SpeechServiceConnection_Endpoint", speechEndpointEnv);
-            }
         }
 
         public async Task<string> ConvertSpeechToTextAsync()

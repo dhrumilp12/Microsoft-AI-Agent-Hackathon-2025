@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using DiagramGenerator.Helpers;
 using System.Collections.Concurrent;
+using DiagramGenerator.Constants;
 
 namespace DiagramGenerator.Services
 {
@@ -114,29 +115,8 @@ namespace DiagramGenerator.Services
             _logger.LogInformation("Extracting concepts from transcript using direct API");
             progress?.Report(10);
             
-            string systemPrompt = "You are an AI assistant that extracts key concepts and their relationships from lecture transcripts for diagram generation.";
-            
-            string userPrompt = $@"
-Extract the main concepts, their relationships, and hierarchy from the following lecture transcript.
-Format your response as a JSON array of concept nodes with the following structure:
-[
-  {{
-    ""id"": ""unique_id"",
-    ""name"": ""concept_name"",
-    ""description"": ""brief_description"",
-    ""relationships"": [
-      {{ ""type"": ""relationship_type"", ""target"": ""target_concept_id"" }}
-    ],
-    ""importance"": 1-5
-  }}
-]
-Ensure the concepts form a coherent structure that could be visualized as a diagram.
-Make sure the JSON is valid, complete, and properly closed.
-Limit your response to important concepts only, maximum 20 concepts.
-
-Transcript:
-{transcript}
-";
+            string systemPrompt = PromptConstants.ConceptExtractionSystemPrompt;
+            string userPrompt = PromptConstants.GetConceptExtractionPrompt(transcript);
             
             progress?.Report(20);
             string conceptsJson = await GetSystemCompletion(systemPrompt, userPrompt, progress: new Progress<int>(p => 
@@ -441,22 +421,8 @@ Transcript:
             progress?.Report(10);
             
             var conceptsJson = JsonSerializer.Serialize(concepts);
-            string systemPrompt = "You are an AI assistant that generates Mermaid diagrams from educational concepts.";
-            
-            string userPrompt = $@"
-Create a Mermaid {diagramType} diagram based on the following concepts and their relationships:
-{conceptsJson}
-
-Rules:
-1. Use proper Mermaid syntax for {diagramType}
-2. Organize concepts hierarchically based on their relationships
-3. Include all important concepts (importance >= 3)
-4. Make the diagram clear and readable
-5. Use style attributes to highlight important nodes
-6. Return ONLY the Mermaid diagram syntax without any explanations
-
-The output should start with ```mermaid and end with ```
-";
+            string systemPrompt = PromptConstants.DiagramGenerationSystemPrompt;
+            string userPrompt = PromptConstants.GetDiagramGenerationPrompt(conceptsJson, diagramType);
             
             progress?.Report(20);
             string mermaidDiagram = await GetSystemCompletion(systemPrompt, userPrompt, progress: new Progress<int>(p => 
@@ -552,18 +518,9 @@ The output should start with ```mermaid and end with ```
             _logger.LogInformation($"Expanding concept: {conceptName}");
             progress?.Report(10);
             
-            string systemPrompt = "You are an AI assistant that generates detailed Mermaid diagrams for educational concepts.";
-            
-            string userPrompt = $@"
-Expand the concept ""{conceptName}"" in more detail. Based on what we know about it:
-{JsonSerializer.Serialize(concept)}
-
-Create a detailed Mermaid {diagramType} diagram that breaks down this concept into sub-concepts, examples, applications, etc.
-Use styling to highlight important elements.
-Return ONLY the Mermaid diagram syntax without any explanations.
-
-The output should start with ```mermaid and end with ```
-";
+            string systemPrompt = PromptConstants.ConceptExpansionSystemPrompt;
+            string conceptJson = JsonSerializer.Serialize(concept);
+            string userPrompt = PromptConstants.GetConceptExpansionPrompt(conceptName, conceptJson, diagramType);
             
             progress?.Report(20);
             string expandedDiagram = await GetSystemCompletion(systemPrompt, userPrompt, progress: new Progress<int>(p => 

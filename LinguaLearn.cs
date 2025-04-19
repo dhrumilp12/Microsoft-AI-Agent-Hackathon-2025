@@ -37,27 +37,47 @@ namespace AI_Agent_Orchestrator
                 .Build();
 
             // Example initialization of services
-            var kernelService = new KernelService();
+            var kernelService = new KernelService(configuration);
 
             var orchestratorService = new OrchestratorService(kernelService, configuration, new AzureOpenAIService(configuration));
 
             var class1 = new LinguaLearn(orchestratorService);
 
+            Console.Clear();
+
             Console.WriteLine(GetWelcomeMessage());
 
-            // Example usage
-            if (args.Length < 2)
+            Console.WriteLine("What would you like to do?");
+            Console.WriteLine("1. Speech-to-Text and Translation");
+            Console.WriteLine("2. Vocabulary Extraction and Flashcard Generation");
+            Console.Write("Enter your choice (1 or 2): ");
+            string choice = Console.ReadLine();
+
+            if (choice == "1")
             {
-                Console.WriteLine("Usage: <sourceLanguage> <targetLanguage> <audioOrVideoFilePath=null>");
-                return;
+                if (args.Length < 3)
+                {
+                    Console.WriteLine("Usage for Speech-to-Text and Translation: <audioOrVideoFilePath> <sourceLanguage> <targetLanguage>");
+                    return;
+                }
+
+                string audioOrVideoFilePath = args[0];
+                string sourceLanguage = args[1];
+                string targetLanguage = args[2];
+
+                await orchestratorService.RunAsync("1", audioOrVideoFilePath: audioOrVideoFilePath, sourceLanguage: sourceLanguage, targetLanguage: targetLanguage);
             }
+            else if (choice == "2")
+            {
+                Console.WriteLine("Enter the text for vocabulary extraction:");
+                string text = Console.ReadLine();
 
-            string sourceLanguage = args[0];
-            string targetLanguage = args[1];
-            string audioOrVideoFilePath = args[2];
-
-            string result = await class1.RunOrchestrationAsync(audioOrVideoFilePath, sourceLanguage, targetLanguage);
-            Console.WriteLine(result);
+                await orchestratorService.RunAsync("2", text: text);
+            }
+            else
+            {
+                Console.WriteLine("Invalid choice. Please restart the application and choose either 1 or 2.");
+            }
         }
     }
 }

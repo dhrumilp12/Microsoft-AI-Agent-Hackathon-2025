@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI-agent-SpeechTranslator",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI-agent-VocabularyBank", "AI-Agent-VocabularyBank\AI-agent-VocabularyBank.csproj", "{6A1FA729-F2B4-39CC-3228-A25A4DE65536}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI-Agent-Orchestrator", "AI-Agent-Orchestrator\AI-Agent-Orchestrator.csproj", "{6A092830-7CA6-0EA7-D1CC-6369A4EA1AF1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI-Agent-Orchestrator", "AI-Agent-Orchestrator.csproj", "{6A092830-7CA6-0EA7-D1CC-6369A4EA1AF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

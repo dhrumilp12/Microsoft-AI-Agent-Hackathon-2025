@@ -1,5 +1,6 @@
 ﻿using AI_Agent_Orchestrator.Services;
 using Microsoft.Extensions.Configuration;
+using DotNetEnv;
 using SpeechTranslator.Services;
 using System;
 using System.Threading.Tasks;
@@ -9,19 +10,6 @@ namespace AI_Agent_Orchestrator
 {
     public class LinguaLearn
     {
-        private readonly OrchestratorService _orchestratorService;
-
-        public LinguaLearn(OrchestratorService orchestratorService)
-        {
-            _orchestratorService = orchestratorService;
-        }
-
-        public async Task<string> RunOrchestrationAsync(string audioOrVideoFilePath, string sourceLanguage, string targetLanguage)
-        {
-            await _orchestratorService.RunAsync(audioOrVideoFilePath, sourceLanguage, targetLanguage);
-            return "Orchestration completed successfully.";
-        }
-
         public static string GetWelcomeMessage()
         {
             return "Welcome to the AI Agent Orchestrator!";
@@ -31,17 +19,20 @@ namespace AI_Agent_Orchestrator
         {
             Console.WriteLine("Initializing AI Agent Orchestrator...");
 
+            Env.Load();
+
             // Load configuration
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
                 .Build();
+
+            Console.WriteLine($"SpeechKey: {configuration["Azure__SpeechKey"]}");
 
             // Example initialization of services
             var kernelService = new KernelService(configuration);
 
             var orchestratorService = new OrchestratorService(kernelService, configuration, new AzureOpenAIService(configuration));
-
-            var class1 = new LinguaLearn(orchestratorService);
 
             Console.Clear();
 

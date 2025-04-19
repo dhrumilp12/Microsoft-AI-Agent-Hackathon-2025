@@ -11,26 +11,45 @@ namespace AI_Agent_Orchestrator.Services
     {
         private readonly Kernel _kernel;
 
+        private readonly SpeechToTextService _speechToTextService;
+
+        private readonly TranslationService _translationService;
+
+        private readonly VocabularyExtractorService _vocabularyExtractorService;
+
+        private readonly FlashcardGeneratorService _flashcardGeneratorService;
+
+        private readonly AzureTranslationService _vocabularyTranslatorService;
+
+        private readonly DefinitionGeneratorService _definitionGeneratorService;
+
         public OrchestratorService(KernelService kernelService, IConfiguration configuration, AzureOpenAIService openAIService)
         {
             _kernel = kernelService.GetKernel();
 
             string kernelSpeechKey = kernelService.GetSpeechKey();
-            string kernelSpeechRegion = kernelService.GetSpeechEndpoint();
+            string kernelSpeechEndpoint = kernelService.GetSpeechEndpoint();
             string kernelTranslatorKey = kernelService.GetTranslatorKey();
             string kernelTranslatorEndpoint = kernelService.GetTranslatorEndpoint();
             string kernelTranslatorRegion = kernelService.GetTranslatorRegion();
 
+            _speechToTextService = new SpeechToTextService(kernelSpeechKey, kernelSpeechEndpoint);
+            _translationService = new TranslationService(kernelTranslatorKey, kernelTranslatorEndpoint, kernelTranslatorRegion);
+            _vocabularyExtractorService = new VocabularyExtractorService(configuration, openAIService);
+            _flashcardGeneratorService = new FlashcardGeneratorService();
+            _vocabularyTranslatorService = new AzureTranslationService(configuration);
+            _definitionGeneratorService = new DefinitionGeneratorService(openAIService, new AzureTranslationService(configuration));
+
             // Register skills
-            _kernel.Plugins.Add(new KernelPluginWrapper("SpeechToText", new SpeechToTextService(kernelSpeechKey, kernelSpeechEndpoint)));
-            _kernel.Plugins.Add(new KernelPluginWrapper("Translation", new TranslationService(kernelTranslatorKey, kernelTranslatorEndpoint, kernelTranslatorRegion)));
-            _kernel.Plugins.Add(new KernelPluginWrapper("Vocabulary", new VocabularyExtractorService(configuration, openAIService)));
-            _kernel.Plugins.Add(new KernelPluginWrapper("FlashcardGenerator", new FlashcardGeneratorService()));
-            _kernel.Plugins.Add(new KernelPluginWrapper("VocabTranslator", new AzureTranslationService(configuration)));
-            _kernel.Plugins.Add(new KernelPluginWrapper("DefinitionGenerator", new DefinitionGeneratorService(openAIService, new AzureTranslationService(configuration))));
+            _kernel.Plugins.Add(new KernelPluginWrapper("SpeechToText", _speechToTextService));
+            _kernel.Plugins.Add(new KernelPluginWrapper("Translation", _translationService));
+            _kernel.Plugins.Add(new KernelPluginWrapper("Vocabulary", _vocabularyExtractorService));
+            _kernel.Plugins.Add(new KernelPluginWrapper("FlashcardGenerator", _flashcardGeneratorService));
+            _kernel.Plugins.Add(new KernelPluginWrapper("VocabTranslator", _vocabularyTranslatorService));
+            _kernel.Plugins.Add(new KernelPluginWrapper("DefinitionGenerator", _definitionGeneratorService));
         }
 
-        public async Task RunAsync(string userChoice, string audioOrVideoFilePath = null, string sourceLanguage = null, string targetLanguage = null, string text = null)
+        public async Task RunAsync(string userChoice, string? audioOrVideoFilePath = null, string? sourceLanguage = null, string? targetLanguage = null, string? text = null)
         {
             try
             {
@@ -66,15 +85,22 @@ namespace AI_Agent_Orchestrator.Services
                     }
 
                     // Step 3: Extract vocabulary terms
-                    var vocabularyTerms = _vocabularyExtractorService.ExtractVocabulary(text);
+                    var vocabularyTerms = await _vocabularyExtractorService.ExtractVocabularyAsync(text);
                     Console.WriteLine("Extracted Vocabulary Terms:");
                     foreach (var term in vocabularyTerms)
                     {
                         Console.WriteLine(term);
                     }
 
+                    // Step 3.1: Translate vocabulary terms if needed
+                    var translatedTerms = await _translationService.TranslateTextAsync(sourceLanguage, targetLanguage, string.Join(", ", vocabularyTerms));
+                    Console.WriteLine($"Translated Vocabulary Terms: {translatedTerms}");
+
+                    // Step 3.2: Generate definitions for vocabulary terms
+                    var definitions = await _definitionGeneratorService.GenerateDefinitionsAsync(vocabularyTerms, text);
+
                     // Step 4: Generate flashcards
-                    var flashcards = _flashcardGeneratorService.GenerateFlashcards(vocabularyTerms);
+                    var flashcards = _flashcardGeneratorService.CreateFlashcards(definitions);
                     Console.WriteLine("Generated Flashcards:");
                     foreach (var flashcard in flashcards)
                     {

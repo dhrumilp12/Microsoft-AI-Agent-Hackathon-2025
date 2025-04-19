@@ -9,6 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AI-agent-SpeechTranslator\**" />
+    <Compile Remove="AI-Agent-VocabularyBank\**" />
+    <EmbeddedResource Remove="AI-agent-SpeechTranslator\**" />
+    <EmbeddedResource Remove="AI-Agent-VocabularyBank\**" />
+    <None Remove="AI-agent-SpeechTranslator\**" />
+    <None Remove="AI-Agent-VocabularyBank\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.46.0" />
   </ItemGroup>
 

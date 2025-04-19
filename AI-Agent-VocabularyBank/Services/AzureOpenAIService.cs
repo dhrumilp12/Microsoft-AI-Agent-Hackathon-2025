@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using DotNetEnv;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -38,6 +39,8 @@ namespace VocabularyBank.Services
             if (useEnvVars)
             {
                 // Get credentials from environment variables
+                Env.Load();
+
                 endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
                 apiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
                 _deploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT_NAME");

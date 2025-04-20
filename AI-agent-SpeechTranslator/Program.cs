@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using dotenv.net;
+using DotNetEnv;
 using SpeechTranslator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -11,6 +11,7 @@ namespace SpeechTranslator
     {
         static async Task Main(string[] args)
         {
+            Env.Load(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, ".env"));
             // Load configuration from appsettings.json
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -27,7 +28,7 @@ namespace SpeechTranslator
             string translatorRegion = configuration["TranslatorService:Region"];
 
             // Load .env variables
-            DotEnv.Load(new DotEnvOptions(envFilePaths: [".env"]));
+            //DotEnv.Load(new DotEnvOptions(envFilePaths: [".env"]));
 
             // Override with .env variables if available
             speechApiKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY") ?? speechApiKey;
@@ -55,7 +56,7 @@ namespace SpeechTranslator
                 Console.WriteLine("This application will help you translate spoken language in real-time.");
                 Console.WriteLine("Press Enter to start the process.");
                 Console.ReadLine();
-                
+
                 logger.LogInformation("Prompting user for source and target languages.");
                 Console.WriteLine("Enter the source language (e.g., 'en' for English):");
                 string sourceLanguage = Console.ReadLine();

@@ -20,41 +20,41 @@ namespace ClassroomBoardCapture
         public static async Task Main(string[] args)
         {
             // Load environment variables from .env file (for local development)
-            Env.Load();
-            
+            Env.Load(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, ".env"));
+
             // Build and configure the host
             using var host = CreateHostBuilder(args).Build();
-            
+
             Console.WriteLine("Classroom Board Capture and Analysis System");
             Console.WriteLine("------------------------------------------");
-            
+
             // Get the capture service from DI container
             var captureService = host.Services.GetRequiredService<IImageCaptureService>();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var config = host.Services.GetRequiredService<AppSettings>();
-            
+
             // Display configuration information
             Console.WriteLine($"Images will be saved to: {config.CaptureFolder}");
             Console.WriteLine($"Capture interval: {config.CaptureIntervalSeconds} seconds");
             Console.WriteLine($"Translation: {config.SourceLanguage} -> {config.TargetLanguage}");
             Console.WriteLine("Press ESC to stop the application");
-            
+
             // Start the capture service
-            await captureService.StartCaptureAsync(token => 
+            await captureService.StartCaptureAsync(token =>
             {
                 // Check for ESC key press to stop the service
                 while (Console.ReadKey(true).Key != ConsoleKey.Escape)
                 {
                     // Continue waiting for ESC
                 }
-                
+
                 logger.LogInformation("User requested application termination");
                 return Task.CompletedTask;
             });
-            
+
             Console.WriteLine("Application terminated.");
         }
-        
+
         /// <summary>
         /// Configure the host builder with services and configuration
         /// </summary>
@@ -73,14 +73,14 @@ namespace ClassroomBoardCapture
                     var appSettings = new AppSettings();
                     hostContext.Configuration.Bind("AppSettings", appSettings);
                     services.AddSingleton(appSettings);
-                    
+
                     // Register services
                     services.AddHttpClient();
                     services.AddSingleton<IImageCaptureService, ImageCaptureService>();
                     services.AddSingleton<IOcrService, OcrService>();
                     services.AddSingleton<ITranslationService, TranslationService>();
                     services.AddSingleton<IImageAnalysisService, ImageAnalysisService>();
-                    
+
                     // Configure logging
                     services.AddLogging(builder =>
                     {

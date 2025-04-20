@@ -15,7 +15,7 @@ class Program
         try
         {
             // Load environment variables from the .env file
-            Env.Load();
+            Env.Load(Path.Combine(Directory.GetParent(Directory.GetCurrentDirectory()).FullName, ".env"));
 
             // Set up configuration to pull from environment variables
             var configuration = new ConfigurationBuilder()
@@ -32,8 +32,8 @@ class Program
             var summarizationService = serviceProvider.GetRequiredService<SummarizationService>();
 
             // Define file paths for transcript and prompt input
-            var transcriptPath = "data/transcript2.txt";
-            var promptPath = "data/prompt.txt";
+            var transcriptPath = "/Users/abhishikthav/Documents/Hackathon/Microsoft-AI-Agent-Hackathon-2025/AI-Summarization-agent/Data/transcript.txt";
+            var promptPath = "/Users/abhishikthav/Documents/Hackathon/Microsoft-AI-Agent-Hackathon-2025/AI-Summarization-agent/Data/prompt.txt";
 
             // Check if input files are present
             if (!File.Exists(transcriptPath) || !File.Exists(promptPath))

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
-using System.Net.Http;  
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -13,30 +13,32 @@ using Microsoft.Identity.Client;
 using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using VocabularyBank.Models;
+using DotNetEnv;
 
 namespace VocabularyBank.Services
 {
     public class M365ExportService
     {
         private readonly IConfiguration _configuration;
-        private GraphServiceClient? _graphClient; 
+        private GraphServiceClient? _graphClient;
         private bool _isM365Available = false;
-        
+
         public M365ExportService(IConfiguration configuration)
         {
             _configuration = configuration;
             InitializeGraphClient();
         }
-        
+
         private void InitializeGraphClient()
         {
             try
             {
                 // Load .env file once at the start - using absolute path to ensure correct location
-                string envPath = Path.GetFullPath(".env");
-                DotNetEnv.Env.Load(envPath);
-                DotNetEnv.Env.TraversePath().Load();
-                
+                //string envPath = Path.GetFullPath(".env");
+                //DotNetEnv.Env.Load(envPath);
+                //DotNetEnv.Env.TraversePath().Load();
+                Env.Load(Path.Combine(System.IO.Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).FullName, ".env"));
+
                 // Force reload environment variables into current process
                 foreach (var key in new[] { "M365_CLIENT_ID", "M365_TENANT_ID", "M365_CLIENT_SECRET" })
                 {
@@ -46,35 +48,38 @@ namespace VocabularyBank.Services
                         Environment.SetEnvironmentVariable(key, value);
                     }
                 }
-                
+
                 // Get credentials directly from environment after ensuring they're loaded
                 string? clientId = Environment.GetEnvironmentVariable("M365_CLIENT_ID");
                 string? tenantId = Environment.GetEnvironmentVariable("M365_TENANT_ID");
                 string? clientSecret = Environment.GetEnvironmentVariable("M365_CLIENT_SECRET");
-                
+
                 if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientSecret))
                 {
                     Console.WriteLine("❌ M365 authentication details are missing. Export to M365 will not be available.");
                     _isM365Available = false;
                     return;
                 }
-                
+
                 // Initialize the MSAL client
                 IConfidentialClientApplication msalClient = ConfidentialClientApplicationBuilder
                     .Create(clientId)
                     .WithAuthority(AzureCloudInstance.AzurePublic, tenantId)
                     .WithClientSecret(clientSecret)
                     .Build();
-                
+
                 // Test token acquisition
-                try {
+                try
+                {
                     string[] scopes = new[] { "https://graph.microsoft.com/.default" };
                     var result = msalClient.AcquireTokenForClient(scopes).ExecuteAsync().GetAwaiter().GetResult();
                 }
-                catch (Exception tokenEx) {
+                catch (Exception tokenEx)
+                {
                     Console.WriteLine($"❌ Failed to acquire token: {tokenEx.Message}");
-                    
-                    if (tokenEx.Message.Contains("AADSTS7000215") || tokenEx.Message.Contains("Invalid client secret")) {
+
+                    if (tokenEx.Message.Contains("AADSTS7000215") || tokenEx.Message.Contains("Invalid client secret"))
+                    {
                         Console.WriteLine();
                         Console.WriteLine("=====================================================");
                         Console.WriteLine("ERROR: INVALID CLIENT SECRET");
@@ -93,14 +98,15 @@ namespace VocabularyBank.Services
                         Console.WriteLine("7. Update your .env file with this new value");
                         Console.WriteLine("=====================================================");
                     }
-                    
-                    if (tokenEx.InnerException != null) {
+
+                    if (tokenEx.InnerException != null)
+                    {
                         Console.WriteLine($"  Inner exception: {tokenEx.InnerException.Message}");
                     }
                     _isM365Available = false;
                     return;
                 }
-                
+
                 // Create Graph client
                 var authProvider = new MicrosoftAuthenticationProvider(msalClient);
                 _graphClient = new GraphServiceClient(authProvider);
@@ -117,12 +123,12 @@ namespace VocabularyBank.Services
                 _isM365Available = false;
             }
         }
-        
+
         public bool IsM365Available()
         {
             return _isM365Available && _graphClient != null;
         }
-        
+
         /// <summary>
         /// Exports flashcards to Microsoft 365 and shares with the specified user.
         /// </summary>
@@ -137,29 +143,29 @@ namespace VocabularyBank.Services
             try
             {
                 Console.WriteLine($"Exporting {flashcards.Count} flashcards to Microsoft 365 for user {userEmail}...");
-                
+
                 // Step 1: Create folder in OneDrive
                 string folderName = $"VocabularyBank_Flashcards_{DateTime.Now:yyyyMMdd_HHmmss}";
                 var folderId = await CreateOneDriveFolderAsync(folderName);
-                
+
                 if (string.IsNullOrEmpty(folderId))
                 {
                     Console.WriteLine("Failed to create folder in OneDrive. Falling back to local files.");
                     return await CreateLocalFilesAsync(flashcards);
                 }
-                
+
                 // Step 2: Upload files to OneDrive
                 bool uploadSuccess = await UploadFilesToOneDriveAsync(flashcards, folderId, folderName);
-                
+
                 if (!uploadSuccess)
                 {
                     Console.WriteLine("Failed to upload files to OneDrive. Falling back to local files.");
                     return await CreateLocalFilesAsync(flashcards);
                 }
-                
+
                 // Step 3: Share folder with the user
                 string sharingUrl = await ShareOneDriveFolderAsync(folderId, userEmail);
-                
+
                 if (string.IsNullOrEmpty(sharingUrl))
                 {
                     Console.WriteLine("Files uploaded successfully but sharing failed. Folder can be accessed through OneDrive.");
@@ -168,7 +174,7 @@ namespace VocabularyBank.Services
                 {
                     Console.WriteLine("Files successfully uploaded and shared via Microsoft 365.");
                 }
-                
+
                 return sharingUrl;
             }
             catch (Exception ex)
@@ -177,8 +183,8 @@ namespace VocabularyBank.Services
                 return await CreateLocalFilesAsync(flashcards);
             }
         }
-        
-                /// <summary>
+
+        /// <summary>
         /// Creates a folder in OneDrive.
         /// </summary>
         private async Task<string> CreateOneDriveFolderAsync(string folderName)
@@ -187,33 +193,33 @@ namespace VocabularyBank.Services
             {
                 // With application permissions, we need to use a shared drive or specific user's drive
                 // Rather than the '/me' endpoint which requires delegated permissions
-                
+
                 // First try to get the drives available to the application
                 var drives = await _graphClient.Drives
                     .Request()
                     .GetAsync();
-                
+
                 if (drives == null || drives.Count == 0)
                 {
                     Console.WriteLine("No drives available to this application.");
                     return string.Empty;
                 }
-                
+
                 // Use the first available drive
                 var driveId = drives[0].Id;
                 Console.WriteLine($"Using drive: {drives[0].Name} (ID: {driveId})");
-                
+
                 var driveItem = new DriveItem
                 {
                     Name = folderName,
                     Folder = new Folder()
                 };
-                
+
                 // Create the folder in the drive root rather than in /me/drive
                 var newFolder = await _graphClient.Drives[driveId].Root.Children
                     .Request()
                     .AddAsync(driveItem);
-                
+
                 Console.WriteLine($"Created folder: {folderName} (ID: {newFolder?.Id})");
                 return newFolder?.Id ?? string.Empty;
             }
@@ -228,7 +234,7 @@ namespace VocabularyBank.Services
                 return string.Empty;
             }
         }
-        
+
         /// <summary>
         /// Uploads files to OneDrive folder.
         /// </summary>
@@ -240,35 +246,35 @@ namespace VocabularyBank.Services
                 var drives = await _graphClient.Drives
                     .Request()
                     .GetAsync();
-                
+
                 if (drives == null || drives.Count == 0)
                 {
                     Console.WriteLine("No drives available for file upload.");
                     return false;
                 }
-                
+
                 // Use the first available drive
                 var driveId = drives[0].Id;
-                
+
                 // Prepare content for different file formats
-                var jsonOptions = new JsonSerializerOptions 
-                { 
+                var jsonOptions = new JsonSerializerOptions
+                {
                     WriteIndented = true,
                     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Don't escape Unicode characters
                 };
                 string jsonContent = JsonSerializer.Serialize(flashcards, jsonOptions);
                 string csvContent = ConvertFlashcardsToCsv(flashcards);
                 string htmlContent = ConvertFlashcardsToHtml(flashcards);
-                
+
                 // Upload JSON file
                 await UploadFileAsync(driveId, folderId, "flashcards.json", jsonContent);
-                
+
                 // Upload CSV file
                 await UploadFileAsync(driveId, folderId, "flashcards.csv", csvContent);
-                
+
                 // Upload HTML file
                 await UploadFileAsync(driveId, folderId, "flashcards.html", htmlContent);
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -281,7 +287,7 @@ namespace VocabularyBank.Services
                 return false;
             }
         }
-        
+
         /// <summary>
         /// Uploads a single file to OneDrive.
         /// </summary>
@@ -293,14 +299,14 @@ namespace VocabularyBank.Services
                 {
                     throw new InvalidOperationException("Graph client is not initialized");
                 }
-                
+
                 using var stream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-                
+
                 // Upload using Microsoft Graph v4 API style but with specific drive
                 var requestResult = await _graphClient.Drives[driveId].Items[folderId].ItemWithPath(fileName).Content
                     .Request()
                     .PutAsync<DriveItem>(stream);
-                
+
                 Console.WriteLine($"Successfully uploaded {fileName}");
             }
             catch (Exception ex)
@@ -309,7 +315,7 @@ namespace VocabularyBank.Services
                 throw; // Re-throw to be handled by the calling method
             }
         }
-        
+
         /// <summary>
         /// Shares a folder with a specific user email.
         /// </summary>
@@ -321,36 +327,36 @@ namespace VocabularyBank.Services
                 {
                     throw new InvalidOperationException("Graph client is not initialized");
                 }
-                
+
                 // First find which drive we're working with
                 var drives = await _graphClient.Drives
                     .Request()
                     .GetAsync();
-                
+
                 if (drives == null || drives.Count == 0)
                 {
                     Console.WriteLine("No drives available for sharing.");
                     return string.Empty;
                 }
-                
+
                 // Use the first available drive
                 var driveId = drives[0].Id;
-                
+
                 // Create a sharing link using the available API in v4 with specific drive
                 var permission = await _graphClient.Drives[driveId].Items[folderId]
                     .CreateLink("view", "anonymous")
                     .Request()
                     .PostAsync();
-                
+
                 // Extract the sharing URL from the permission object
                 string sharingUrl = permission?.Link?.WebUrl ?? string.Empty;
-                
+
                 // Log successful sharing
                 if (!string.IsNullOrEmpty(sharingUrl))
                 {
                     Console.WriteLine($"Sharing link created for {userEmail}: {sharingUrl}");
                 }
-                
+
                 return sharingUrl;
             }
             catch (Exception ex)
@@ -372,24 +378,24 @@ namespace VocabularyBank.Services
             string folderName = $"VocabularyBank_Flashcards_{DateTime.Now:yyyyMMdd_HHmmss}";
             string folderPath = Path.Combine(Path.GetTempPath(), folderName);
             System.IO.Directory.CreateDirectory(folderPath);
-            
+
             // Create JSON, CSV, and HTML files
-            var jsonOptions = new JsonSerializerOptions 
-            { 
+            var jsonOptions = new JsonSerializerOptions
+            {
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Don't escape Unicode characters 
             };
             string jsonContent = JsonSerializer.Serialize(flashcards, jsonOptions);
             await System.IO.File.WriteAllTextAsync(Path.Combine(folderPath, "flashcards.json"), jsonContent);
-            
+
             string csvContent = ConvertFlashcardsToCsv(flashcards);
             await System.IO.File.WriteAllTextAsync(Path.Combine(folderPath, "flashcards.csv"), csvContent);
-            
+
             string htmlContent = ConvertFlashcardsToHtml(flashcards);
             await System.IO.File.WriteAllTextAsync(Path.Combine(folderPath, "flashcards.html"), htmlContent);
-            
+
             Console.WriteLine($"Files have been saved locally to: {folderPath}");
-            
+
             // For Windows systems, try to open the folder automatically
             try
             {
@@ -402,7 +408,7 @@ namespace VocabularyBank.Services
             {
                 Console.WriteLine($"Note: Could not open folder automatically: {ex.Message}");
             }
-            
+
             return $"file://{folderPath}";
         }
 
@@ -421,7 +427,7 @@ namespace VocabularyBank.Services
             }
             return sb.ToString();
         }
-        
+
         private string ConvertFlashcardsToHtml(List<Flashcard> flashcards, List<Flashcard>? translatedFlashcards = null, string? translatedLanguage = null)
         {
             var sb = new StringBuilder();
@@ -451,13 +457,13 @@ namespace VocabularyBank.Services
             sb.AppendLine("  <h1>Vocabulary Flashcards</h1>");
 
             bool hasBothLanguages = translatedFlashcards != null && translatedFlashcards.Count > 0;
-            
+
             // For original flashcards
             if (hasBothLanguages)
             {
                 sb.AppendLine("  <h2>Original Language (English)</h2>");
             }
-            
+
             sb.AppendLine("  <div class=\"flashcard-container\">");
             foreach (var card in flashcards)
             {
@@ -469,24 +475,24 @@ namespace VocabularyBank.Services
                 }
                 sb.AppendLine("      </div>");
                 sb.AppendLine($"      <div class=\"definition\">{HtmlEncode(card.Definition)}</div>");
-                
+
                 if (!string.IsNullOrEmpty(card.Example))
                     sb.AppendLine($"      <div class=\"example\">Example: {HtmlEncode(card.Example)}</div>");
-                    
+
                 if (!string.IsNullOrEmpty(card.Context))
                     sb.AppendLine($"      <div class=\"context\">Context: {HtmlEncode(card.Context)}</div>");
-                    
+
                 sb.AppendLine($"      <div class=\"date\">{card.CreatedDate:yyyy-MM-dd}</div>");
                 sb.AppendLine("    </div>");
             }
             sb.AppendLine("  </div>");
-            
+
             // For translated flashcards
             if (hasBothLanguages)
             {
                 sb.AppendLine($"  <h2>Translated Language ({translatedLanguage})</h2>");
                 sb.AppendLine("  <div class=\"flashcard-container\">");
-                
+
                 foreach (var card in translatedFlashcards)
                 {
                     sb.AppendLine("    <div class=\"flashcard\">");
@@ -494,30 +500,30 @@ namespace VocabularyBank.Services
                     sb.AppendLine($"      <span class=\"language-indicator translated\">{translatedLanguage}</span>");
                     sb.AppendLine("      </div>");
                     sb.AppendLine($"      <div class=\"definition\">{HtmlEncode(card.Definition)}</div>");
-                    
+
                     if (!string.IsNullOrEmpty(card.Example))
                         sb.AppendLine($"      <div class=\"example\">Example: {HtmlEncode(card.Example)}</div>");
-                        
+
                     if (!string.IsNullOrEmpty(card.Context))
                         sb.AppendLine($"      <div class=\"context\">Context: {HtmlEncode(card.Context)}</div>");
-                        
+
                     sb.AppendLine($"      <div class=\"date\">{card.CreatedDate:yyyy-MM-dd}</div>");
                     sb.AppendLine("    </div>");
                 }
-                
+
                 sb.AppendLine("  </div>");
             }
-            
+
             sb.AppendLine("</body>");
             sb.AppendLine("</html>");
             return sb.ToString();
         }
-        
+
         private string EscapeCsvField(string field)
         {
             return string.IsNullOrEmpty(field) ? string.Empty : field.Replace("\"", "\"\"");
         }
-        
+
         private string HtmlEncode(string text)
         {
             return string.IsNullOrEmpty(text) ? string.Empty : System.Net.WebUtility.HtmlEncode(text);

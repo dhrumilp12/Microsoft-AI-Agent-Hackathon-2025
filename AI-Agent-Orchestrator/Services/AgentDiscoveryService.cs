@@ -49,8 +49,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-Agent-VocabularyBank")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "vocabulary", "flashcards", "education", "learning", "terms" },
-                    Category = "Education"
+                    Keywords = new[] { "vocabulary", "flashcards", "education", "learning", "terms" }
                 },
                 new AgentInfo 
                 {
@@ -59,8 +58,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-Summarization-agent")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "summary", "summarize", "text", "condense" },
-                    Category = "Content"
+                    Keywords = new[] { "summary", "summarize", "text", "condense" }
                 },
                 new AgentInfo 
                 {
@@ -69,8 +67,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-agent-SpeechTranslator")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "speech", "translate", "language", "audio" },
-                    Category = "Language"
+                    Keywords = new[] { "speech", "translate", "language", "audio" }
                 },
                 new AgentInfo 
                 {
@@ -79,8 +76,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-agent-DiagramGenerator")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "diagram", "visual", "chart", "mindmap", "flowchart" },
-                    Category = "Visualization"
+                    Keywords = new[] { "diagram", "visual", "chart", "mindmap", "flowchart" }
                 },
                 new AgentInfo 
                 {
@@ -89,8 +85,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-Agent-BoardCapture")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "whiteboard", "capture", "classroom", "ocr", "image" },
-                    Category = "Education"
+                    Keywords = new[] { "whiteboard", "capture", "classroom", "ocr", "image" }
                 }
             };
             

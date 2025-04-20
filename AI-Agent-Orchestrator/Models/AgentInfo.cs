@@ -11,5 +11,5 @@ public class AgentInfo
     
     // For Semantic Kernel integration
     public string[] Keywords { get; set; } = Array.Empty<string>();
-    public string Category { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty; 
 }

@@ -84,7 +84,7 @@ public class Program
             
             while (true)
             {
-                var selectedAgent = await PromptForAgentSelectionAsync(agents, semanticKernelService);
+                var selectedAgent = await PromptForAgentSelectionAsync(agents);
                 
                 if (selectedAgent == null)
                 {
@@ -180,97 +180,23 @@ public class Program
         AnsiConsole.WriteLine();
     }
     
-    private static async Task<AgentInfo?> PromptForAgentSelectionAsync(
-        List<AgentInfo> agents, SemanticKernelService semanticKernelService)
+    private static async Task<AgentInfo?> PromptForAgentSelectionAsync(List<AgentInfo> agents)
     {
-        // Option for semantic search
-        var useSemanticSearch = false;
-        var relevantAgents = agents;
-        
         AnsiConsole.Clear();
         var figlet = new FigletText("AI Agent Hub")
             .LeftJustified()
             .Color(Color.Blue);
         AnsiConsole.Write(figlet);
         
-        // Ask for natural language query if semantic kernel is available
-        try
-        {
-            AnsiConsole.MarkupLine("[dim]You can describe what you want to do, or just press Enter to see all agents[/]");
-            var userQuery = AnsiConsole.Ask<string>("What would you like to do? ").Trim();
-            
-            if (!string.IsNullOrEmpty(userQuery))
-            {
-                AnsiConsole.Markup("[yellow]Finding the most relevant agents...[/]");
-                relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(agents, userQuery);
-                
-                if (relevantAgents.Count < agents.Count)
-                {
-                    useSemanticSearch = true;
-                }
-                AnsiConsole.MarkupLine("[green]Done![/]");
-            }
-        }
-        catch (Exception ex)
-        {
-            // Fall back to showing all agents
-            AnsiConsole.MarkupLine($"[red]Error during search: {ex.Message}[/]");
-            relevantAgents = agents;
-        }
-        
-        // Build the selection prompt with agent categories
-        var agentsByCategory = relevantAgents
-            .GroupBy(a => string.IsNullOrEmpty(a.Category) ? "Other" : a.Category)
-            .OrderBy(g => g.Key != "Other" ? g.Key : "ZZZZZ");  // Keep "Other" at the end
-            
-        var selectionPrompt = new SelectionPrompt<string>()
-            .Title(useSemanticSearch ? "Most relevant agents for your query:" : "Available agents:")
-            .PageSize(10);
-            
-        // Add all agents by category
-        foreach (var category in agentsByCategory)
-        {
-            selectionPrompt.AddChoiceGroup(category.Key, category.Select(a => a.Name));
-        }
-        
-        // Add additional options
-        selectionPrompt.AddChoice("Show all agents");
-        selectionPrompt.AddChoice("Exit");
-            
-        var selection = AnsiConsole.Prompt(selectionPrompt);
-        
-        if (selection == "Exit")
-        {
-            return null;
-        }
-        
-        if (selection == "Show all agents" && useSemanticSearch)
-        {
-            // Show all agents instead of just the relevant ones
-            return await PromptForAgentSelectionFromListAsync(agents);
-        }
-        
-        return agents.FirstOrDefault(a => a.Name == selection);
-    }
-    
-    private static Task<AgentInfo?> PromptForAgentSelectionFromListAsync(List<AgentInfo> agents)
-    {
-        AnsiConsole.Clear();
-        
-        // Group agents by category
-        var agentsByCategory = agents
-            .GroupBy(a => string.IsNullOrEmpty(a.Category) ? "Other" : a.Category)
-            .OrderBy(g => g.Key != "Other" ? g.Key : "ZZZZZ");  // Keep "Other" at the end
-            
         var selectionPrompt = new SelectionPrompt<string>()
             .Title("Select an agent to run:")
             .PageSize(15)
             .HighlightStyle(new Style().Foreground(Color.Green));
             
-        // Add agents organized by category
-        foreach (var category in agentsByCategory)
+        // Add all agents directly - no categories
+        foreach (var agent in agents)
         {
-            selectionPrompt.AddChoiceGroup(category.Key, category.Select(a => a.Name));
+            selectionPrompt.AddChoice(agent.Name);
         }
         
         // Add exit option
@@ -280,9 +206,9 @@ public class Program
         
         if (selection == "Exit")
         {
-            return Task.FromResult<AgentInfo?>(null);
+            return null;
         }
         
-        return Task.FromResult(agents.FirstOrDefault(a => a.Name == selection));
+        return agents.FirstOrDefault(a => a.Name == selection);
     }
 }

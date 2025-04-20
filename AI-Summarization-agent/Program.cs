@@ -32,8 +32,8 @@ class Program
             var summarizationService = serviceProvider.GetRequiredService<SummarizationService>();
 
             // Define file paths for transcript and prompt input
-            var transcriptPath = "/Users/abhishikthav/Documents/Hackathon/Microsoft-AI-Agent-Hackathon-2025/AI-Summarization-agent/Data/transcript.txt";
-            var promptPath = "/Users/abhishikthav/Documents/Hackathon/Microsoft-AI-Agent-Hackathon-2025/AI-Summarization-agent/Data/prompt.txt";
+            var transcriptPath = "data/transcript2.txt";
+            var promptPath = "data/prompt.txt";
 
             // Check if input files are present
             if (!File.Exists(transcriptPath) || !File.Exists(promptPath))

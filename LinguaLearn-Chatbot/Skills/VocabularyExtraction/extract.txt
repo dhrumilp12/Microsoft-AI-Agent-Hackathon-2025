@@ -1,0 +1,1 @@
+Extract vocabulary terms from the provided text and return them as a list.

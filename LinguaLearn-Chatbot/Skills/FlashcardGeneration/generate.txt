@@ -1,0 +1,1 @@
+Generate flashcards based on the provided vocabulary terms.

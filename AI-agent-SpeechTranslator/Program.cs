@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using dotenv.net;
+using DotNetEnv;
 using SpeechTranslator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -11,33 +11,32 @@ namespace SpeechTranslator
     {
         static async Task Main(string[] args)
         {
-            // Load configuration from appsettings.json
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
-
-            // Retrieve Speech Service configuration
-            string speechApiKey = configuration["SpeechService:ApiKey"];
-            string speechEndpoint = configuration["SpeechService:Endpoint"];
-
-            // Retrieve Translator Service configuration
-            string translatorApiKey = configuration["TranslatorService:ApiKey"];
-            string translatorRegion = configuration["TranslatorService:Region"];
-
             // Load .env variables
-            DotEnv.Load(new DotEnvOptions(envFilePaths: [".env"]));
+            Env.Load(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".env")));
+            
+            // Load configuration from appsettings.json
+            //var configuration = new ConfigurationBuilder()
+            //    .SetBasePath(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..")))
+            //    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            //    .AddEnvironmentVariables()
+            //    .Build();
+
+            //// Retrieve Speech Service configuration
+            //string speechApiKey = configuration["SpeechService:ApiKey"];
+            //string speechEndpoint = configuration["SpeechService:Endpoint"];
+
+            //// Retrieve Translator Service configuration
+            //string translatorApiKey = configuration["TranslatorService:ApiKey"];
+            //string translatorRegion = configuration["TranslatorService:Region"];
 
             // Override with .env variables if available
-            speechApiKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY") ?? speechApiKey;
-            speechEndpoint = Environment.GetEnvironmentVariable("SPEECH_ENDPOINT") ?? speechEndpoint;
-            translatorApiKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? translatorApiKey;
-            translatorRegion = Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? translatorRegion;
+            string speechApiKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY");
+            string speechEndpoint = Environment.GetEnvironmentVariable("SPEECH_ENDPOINT");
+            string translatorApiKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY");
+            string translatorRegion = Environment.GetEnvironmentVariable("TRANSLATOR_REGION");
 
             // Initialize services
             var speechService = new SpeechToTextService(speechEndpoint, speechApiKey);
-            var translationService = new TranslationService(translatorApiKey, "https://api.cognitive.microsofttranslator.com/", translatorRegion);
 
             // Add logging configuration
             var loggerFactory = LoggerFactory.Create(builder =>
@@ -64,14 +63,49 @@ namespace SpeechTranslator
                 string targetLanguage = Console.ReadLine();
 
                 logger.LogInformation("Starting speech-to-text and translation process.");
-                Console.WriteLine("Start speaking. Press Enter to stop.");
 
-                var speechStream = speechService.GetSpeechStreamAsync(sourceLanguage, targetLanguage);
+                Console.WriteLine("Choose an input method:");
+                Console.WriteLine("1. Speak into the microphone");
+                Console.WriteLine("2. Upload a video lecture");
+                Console.WriteLine("3. Upload an audio file");
 
-                await foreach (var recognizedText in speechStream)
+                string choice = Console.ReadLine();
+
+                var recognizedText = string.Empty; 
+
+                switch (choice)
                 {
-                    logger.LogInformation($"Recognized text: {recognizedText}");
-                    Console.WriteLine($"Final Recognized: {recognizedText}");
+                    case "1":
+                        Console.WriteLine("Start speaking. Press Enter to stop.");
+
+                        recognizedText = await speechService.ConvertSpeechToTextAsync(sourceLanguage: sourceLanguage, targetLanguage: targetLanguage);
+                        break;
+
+                    case "2":
+                        Console.WriteLine("You chose to upload a video lecture.");
+                        Console.WriteLine("Please provide the path to the video file:");
+                        string videoPath = Console.ReadLine();
+                        // Process the video file (e.g., extract audio)
+
+                        recognizedText = await speechService.ConvertSpeechToTextFromVideoAsync(videoPath, sourceLanguage, targetLanguage);
+                        logger.LogInformation($"Recognized text from video: {recognizedText}");
+                        Console.WriteLine($"Final Recognized from Video: {recognizedText}");
+                        break;
+
+                    case "3":
+                        Console.WriteLine("You chose to upload an audio file.");
+                        Console.WriteLine("Please provide the path to the audio file:");
+                        string audioPath = Console.ReadLine();
+                        // Process the audio file
+
+                        recognizedText = await speechService.ConvertSpeechToTextAsync(audioPath, sourceLanguage, targetLanguage);
+                        logger.LogInformation($"Recognized text from audio: {recognizedText}");
+                        Console.WriteLine($"Final Recognized from Audio: {recognizedText}");
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid choice. Please restart the application and try again.");
+                        return;
                 }
             }
             catch (Exception ex)

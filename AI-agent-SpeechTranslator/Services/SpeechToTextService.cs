@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Microsoft.CognitiveServices.Speech.Audio;
 using System.Collections.Generic;
+using Xabe.FFmpeg;
 
 namespace SpeechTranslator.Services
 {
@@ -15,6 +16,7 @@ namespace SpeechTranslator.Services
 
         public SpeechToTextService(string speechEndpoint, string speechKey)
         {
+            FFmpeg.SetExecutablesPath(@"C:\Program Files\ffmpeg-master-latest-win64-lgpl\bin");
             _speechConfig = SpeechConfig.FromEndpoint(new Uri(speechEndpoint), speechKey);
             _translationService = new TranslationService(
                 Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
@@ -23,81 +25,69 @@ namespace SpeechTranslator.Services
             );
         }
 
-        public async Task<string> ConvertSpeechToTextAsync()
+        public async Task<string> ConvertSpeechToTextAsync(string audioFilePath = null, string sourceLanguage = "en", string targetLanguage = "es")
         {
-            using var recognizer = new SpeechRecognizer(_speechConfig);
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            // Set the source and target languages for the speech recognition
+            var recognizedText = string.Empty;
+            var audioInput = AudioConfig.FromDefaultMicrophoneInput();
 
-            Console.WriteLine("Speak into your microphone.");
-            var result = await recognizer.RecognizeOnceAsync();
-
-            if (result.Reason == ResultReason.RecognizedSpeech)
+            if (!string.IsNullOrEmpty(audioFilePath))
             {
-                return result.Text;
+                audioFilePath = audioFilePath.Replace('"', ' ').Trim();
+                audioInput = AudioConfig.FromWavFileInput(audioFilePath);
             }
 
-            throw new Exception("Speech could not be recognized.");
-        }
 
-        public async Task<string> ConvertSpeechToTextAsync(string audioFilePath)
-        {
-            using var audioConfig = AudioConfig.FromWavFileInput(audioFilePath);
-            using var recognizer = new SpeechRecognizer(_speechConfig, audioConfig);
-
-            Console.WriteLine("Processing audio file...");
-            var result = await recognizer.RecognizeOnceAsync();
-
-            if (result.Reason == ResultReason.RecognizedSpeech)
+            using var recognizer = new SpeechRecognizer(_speechConfig, audioInput);
+            await foreach (var text in GetSpeechStreamAsync(recognizer, sourceLanguage, targetLanguage))
             {
-                return result.Text;
+                recognizedText += text + " ";
             }
 
-            throw new Exception("Speech could not be recognized from the audio file.");
+            return recognizedText.Trim();
         }
 
-        public async Task<string> ConvertSpeechToTextFromVideoAsync(string videoFilePath)
+        public async Task<string> ConvertSpeechToTextFromVideoAsync(string videoFilePath, string sourceLanguage, string targetLanguage)
         {
             // Extract audio from video file (placeholder for actual implementation)
-            string extractedAudioPath = ExtractAudioFromVideo(videoFilePath);
+            string extractedAudioPath = await ExtractAudioFromVideo(videoFilePath);
 
             // Use the existing audio file method
-            return await ConvertSpeechToTextAsync(extractedAudioPath);
+            return await ConvertSpeechToTextAsync(extractedAudioPath, sourceLanguage, targetLanguage);
         }
 
-        private string ExtractAudioFromVideo(string videoFilePath)
+        private async Task<string> ExtractAudioFromVideo(string videoFilePath)
         {
+            if (!videoFilePath.StartsWith("\""))
+            {
+                videoFilePath = "\"" + videoFilePath;
+            }
+
+            if (!videoFilePath.EndsWith("\""))
+            {
+                videoFilePath += "\"";
+            }
+
             string audioFilePath = Path.ChangeExtension(videoFilePath, ".wav");
 
-            // Construct the FFmpeg command
-            string ffmpegCommand = $"ffmpeg -i \"{videoFilePath}\" -q:a 0 -map a \"{audioFilePath}\" -y";
+            if (!audioFilePath.EndsWith("\""))
+                audioFilePath += "\"";
 
-            // Execute the command
-            var process = new System.Diagnostics.Process
+            var conversion = await FFmpeg.Conversions.FromSnippet.ExtractAudio(videoFilePath, audioFilePath);
+            await conversion.Start();
+
+            // Ensure the audio file was created
+            if (!File.Exists(audioFilePath.Trim('"')))
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/C {ffmpegCommand}",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                throw new Exception("Failed to extract audio from video. Ensure FFmpeg is installed and accessible from the command line.");
+                throw new FileNotFoundException("The audio file was not generated. Please check the FFmpeg command and input file.");
             }
 
             return audioFilePath;
         }
 
-        public async IAsyncEnumerable<string> GetSpeechStreamAsync(string sourceLanguage, string targetLanguage)
+        public async IAsyncEnumerable<string> GetSpeechStreamAsync(SpeechRecognizer speechRecognizer, string sourceLanguage, string targetLanguage)
         {
-            var speechRecognizer = new SpeechRecognizer(_speechConfig);
             var speechSynthesizer = new SpeechSynthesizer(_speechConfig);
 
             var recognizedTexts = new Queue<string>();
@@ -113,9 +103,6 @@ namespace SpeechTranslator.Services
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Interim): {translatedText}");
-
-                        // Speak the translated text
-                        await speechSynthesizer.SpeakTextAsync(translatedText);
                     }
                 }
             };

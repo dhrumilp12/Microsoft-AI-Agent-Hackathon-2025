@@ -1,0 +1,1 @@
+Generate a diagram based on the concepts provided in the input. The diagram type is specified as a parameter.

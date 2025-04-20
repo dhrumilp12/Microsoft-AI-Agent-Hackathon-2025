@@ -1,0 +1,1 @@
+Generate definitions for the provided vocabulary terms.

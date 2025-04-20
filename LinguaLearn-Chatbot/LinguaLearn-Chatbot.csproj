@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>LinguaLearn_Chatbot</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AI-Agent-BoardCapture\ClassroomBoardCapture.csproj" />
+    <ProjectReference Include="..\AI-agent-DiagramGenerator\DiagramGenerator.csproj" />
+    <ProjectReference Include="..\AI-agent-SpeechTranslator\AI-agent-SpeechTranslator.csproj" />
+    <ProjectReference Include="..\AI-Agent-VocabularyBank\AI-agent-VocabularyBank.csproj" />
+    <ProjectReference Include="..\AI-Summarization-agent\AI-Summarization-agent.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.Language.Conversations" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Bot.Builder.AI.LUIS" Version="4.23.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.47.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,1 @@
+Capture images from the whiteboard and save them to the specified folder.

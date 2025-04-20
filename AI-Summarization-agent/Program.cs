@@ -14,6 +14,19 @@ class Program
     {
         try
         {
+            // Safe console setup
+            try
+            {
+                Console.Title = "AI Summarization Agent";
+                Console.Clear();
+            }
+            catch (IOException)
+            {
+                // Ignore console errors when running with redirected output
+            }
+            
+            Console.WriteLine("=== AI Summarization Agent ===\n");
+
             // Load environment variables from the .env file
             Env.Load();
 

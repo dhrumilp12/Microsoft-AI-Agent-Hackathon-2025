@@ -26,7 +26,17 @@ namespace VocabularyBank
             // Set up console display
             Console.Title = "Vocabulary Bank & Flashcards Generator";
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Clear();
+            
+            // Try to clear the console, but don't fail if there's no valid console
+            try
+            {
+                Console.Clear();
+            }
+            catch (IOException)
+            {
+                // No valid console handle, possibly running as a child process with redirected output
+                // Just continue without clearing
+            }
             
             DisplayBanner();
             
@@ -236,12 +246,21 @@ namespace VocabularyBank
         /// </summary>
         private static void DisplayBanner()
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("╔════════════════════════════════════════════╗");
-            Console.WriteLine("║  Vocabulary Bank & Flashcards Generator    ║");
-            Console.WriteLine("╚════════════════════════════════════════════╝");
-            Console.ResetColor();
-            Console.WriteLine("\nAutomatically extract and define key terms from educational content");
+            try
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("╔════════════════════════════════════════════╗");
+                Console.WriteLine("║  Vocabulary Bank & Flashcards Generator    ║");
+                Console.WriteLine("╚════════════════════════════════════════════╝");
+                Console.ResetColor();
+                Console.WriteLine("\nAutomatically extract and define key terms from educational content");
+            }
+            catch (IOException)
+            {
+                // Fallback for redirected console
+                Console.WriteLine("== Vocabulary Bank & Flashcards Generator ==");
+                Console.WriteLine("Automatically extract and define key terms from educational content");
+            }
         }
         
         /// <summary>

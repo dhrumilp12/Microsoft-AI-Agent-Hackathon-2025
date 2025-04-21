@@ -7,7 +7,6 @@ The AI Agent Orchestrator provides a unified interface for accessing and managin
 - **Centralized Management**: Access all available AI agents from a single interface
 - **Intelligent Agent Recommendation**: Uses Azure OpenAI to suggest relevant agents based on natural language queries
 - **User-Friendly Interface**: Interactive console-based UI built with Spectre.Console
-- **Categorized Agent Organization**: Agents are organized by category (Education, Content, Language, etc.)
 - **Environment Variable Propagation**: Automatically passes environment variables to child processes
 - **Adaptive Path Resolution**: Automatically locates agent directories in repository structure
 

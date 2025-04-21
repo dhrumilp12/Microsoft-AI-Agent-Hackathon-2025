@@ -24,8 +24,10 @@ public class SemanticKernelService
         {
             _logger.LogInformation("Initializing Semantic Kernel");
             
-            var endpoint = _configuration["AzureOpenAI:Endpoint"];
-            var apiKey = _configuration["AzureOpenAI:ApiKey"];
+            var endpoint = string.IsNullOrEmpty(_configuration["AzureOpenAI:Endpoint"]) 
+                ? Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") : _configuration["AzureOpenAI:Endpoint"];
+            var apiKey = string.IsNullOrEmpty(_configuration["AzureOpenAI:ApiKey"]) 
+                ? Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY") : _configuration["AzureOpenAI:ApiKey"];
             var deploymentName = _configuration["AzureOpenAI:DeploymentName"];
             
             if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey) || 
@@ -76,13 +78,13 @@ Available agents:
 {string.Join("\n", allAgents.Select((a, i) => $"{i+1}. {a.Name}: {a.Description} Keywords: {string.Join(", ", a.Keywords ?? new[] {""})}"))}";
 
             // Create the function to call OpenAI
-            var functionParams = new OpenAIPromptExecutionSettings { 
-                MaxTokens = 100,
-                Temperature = 0.0
-            };
+            //var functionParams = new OpenAIPromptExecutionSettings {
+            //    MaxTokens = 100,
+            //    Temperature = 0.0
+            //};
             
-            var function = _kernel.CreateFunctionFromPrompt(promptText, functionParams);
-            
+            var function = _kernel.CreateFunctionFromPrompt(promptText);
+
             // Invoke the function
             var result = await _kernel.InvokeAsync(function);
             var response = result.GetValue<string>() ?? string.Empty;

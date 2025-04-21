@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using System.Diagnostics;
+using System.Net;
 
 namespace AI_Agent_Orchestrator;
 
@@ -25,7 +26,30 @@ public class Program
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddEnvironmentVariables()
             .Build();
-            
+
+        if (File.Exists(".env"))
+        {
+            var azureOpenAIConfig = new
+            {
+                Endpoint = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT"),
+                ApiKey = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY"),
+                DeploymentName = Environment.GetEnvironmentVariable("AZURE_OPENAI_DEPLOYMENT_NAME")
+            };
+
+            configuration["AzureOpenAI:Endpoint"] = azureOpenAIConfig.Endpoint;
+            configuration["AzureOpenAI:ApiKey"] = azureOpenAIConfig.ApiKey;
+            configuration["AzureOpenAI:DeploymentName"] = azureOpenAIConfig.DeploymentName;
+        }
+
+        // Check if the configuration is valid
+        if (string.IsNullOrEmpty(configuration["AzureOpenAI:Endpoint"]) ||
+            string.IsNullOrEmpty(configuration["AzureOpenAI:ApiKey"]) ||
+            string.IsNullOrEmpty(configuration["AzureOpenAI:DeploymentName"]))
+        {
+            AnsiConsole.MarkupLine("[bold red]Error:[/] Missing Azure OpenAI configuration in appsettings.json or environment variables.");
+            return;
+        }
+
         // Set up dependency injection
         var services = new ServiceCollection()
             .AddSingleton<IConfiguration>(configuration)
@@ -82,9 +106,22 @@ public class Program
                 return;
             }
             
+            // Use FindRelevantAgentsAsync to determine relevant agents based on user input
+            Console.Write("Enter a query to find relevant agents: ");
+            string userQuery = Console.ReadLine();
+
+            var allAgents = await agentDiscoveryService.DiscoverAgentsAsync();
+            var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(allAgents, userQuery);
+
+            Console.WriteLine("Relevant agents:");
+            foreach (var agent in relevantAgents)
+            {
+                Console.WriteLine($"- {agent.Name}: {agent.Description}");
+            }
+            
             while (true)
             {
-                var selectedAgent = await PromptForAgentSelectionAsync(agents);
+                var selectedAgent = await PromptForAgentSelectionAsync(relevantAgents);
                 
                 if (selectedAgent == null)
                 {

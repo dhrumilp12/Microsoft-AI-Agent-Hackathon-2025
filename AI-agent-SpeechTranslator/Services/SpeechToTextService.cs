@@ -98,7 +98,7 @@ namespace SpeechTranslator.Services
         public async IAsyncEnumerable<string> GetSpeechStreamAsync(string sourceLanguage, string targetLanguage)
         {
             var speechRecognizer = new SpeechRecognizer(_speechConfig);
-            var speechSynthesizer = new SpeechSynthesizer(_speechConfig);
+            //var speechSynthesizer = new SpeechSynthesizer(_speechConfig);
 
             var recognizedTexts = new Queue<string>();
 
@@ -109,13 +109,13 @@ namespace SpeechTranslator.Services
                 {
                     Console.WriteLine($"Interim Recognized: {e.Result.Text}");
 
-                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, TextStream.GetSingleTextStream(e.Result.Text));
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Interim): {translatedText}");
 
                         // Speak the translated text
-                        await speechSynthesizer.SpeakTextAsync(translatedText);
+                        //await speechSynthesizer.SpeakTextAsync(translatedText);
                     }
                 }
             };
@@ -124,14 +124,14 @@ namespace SpeechTranslator.Services
             {
                 if (!string.IsNullOrWhiteSpace(e.Result.Text))
                 {
-                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, GetSingleTextStream(e.Result.Text));
+                    var translationStream = _translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, TextStream.GetSingleTextStream(e.Result.Text));
                     await foreach (var translatedText in translationStream)
                     {
                         Console.WriteLine($"Translated (Final): {translatedText}");
-                        recognizedTexts.Enqueue(translatedText);
+                        recognizedTexts.Enqueue(e.Result.Text);
 
                         // Speak the translated text
-                        await speechSynthesizer.SpeakTextAsync(translatedText);
+                        //await speechSynthesizer.SpeakTextAsync(translatedText);
                     }
                 }
             };
@@ -151,12 +151,6 @@ namespace SpeechTranslator.Services
             await speechRecognizer.StopContinuousRecognitionAsync();
 
             yield break;
-
-            static async IAsyncEnumerable<string> GetSingleTextStream(string text)
-            {
-                yield return text;
-                await Task.CompletedTask;
-            }
         }
     }
 }

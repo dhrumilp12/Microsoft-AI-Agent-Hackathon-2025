@@ -4,6 +4,7 @@ using dotenv.net;
 using SpeechTranslator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Speech.Synthesis;
 
 namespace SpeechTranslator
 {
@@ -51,27 +52,100 @@ namespace SpeechTranslator
 
             try
             {
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("\n==============================");
                 Console.WriteLine("Welcome to the Real-time Speech Translator AI Agent!");
+                Console.WriteLine("==============================\n");
+                Console.ResetColor();
+
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("This application will help you translate spoken language in real-time.");
                 Console.WriteLine("Press Enter to start the process.");
+                Console.ResetColor();
                 Console.ReadLine();
-                
+
                 logger.LogInformation("Prompting user for source and target languages.");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n==============================");
+                Console.WriteLine("Enter the source and target languages");
+                Console.WriteLine("==============================\n");
+                Console.ResetColor();
+
+                Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("Enter the source language (e.g., 'en' for English):");
+                Console.ResetColor();
                 string sourceLanguage = Console.ReadLine();
 
+                Console.ForegroundColor = ConsoleColor.Magenta;
                 Console.WriteLine("Enter the target language (e.g., 'es' for Spanish):");
+                Console.ResetColor();
                 string targetLanguage = Console.ReadLine();
 
                 logger.LogInformation("Starting speech-to-text and translation process.");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n==============================");
                 Console.WriteLine("Start speaking. Press Enter to stop.");
+                Console.WriteLine("==============================\n");
+                Console.ResetColor();
 
-                var speechStream = speechService.GetSpeechStreamAsync(sourceLanguage, targetLanguage);
-
-                await foreach (var recognizedText in speechStream)
+                if(!Directory.Exists("Output"))
                 {
-                    logger.LogInformation($"Recognized text: {recognizedText}");
-                    Console.WriteLine($"Final Recognized: {recognizedText}");
+                    Directory.CreateDirectory("Output");
+                }
+
+                // Create output files for recognized and translated text
+                string recognizedTextFilePath = "Output/recognized_transcript.txt";
+                string translatedTextFilePath = "Output/translated_transcript.txt";
+
+                using (var recognizedTextWriter = new StreamWriter(recognizedTextFilePath, append: false))
+                {
+                    using (var translatedTextWriter = new StreamWriter(translatedTextFilePath, append: false))
+                    {
+                        var speechStream = speechService.GetSpeechStreamAsync(sourceLanguage, targetLanguage);
+
+                        await foreach (var recognizedText in speechStream)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.WriteLine("\n[Recognized Speech]");
+                            Console.WriteLine($"{recognizedText}");
+                            Console.ResetColor();
+
+                            logger.LogInformation($"Recognized text: {recognizedText}");
+
+                            // Write recognized text to file
+                            await recognizedTextWriter.WriteLineAsync(recognizedText);
+
+                            var translationStream = translationService.TranslateTextStreamAsync(sourceLanguage, targetLanguage, TextStream.GetSingleTextStream(recognizedText));
+                            await foreach (var translatedText in translationStream)
+                            {
+                                Console.ForegroundColor = ConsoleColor.DarkYellow;
+                                Console.WriteLine("\n[Translated Text]");
+                                Console.WriteLine($"{translatedText}");
+                                Console.ResetColor();
+
+                                logger.LogInformation($"Translated text: {translatedText}");
+
+                                // Write translated text to file
+                                await translatedTextWriter.WriteLineAsync(translatedText);
+                            }
+                        }
+                    }
+                }
+
+                // Initialize speech synthesizer
+                var synthesizer = new SpeechSynthesizer();
+
+                // Read and speak the translated text
+                if (File.Exists(translatedTextFilePath))
+                {
+                    Console.WriteLine("\n[Speaking Translated Text]");
+                    var translatedText = await File.ReadAllTextAsync(translatedTextFilePath);
+                    synthesizer.Speak(translatedText);
+                }
+                else
+                {
+                    Console.WriteLine("Translated text file not found.");
                 }
             }
             catch (Exception ex)

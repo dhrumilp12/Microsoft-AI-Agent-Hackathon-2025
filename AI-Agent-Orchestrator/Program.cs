@@ -76,14 +76,15 @@ public class Program
             // Initialize Semantic Kernel in the background
             var semanticKernelInitTask = semanticKernelService.InitializeAsync();
             
-            // Discover available agents
+            // Discover available agents and workflows
             AnsiConsole.Status()
-                .Start("Discovering AI agents...", ctx => 
+                .Start("Discovering AI agents and workflows...", ctx => 
                 {
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
                     
                     var agents = agentDiscoveryService.DiscoverAgentsAsync().GetAwaiter().GetResult();
+                    var workflows = agentDiscoveryService.DiscoverWorkflowsAsync().GetAwaiter().GetResult();
                     
                     if (agents.Count == 0)
                     {
@@ -91,13 +92,12 @@ public class Program
                     }
                     else
                     {
-                        ctx.Status($"Found {agents.Count} available agents");
+                        ctx.Status($"Found {agents.Count} available agents and {workflows.Count} workflows");
                     }
-                    
-                    return agents;
                 });
                 
             var agents = await agentDiscoveryService.DiscoverAgentsAsync();
+            var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync();
             
             if (agents.Count == 0)
             {
@@ -108,8 +108,8 @@ public class Program
             
             while (true)
             {
-                Console.Write("Enter a query to find relevant agents (or chat with the LLM if no agents are identified): ");
-                string userQuery = Console.ReadLine();
+                Console.Write("Enter a query to find relevant agents or workflows (or type 'exit' to quit): ");
+                string userQuery = Console.ReadLine() ?? "";
 
                 if (string.Equals(userQuery, "exit", StringComparison.OrdinalIgnoreCase))
                 {
@@ -117,6 +117,61 @@ public class Program
                     break;
                 }
 
+                // DEBUG: Show all available workflows
+                AnsiConsole.MarkupLine($"[dim]Found {workflows.Count} workflows in total.[/]");
+                
+                // First check if any workflows match the query
+                var relevantWorkflows = await semanticKernelService.FindRelevantWorkflowsAsync(workflows, userQuery);
+                
+                // SPECIAL CASE: If query explicitly mentions speech/translate AND flashcards/vocabulary, always show workflow
+                bool forceWorkflow = userQuery.Contains("speech", StringComparison.OrdinalIgnoreCase) && 
+                    (userQuery.Contains("flashcard", StringComparison.OrdinalIgnoreCase) || 
+                     userQuery.Contains("vocabulary", StringComparison.OrdinalIgnoreCase));
+                
+                // DEBUG: Output workflow matching info
+                AnsiConsole.MarkupLine($"[dim]Query matched {relevantWorkflows.Count} workflows.[/]");
+                
+                // If we have relevant workflows OR we should force workflow selection, offer those first
+                if (relevantWorkflows.Count > 0 || forceWorkflow)
+                {
+                    // If forceWorkflow is true but no workflows were matched, use all workflows
+                    if (forceWorkflow && relevantWorkflows.Count == 0)
+                    {
+                        relevantWorkflows = workflows;
+                        AnsiConsole.MarkupLine("[yellow]Direct workflow match detected.[/]");
+                    }
+                    
+                    AnsiConsole.MarkupLine("[bold cyan]Relevant workflows found:[/]");
+                    foreach (var workflow in relevantWorkflows)
+                    {
+                        AnsiConsole.MarkupLine($"- [bold]{workflow.Name}[/]: {workflow.Description}");
+                        AnsiConsole.MarkupLine($"  [dim]Steps: {string.Join(" → ", workflow.Agents.Select(a => a.Name))}[/]");
+                    }
+                    
+                    // Prompt to use a workflow
+                    if (AnsiConsole.Confirm("Would you like to execute one of these workflows?", true))
+                    {
+                        var workflowSelection = await PromptForWorkflowSelectionAsync(relevantWorkflows);
+                        if (workflowSelection != null)
+                        {
+                            AnsiConsole.MarkupLine($"[bold green]Executing workflow:[/] {workflowSelection.Name}");
+                            var result = await agentExecutionService.ExecuteWorkflowAsync(workflowSelection);
+                            
+                            if (result)
+                            {
+                                AnsiConsole.MarkupLine($"[bold green]Workflow {workflowSelection.Name} executed successfully.[/]");
+                            }
+                            else
+                            {
+                                AnsiConsole.MarkupLine($"[bold red]Workflow {workflowSelection.Name} execution failed.[/]");
+                            }
+                            
+                            continue;
+                        }
+                    }
+                }
+
+                // If no workflow was selected, fall back to individual agents
                 var allAgents = await agentDiscoveryService.DiscoverAgentsAsync();
                 var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(allAgents, userQuery);
 
@@ -133,7 +188,7 @@ public class Program
                     while (true)
                     {
                         AnsiConsole.MarkupLine("\n[bold cyan]You:[/]");
-                        string followUpQuery = Console.ReadLine();
+                        string followUpQuery = Console.ReadLine() ?? "";
 
                         if (string.Equals(followUpQuery, "exit", StringComparison.OrdinalIgnoreCase))
                         {
@@ -182,6 +237,7 @@ public class Program
                         else
                         {
                             AnsiConsole.MarkupLine("[bold yellow]No agent was selected. Returning to the main menu.[/]");
+                            break;
                         }
                     }
                 }
@@ -223,6 +279,38 @@ public class Program
         AnsiConsole.MarkupLine("[bold]Welcome to the AI Agent Orchestrator[/]");
         AnsiConsole.MarkupLine("[dim]Your central hub for accessing all available AI agents[/]");
         AnsiConsole.WriteLine();
+    }
+    
+    private static async Task<AgentWorkflow?> PromptForWorkflowSelectionAsync(List<AgentWorkflow> workflows)
+    {
+        AnsiConsole.Clear();
+        var figlet = new FigletText("AI Workflow Hub") 
+            .LeftJustified()
+            .Color(Color.Purple); // Fix: Change from Magenta to Purple which exists in Spectre.Console
+        AnsiConsole.Write(figlet);
+        
+        var selectionPrompt = new SelectionPrompt<string>()
+            .Title("Select a workflow to run:")
+            .PageSize(15)
+            .HighlightStyle(new Style().Foreground(Color.Green));
+            
+        // Add all workflows
+        foreach (var workflow in workflows)
+        {
+            selectionPrompt.AddChoice(workflow.Name);
+        }
+        
+        // Add exit option
+        selectionPrompt.AddChoice("Exit");
+        
+        var selection = AnsiConsole.Prompt(selectionPrompt);
+        
+        if (selection == "Exit")
+        {
+            return null;
+        }
+        
+        return workflows.FirstOrDefault(w => w.Name == selection);
     }
     
     private static async Task<AgentInfo?> PromptForAgentSelectionAsync(List<AgentInfo> agents)

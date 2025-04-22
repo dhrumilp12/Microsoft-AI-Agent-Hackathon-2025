@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Spectre.Console;
 
 namespace AI_Agent_Orchestrator.Services;
 
@@ -57,13 +58,13 @@ public class AgentExecutionService
             Console.WriteLine("Press any key in this window to return when done...");
             
             // Wait for user to acknowledge before continuing
-            Console.ReadKey(true);
+            await Task.Run(() => Console.ReadKey(true));
             
             // Check if process is still running
             if (!process.HasExited)
             {
                 Console.WriteLine("Agent is still running. Wait for it to complete or press any key again to force return.");
-                Console.ReadKey(true);
+                await Task.Run(() => Console.ReadKey(true));
             }
             
             // Check exit code if available
@@ -81,6 +82,79 @@ public class AgentExecutionService
             Console.WriteLine($"Error executing agent: {ex.Message}");
             return false;
         }
+    }
+    
+    public async Task<bool> ExecuteWorkflowAsync(AgentWorkflow workflow)
+    {
+        _logger.LogInformation($"Executing workflow: {workflow.Name}");
+        
+        try
+        {
+            for (int i = 0; i < workflow.Agents.Count; i++)
+            {
+                var agent = workflow.Agents[i];
+                bool isLastAgent = (i == workflow.Agents.Count - 1);
+                
+                AnsiConsole.MarkupLine($"\n[bold cyan]Executing workflow step {i+1}/{workflow.Agents.Count}:[/] [green]{agent.Name}[/]");
+                
+                // Execute the agent
+                bool success = await ExecuteAgentAsync(agent);
+                
+                if (!success)
+                {
+                    _logger.LogError($"Workflow step failed: {agent.Name}");
+                    AnsiConsole.MarkupLine($"[bold red]Workflow step failed:[/] {agent.Name}");
+                    
+                    if (!PromptContinueWorkflow())
+                    {
+                        return false;
+                    }
+                }
+                
+                // If not the last agent, pass output to the next agent if we have a mapping
+                if (!isLastAgent && workflow.OutputMappings.ContainsKey(agent.Name))
+                {
+                    var outputPath = workflow.OutputMappings[agent.Name];
+                    var nextAgent = workflow.Agents[i + 1];
+                    
+                    _logger.LogInformation($"Passing output from {agent.Name} to {nextAgent.Name}");
+                    AnsiConsole.MarkupLine($"\n[bold blue]Passing output from {agent.Name} to {nextAgent.Name}[/]");
+                    
+                    // Resolve output path relative to agent's working directory
+                    string fullOutputPath = Path.IsPathRooted(outputPath) ? 
+                        outputPath : Path.GetFullPath(Path.Combine(agent.WorkingDirectory, outputPath));
+                    
+                    // Check if the output file exists
+                    if (File.Exists(fullOutputPath))
+                    {
+                        // Add the file to the next agent's arguments
+                        if (!nextAgent.Arguments.Contains(fullOutputPath))
+                        {
+                            nextAgent.Arguments.Add(fullOutputPath);
+                            AnsiConsole.MarkupLine($"[dim]Added file to next agent: {fullOutputPath}[/]");
+                        }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Output file not found at {fullOutputPath}");
+                    }
+                }
+            }
+            
+            AnsiConsole.MarkupLine($"\n[bold green]Workflow completed successfully:[/] {workflow.Name}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error executing workflow {workflow.Name}");
+            AnsiConsole.MarkupLine($"[bold red]Error executing workflow:[/] {ex.Message}");
+            return false;
+        }
+    }
+    
+    private bool PromptContinueWorkflow()
+    {
+        return AnsiConsole.Confirm("Do you want to continue with the next workflow step?", false);
     }
     
     private string CreateTemporaryBatchFile(AgentInfo agent)

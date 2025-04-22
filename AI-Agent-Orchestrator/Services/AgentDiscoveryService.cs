@@ -12,6 +12,7 @@ public class AgentDiscoveryService
     private readonly IConfiguration _configuration;
     private readonly ILogger<AgentDiscoveryService> _logger;
     private List<AgentInfo> _discoveredAgents = new();
+    private List<AgentWorkflow> _discoveredWorkflows = new();
 
     public AgentDiscoveryService(IConfiguration configuration, ILogger<AgentDiscoveryService> logger)
     {
@@ -24,7 +25,15 @@ public class AgentDiscoveryService
         _logger.LogInformation("Discovering available AI agents...");
         
         // Get the root directory - go up from the current assembly location to find the solution root
-        string currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string? currentDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        
+        // Make sure currentDir is not null before using it
+        if (currentDir == null)
+        {
+            _logger.LogError("Could not determine assembly location");
+            return _discoveredAgents;
+        }
+        
         string rootDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
         
         _logger.LogInformation($"Root directory: {rootDir}");
@@ -122,5 +131,64 @@ public class AgentDiscoveryService
         }
         
         return _discoveredAgents;
+    }
+    
+    public async Task<List<AgentWorkflow>> DiscoverWorkflowsAsync()
+    {
+        _logger.LogInformation("Discovering available AI agent workflows...");
+        
+        // First ensure we have all agents loaded
+        if (_discoveredAgents.Count == 0)
+        {
+            await DiscoverAgentsAsync();
+        }
+        
+        // Load predefined workflows from configuration
+        var workflowsSection = _configuration.GetSection("Workflows");
+        if (workflowsSection.Exists())
+        {
+            // Load from configuration if available
+            _discoveredWorkflows = workflowsSection.Get<List<AgentWorkflow>>() ?? new List<AgentWorkflow>();
+            _logger.LogInformation($"Loaded {_discoveredWorkflows.Count} workflows from configuration");
+        }
+        else
+        {
+            // Create predefined workflows based on the diagram
+            _discoveredWorkflows = new List<AgentWorkflow>();
+            
+            // Find the Speech Translator and Vocabulary Bank agents
+            var speechTranslator = _discoveredAgents.FirstOrDefault(a => 
+                a.Name.Contains("Speech Translator", StringComparison.OrdinalIgnoreCase));
+            var vocabularyBank = _discoveredAgents.FirstOrDefault(a => 
+                a.Name.Contains("Vocabulary Bank", StringComparison.OrdinalIgnoreCase));
+            
+            if (speechTranslator != null && vocabularyBank != null)
+            {
+                // Create a workflow that connects them with more comprehensive keywords
+                _discoveredWorkflows.Add(new AgentWorkflow
+                {
+                    Name = "Audio Translation to Vocabulary",
+                    Description = "Records and translates speech, then generates vocabulary flashcards",
+                    Agents = new List<AgentInfo> { speechTranslator, vocabularyBank },
+                    OutputMappings = new Dictionary<string, string> { 
+                        { "Speech Translator", "Output/translated_transcript.txt" } 
+                    },
+                    Keywords = new[] { 
+                        "audio", "speech", "translate", "translator", 
+                        "vocabulary", "flashcards", "flashcard", "word", 
+                        "language", "learning", "education"
+                    },
+                    Category = "Language Learning"
+                });
+                
+                _logger.LogInformation("Created Speech-to-Vocabulary workflow");
+            }
+            
+            // Save discovered workflows to a local file for future use
+            var workflowsFile = Path.Combine(AppContext.BaseDirectory, "workflows.json");
+            await File.WriteAllTextAsync(workflowsFile, JsonSerializer.Serialize(_discoveredWorkflows, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        
+        return _discoveredWorkflows;
     }
 }

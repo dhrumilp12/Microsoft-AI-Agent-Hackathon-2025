@@ -4,7 +4,7 @@ using dotenv.net;
 using SpeechTranslator.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Speech.Synthesis;
+using Microsoft.CognitiveServices.Speech;
 
 namespace SpeechTranslator
 {
@@ -134,14 +134,14 @@ namespace SpeechTranslator
                 }
 
                 // Initialize speech synthesizer
-                var synthesizer = new SpeechSynthesizer();
+                var synthesizer = new SpeechSynthesizer(speechService.GetSpeechConfig());
 
                 // Read and speak the translated text
                 if (File.Exists(translatedTextFilePath))
                 {
                     Console.WriteLine("\n[Speaking Translated Text]");
                     var translatedText = await File.ReadAllTextAsync(translatedTextFilePath);
-                    synthesizer.Speak(translatedText);
+                    await synthesizer.SpeakTextAsync(translatedText);
                 }
                 else
                 {

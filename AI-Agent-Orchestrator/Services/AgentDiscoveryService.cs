@@ -67,7 +67,7 @@ public class AgentDiscoveryService
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-agent-SpeechTranslator")),
                     Arguments = new List<string> { "run", "--project", "." },
-                    Keywords = new[] { "speech", "translate", "language", "audio" }
+                    Keywords = new[] { "speech", "translate", "language", "audio", "record", "recording" }
                 },
                 new AgentInfo 
                 {

@@ -134,4 +134,31 @@ Available agents:
         
         return result;
     }
+
+    public async Task<string> ChatWithLLMAsync(string userQuery)
+    {
+        if (_kernel == null)
+        {
+            _logger.LogWarning("Semantic Kernel is not initialized. Cannot engage in chat.");
+            return "Sorry, the chat service is currently unavailable.";
+        }
+
+        try
+        {
+            // Create a prompt for the LLM
+            var promptText = $"The user has asked: \"{userQuery}\". Please provide a helpful and concise response.";
+
+            // Create the function to call OpenAI
+            var function = _kernel.CreateFunctionFromPrompt(promptText);
+
+            // Invoke the function
+            var result = await _kernel.InvokeAsync(function);
+            return result.GetValue<string>() ?? "No response from the LLM.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during chat with LLM");
+            return "An error occurred while trying to chat with the LLM.";
+        }
+    }
 }

@@ -23,6 +23,11 @@ namespace SpeechTranslator.Services
             );
         }
 
+        public SpeechConfig GetSpeechConfig()
+        {
+            return _speechConfig;
+        }
+
         public async Task<string> ConvertSpeechToTextAsync()
         {
             using var recognizer = new SpeechRecognizer(_speechConfig);

@@ -106,77 +106,85 @@ public class Program
                 return;
             }
             
-            // Use FindRelevantAgentsAsync to determine relevant agents based on user input
-            Console.Write("Enter a query to find relevant agents: ");
-            string userQuery = Console.ReadLine();
-
-            var allAgents = await agentDiscoveryService.DiscoverAgentsAsync();
-            var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(allAgents, userQuery);
-
-            Console.WriteLine("Relevant agents:");
-            foreach (var agent in relevantAgents)
-            {
-                Console.WriteLine($"- {agent.Name}: {agent.Description}");
-            }
-            
             while (true)
             {
-                var selectedAgent = await PromptForAgentSelectionAsync(relevantAgents);
-                
-                if (selectedAgent == null)
+                Console.Write("Enter a query to find relevant agents (or chat with the LLM if no agents are identified): ");
+                string userQuery = Console.ReadLine();
+
+                if (string.Equals(userQuery, "exit", StringComparison.OrdinalIgnoreCase))
                 {
-                    break; // User chose to exit
+                    AnsiConsole.MarkupLine("[bold red]Exiting the program.[/]");
+                    break;
                 }
-                
-                AnsiConsole.Clear();
-                AnsiConsole.MarkupLine($"[bold green]Launching:[/] {selectedAgent.Name}");
-                AnsiConsole.MarkupLine($"[dim]The agent will open in a new window. Return here after you're done.[/]");
-                
-                // Show directory information for debugging
-                if (!Directory.Exists(selectedAgent.WorkingDirectory))
+
+                var allAgents = await agentDiscoveryService.DiscoverAgentsAsync();
+                var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(allAgents, userQuery);
+
+                if (relevantAgents.Count == allAgents.Count)
                 {
-                    AnsiConsole.MarkupLine($"[bold red]Warning:[/] Working directory does not exist: {selectedAgent.WorkingDirectory}");
-                    AnsiConsole.MarkupLine("[yellow]Would you like to provide an alternative path? (Y/N)[/]");
-                    
-                    var key = Console.ReadKey();
-                    if (key.Key == ConsoleKey.Y)
+                    AnsiConsole.MarkupLine("[bold yellow]No specific agents were identified. Engaging in a chat with the LLM. Type \"exit\" to stop.[/]");
+
+                    // Use the LLM to chat with the user based on the query
+                    var chatResponse = await semanticKernelService.ChatWithLLMAsync(userQuery);
+                    AnsiConsole.MarkupLine("\n[bold green]LinguaLearn Bot:[/]");
+                    AnsiConsole.WriteLine(chatResponse);
+
+                    // Continue engaging in a conversation with the user
+                    while (true)
                     {
-                        AnsiConsole.WriteLine();
-                        var path = AnsiConsole.Ask<string>("Enter the correct path to the agent directory:");
-                        if (Directory.Exists(path))
+                        AnsiConsole.MarkupLine("\n[bold cyan]You:[/]");
+                        string followUpQuery = Console.ReadLine();
+
+                        if (string.Equals(followUpQuery, "exit", StringComparison.OrdinalIgnoreCase))
                         {
-                            selectedAgent.WorkingDirectory = path;
+                            AnsiConsole.MarkupLine("[bold red]Exiting chat with the LLM.[/]");
+                            break;
                         }
-                        else
-                        {
-                            AnsiConsole.MarkupLine($"[bold red]Path does not exist:[/] {path}");
-                            AnsiConsole.MarkupLine("[yellow]Press any key to return to agent selection...[/]");
-                            Console.ReadKey(true);
-                            continue;
-                        }
+
+                        var followUpResponse = await semanticKernelService.ChatWithLLMAsync(followUpQuery);
+                        AnsiConsole.MarkupLine("\n[bold green]LinguaLearn Bot:[/]");
+                        AnsiConsole.WriteLine(followUpResponse);
                     }
-                    else
-                    {
-                        AnsiConsole.WriteLine();
-                        AnsiConsole.MarkupLine("[yellow]Returning to agent selection...[/]");
-                        continue;
-                    }
-                }
-                
-                var result = await agentExecutionService.ExecuteAgentAsync(selectedAgent);
-                
-                // After agent execution
-                AnsiConsole.WriteLine();
-                if (result)
-                {
-                    AnsiConsole.MarkupLine("[bold green]Agent execution completed successfully.[/]");
                 }
                 else
                 {
-                    AnsiConsole.MarkupLine("[bold red]Agent execution completed with errors.[/]");
+                    AnsiConsole.MarkupLine("[bold cyan]Relevant agents in order:[/]");
+                    foreach (var agent in relevantAgents)
+                    {
+                        AnsiConsole.MarkupLine($"- [bold]{agent.Name}[/]: {agent.Description}");
+                    }
+
+                    // Prompt the user to select an agent
+                    while (true) {
+                        var selectedAgent = await PromptForAgentSelectionAsync(relevantAgents);
+
+                        if (selectedAgent != null)
+                        {
+                            AnsiConsole.MarkupLine($"[bold green]Executing agent:[/] {selectedAgent.Name}");
+                            var result = await agentExecutionService.ExecuteAgentAsync(selectedAgent);
+
+                            if (result)
+                            {
+                                AnsiConsole.MarkupLine($"[bold green]Agent {selectedAgent.Name} executed successfully.[/]");
+                            }
+                            else
+                            {
+                                AnsiConsole.MarkupLine($"[bold red]Agent {selectedAgent.Name} execution failed.[/]");
+                            }
+
+                            relevantAgents.Remove(selectedAgent);
+                            if (relevantAgents.Count == 0)
+                            {
+                                AnsiConsole.MarkupLine("[bold red]No more relevant agents available.[/]");
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine("[bold yellow]No agent was selected. Returning to the main menu.[/]");
+                        }
+                    }
                 }
-                AnsiConsole.MarkupLine("[dim]Press any key to return to agent selection...[/]");
-                Console.ReadKey(true);
             }
         }
         catch (Exception ex)

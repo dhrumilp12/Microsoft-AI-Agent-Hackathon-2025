@@ -68,6 +68,20 @@ The orchestrator currently supports the following agents:
 
 4. After selecting an agent, it will be launched in a new window. Return to the orchestrator window after you're done using the agent.
 
+## Enhanced Logic for Agent Selection
+
+The orchestrator now includes enhanced logic for agent selection and fallback mechanisms:
+
+1. **Fallback to LLM Chat**:
+   - If no agents are identified for a given query, the orchestrator engages in a conversation with the user using the Azure OpenAI-powered LLM.
+   - The user can continue chatting with the LLM until they type "exit."
+
+2. **Interactive Agent Selection**:
+   - When multiple agents are identified, the user is prompted to select an agent interactively using the Spectre.Console interface.
+   - The selected agent is then executed, and the user is returned to the main menu after execution.
+
+This logic ensures a seamless and user-friendly experience, allowing users to either interact with specific agents or engage in a natural language conversation with the LLM.
+
 ## Troubleshooting
 
 ### Agent Not Found

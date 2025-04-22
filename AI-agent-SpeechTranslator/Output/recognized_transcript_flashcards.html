@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Flashcards</title>
+  <style>
+    body { background-color: #f9f9f9; padding: 20px; font-family: Arial, sans-serif; }
+    header { text-align: center; margin-bottom: 40px; }
+    h1 { color: #3498db; font-size: 28px; }
+    h2 { color: #2c3e50; font-size: 22px; margin-top: 30px; margin-bottom: 20px; }
+    .language-switcher { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+    .language-btn { padding: 8px 16px; background-color: #ecf0f1; border: none; border-radius: 4px; cursor: pointer; }
+    .language-btn.active { background-color: #3498db; color: white; font-weight: bold; }
+    .flashcard-container { display: flex; flex-wrap: wrap; gap: 20px; }
+    .flashcard { width: 300px; min-height: 200px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; background-color: #fff; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .flashcard:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .flashcard-term { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0; }
+    .flashcard-definition { font-size: 15px; margin-bottom: 15px; color: #34495e; }
+    .flashcard-example { font-size: 14px; font-style: italic; color: #7f8c8d; margin-bottom: 15px; }
+    .flashcard-context { font-size: 13px; color: #95a5a6; }
+    .flashcard-date { font-size: 12px; color: #bdc3c7; text-align: right; margin-top: 15px; }
+    .language-tag { font-size: 12px; padding: 3px 8px; border-radius: 3px; display: inline-block; margin-left: 10px; }
+    .original-tag { background-color: #e8f4f8; color: #3498db; }
+    .translated-tag { background-color: #f8e8f4; color: #9b59b6; }
+    .language-section { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Vocabulary Flashcards</h1>
+  </header>
+  <div class="language-switcher">
+    <button class="language-btn active" onclick="showLanguage('original')">Unknown Language</button>
+    <button class="language-btn" onclick="showLanguage('translated')"></button>
+    <button class="language-btn" onclick="showLanguage('both')">Both Languages</button>
+  </div>
+  <div id="original-section" class="language-section">
+    <h2>Original Language (Unknown Language)</h2>
+    <div class="flashcard-container">
+      <div class="flashcard">
+        <div class="flashcard-term">algorithm<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">A procedure consisting of a series of steps to solve a specific problem.</div>
+        <div class="flashcard-example">Example: For example, an algorithm can automatically sort a list of numbers.</div>
+        <div class="flashcard-context">Context: In this context, algorithms provide the logical frameworks that drive computer science applications like AIML and web development on Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">computation<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">The process of executing operations, performing calculations, and processing data using computer systems.</div>
+        <div class="flashcard-example">Example: The system&#39;s computation of large datasets allowed us to derive accurate insights.</div>
+        <div class="flashcard-context">Context: In this snippet, computation refers to the processing activities within computer science fields like AIML, machine learning, and web applications using platforms such as Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">data structures<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Data structures are organized formats for storing and managing data, enabling efficient access and modification.</div>
+        <div class="flashcard-example">Example: For instance, arrays, linked lists, and trees are data structures used to manage collections of data in programming.</div>
+        <div class="flashcard-context">Context: In this context, data structures form the fundamental backbone of computer science, supporting technologies like AIML, machine learning, and web applications on Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">memory management<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Memory management is the process of allocating, tracking, and deallocating computer memory to optimize system performance.</div>
+        <div class="flashcard-example">Example: The operating system handles memory management to ensure the web application on Azure runs efficiently.</div>
+        <div class="flashcard-context">Context: In the discussion on computer science, memory management is crucial for efficiently managing resources in AIML, machine learning, and web applications on Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">concurrency<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Concurrency is the ability of a system to manage multiple tasks simultaneously or in overlapping time periods.</div>
+        <div class="flashcard-example">Example: The web server achieved high performance by processing user requests concurrently.</div>
+        <div class="flashcard-context">Context: In this context, concurrency relates to handling diverse computer science tasks like AIML and web applications efficiently on Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">recursion<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Recursion is a method where a function calls itself to solve a problem by breaking it into simpler instances of the same problem.</div>
+        <div class="flashcard-example">Example: For example, a recursive function calculating factorial calls itself with decreasing numbers until it reaches 1.</div>
+        <div class="flashcard-context">Context: In this computer science discussion, recursion is understood as a programming technique relevant in algorithms and applications, like those deployed on platforms such as Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">design patterns<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Design patterns are reusable solutions that provide standard approaches to common software design challenges.</div>
+        <div class="flashcard-example">Example: Using the singleton design pattern ensures only one instance of a class is created across an application.</div>
+        <div class="flashcard-context">Context: In this context, design patterns offer structured methods to architect applications in computer science areas like AIML and web applications on platforms such as Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">formal verification<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Formal verification is the process of using mathematical methods to prove the correctness of systems based on their specifications.</div>
+        <div class="flashcard-example">Example: Engineers used formal verification to ensure that the algorithm implemented in the Azure-based application met its safety requirements.</div>
+        <div class="flashcard-context">Context: In this setting, formal verification could be applied to components of computer science systems like AIML applications or web services running on Azure to guarantee their reliability.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">distributed computing<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Distributed computing is a system where multiple networked computers work together to perform tasks, sharing processing power and resources.</div>
+        <div class="flashcard-example">Example: Azure can be used for distributed computing, where several machines collaborate to process large-scale data workloads.</div>
+        <div class="flashcard-context">Context: In this context, distributed computing refers to using Azure&#39;s networked resources to support applications like AIML and machine learning within computer science.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">artificial intelligence<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Artificial intelligence refers to systems and algorithms designed to mimic human cognitive functions such as learning, problem-solving, and decision-making.</div>
+        <div class="flashcard-example">Example: A voice recognition system that understands and processes natural language queries is an example of artificial intelligence.</div>
+        <div class="flashcard-context">Context: In this context, artificial intelligence is part of the broader computer science domain, alongside AIML and machine learning, and is being applied using platforms like Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">database management<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Database management involves the systematic organization, storage, and retrieval of data using specialized software to ensure efficient and secure data handling.</div>
+        <div class="flashcard-example">Example: The team implemented robust database management to ensure quick access to user data in the application.</div>
+        <div class="flashcard-context">Context: In this context, database management pertains to handling data efficiently within Azure-driven computer science projects, which include AI/ML and web applications.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">networking protocols<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Networking protocols are standardized rules that govern how data is transmitted and received between computing devices.</div>
+        <div class="flashcard-example">Example: For example, the TCP/IP protocol is used to ensure reliable communication over the internet.</div>
+        <div class="flashcard-context">Context: In this context, networking protocols facilitate data exchange in cloud environments like Azure, which supports web applications and machine learning services.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">encryption<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Encryption is the process of converting data into a format that is unreadable by anyone except those with a decryption key.</div>
+        <div class="flashcard-example">Example: Encrypting sensitive user data ensures that even if intercepted, the information remains secure.</div>
+        <div class="flashcard-context">Context: Within the computer science discussion using Azure, encryption secures data handled in applications such as AIML and web applications.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">software development<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Software development is the process of designing, coding, testing, and maintaining software applications and systems.</div>
+        <div class="flashcard-example">Example: The team engaged in software development to build a web application on Azure.</div>
+        <div class="flashcard-context">Context: In this context, software development refers to creating computer science solutions such as AI/ML projects and web applications using Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">debugging<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Debugging is the process of identifying, analyzing, and correcting errors or bugs in a computer program.</div>
+        <div class="flashcard-example">Example: After implementing the new feature, the developer spent hours debugging the code to ensure it worked correctly.</div>
+        <div class="flashcard-context">Context: Within this computer science overview involving AIML, machine learning, and web applications on Azure, debugging refers to the systematic process of resolving issues during software development and deployment.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">compiler<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">A compiler is a software tool that translates code from a high-level programming language into machine code.</div>
+        <div class="flashcard-example">Example: The compiler translated the written code into an executable program.</div>
+        <div class="flashcard-context">Context: In this computer science context, while topics like AIML and Azure are discussed, a compiler remains essential for converting programming language code into a runnable format.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">runtime<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">The period during which a program is actively executing.</div>
+        <div class="flashcard-example">Example: During runtime, the web application on Azure processed user requests.</div>
+        <div class="flashcard-context">Context: In this context, runtime refers to the execution phase of computer programs including AIML and web applications.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">virtualization<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Definition could not be generated - Exception occurred</div>
+        <div class="flashcard-example">Example: Example could not be generated</div>
+        <div class="flashcard-context">Context: Context information not available</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">cloud computing<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Cloud computing is the delivery of computing resources and services over the internet, enabling scalable and flexible usage of servers, storage, and applications.</div>
+        <div class="flashcard-example">Example: A company might use Azure for cloud computing to host its web application with machine learning capabilities.</div>
+        <div class="flashcard-context">Context: In this context, Azure is mentioned as the platform providing cloud computing services for computer science tasks including web applications and AIML.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">analytics<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Analytics is the process of systematically examining data to identify patterns, trends, and insights.</div>
+        <div class="flashcard-example">Example: A team uses analytics to improve machine learning algorithms by understanding user behavior.</div>
+        <div class="flashcard-context">Context: In this context, analytics involves utilizing Azure to process and analyze data within computer science fields like AIML and web applications.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+    </div>
+  </div>
+  <div id="translated-section" class="language-section" style="display:none;">
+    <h2>Translated Language ()</h2>
+    <div class="flashcard-container">
+      <div class="flashcard">
+        <div class="flashcard-term">inform&#225;tica<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Inform&#225;tica is the discipline that encompasses the study, development, and application of computer systems, software, and data processing technologies.</div>
+        <div class="flashcard-example">Example: Inform&#225;tica is essential for understanding and implementing modern technology solutions.</div>
+        <div class="flashcard-context">Context: In this context, inform&#225;tica refers to the integration of technologies like AIML, machine learning, and web applications, particularly using platforms such as Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">algoritmo<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Un algoritmo es un conjunto finito de pasos ordenados que se siguen para resolver un problema o ejecutar una tarea espec&#237;fica en inform&#225;tica.</div>
+        <div class="flashcard-example">Example: El algoritmo de b&#250;squeda se utiliza para localizar datos en una base de datos.</div>
+        <div class="flashcard-context">Context: En el texto, se refiere a las instrucciones utilizadas en aplicaciones de inform&#225;tica que incluyen aprendizaje autom&#225;tico y servicios en la nube (Azure).</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">programaci&#243;n<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">La programaci&#243;n es el proceso de escribir, probar y mantener el c&#243;digo que controla el comportamiento de aplicaciones y sistemas inform&#225;ticos.</div>
+        <div class="flashcard-example">Example: La programaci&#243;n en Python permite automatizar tareas y manipular datos de manera eficiente.</div>
+        <div class="flashcard-context">Context: En este contexto, se refiere al desarrollo de aplicaciones y soluciones web utilizando tecnolog&#237;as como Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">base de datos<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Una &#39;base de datos&#39; es un conjunto organizado de datos que se almacenan y gestionan electr&#243;nicamente para su f&#225;cil acceso y manipulaci&#243;n.</div>
+        <div class="flashcard-example">Example: La aplicaci&#243;n web consulta la base de datos para mostrar informaci&#243;n actualizada a los usuarios.</div>
+        <div class="flashcard-context">Context: En este contexto, se relaciona con la gesti&#243;n de informaci&#243;n en inform&#225;tica, posiblemente utilizando servicios como Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">software<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Software refers to the collection of programs, applications, and routines that enable a computer to perform specific tasks.</div>
+        <div class="flashcard-example">Example: The web application runs on software that manages both machine learning and AIML functions.</div>
+        <div class="flashcard-context">Context: In this context, software encompasses components of computing, including AIML, machine learning, and web applications deployed on Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">hardware<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Hardware refers to the physical components of a computer system, such as processors, memory, and storage devices.</div>
+        <div class="flashcard-example">Example: The hardware in our server includes powerful CPUs and multiple hard drives.</div>
+        <div class="flashcard-context">Context: In this context, hardware is contrasted with software elements like AIML and web applications, highlighting the physical infrastructure used in computing with Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">compilador<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Un compilador es un programa que traduce c&#243;digo fuente escrito en un lenguaje de programaci&#243;n a c&#243;digo de m&#225;quina o a otro lenguaje de bajo nivel.</div>
+        <div class="flashcard-example">Example: El compilador convirti&#243; el c&#243;digo C en un ejecutable optimizado para la m&#225;quina.</div>
+        <div class="flashcard-context">Context: En este contexto de inform&#225;tica y uso de tecnolog&#237;as como Azure, el compilador es una herramienta esencial para transformar el c&#243;digo en aplicaciones funcionales.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">depuraci&#243;n<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Proceso de identificar y corregir errores en aplicaciones o sistemas inform&#225;ticos.</div>
+        <div class="flashcard-example">Example: Durante la fase de desarrollo, la depuraci&#243;n ayud&#243; a resolver inconsistencias en el c&#243;digo.</div>
+        <div class="flashcard-context">Context: En este contexto de inform&#225;tica y desarrollo en Azure, se refiere a la pr&#225;ctica de mejorar y optimizar el software a trav&#233;s de la correcci&#243;n de fallas.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">interfaz<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">El punto de conexi&#243;n que permite la comunicaci&#243;n entre distintos sistemas, programas o entre el usuario y la m&#225;quina.</div>
+        <div class="flashcard-example">Example: La interfaz de usuario de la aplicaci&#243;n facilit&#243; la interacci&#243;n con el sistema.</div>
+        <div class="flashcard-context">Context: En este caso, la interfaz se relaciona con la conexi&#243;n y dise&#241;o dentro de aplicaciones web en entornos de Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">protocolo<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Conjunto de reglas y est&#225;ndares que facilitan la comunicaci&#243;n y el intercambio de datos entre sistemas inform&#225;ticos.</div>
+        <div class="flashcard-example">Example: El protocolo HTTP define c&#243;mo se intercambian datos entre el cliente y el servidor en una aplicaci&#243;n web.</div>
+        <div class="flashcard-context">Context: Dentro de este contexto, protocolo se refiere a las normas que aseguran la correcta integraci&#243;n y comunicaci&#243;n entre los componentes inform&#225;ticos, como AIML, aplicaciones web y servicios en Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">red<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">En inform&#225;tica, &#39;red&#39; se refiere a un conjunto de dispositivos interconectados que comparten recursos y datos.</div>
+        <div class="flashcard-example">Example: La aplicaci&#243;n se comunica a trav&#233;s de una red segura para acceder a los servicios en la nube.</div>
+        <div class="flashcard-context">Context: En este contexto, &#39;red&#39; se relaciona con las infraestructuras de conectividad que soportan servicios como Azure en ambientes inform&#225;ticos.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">sistema operativo<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Un sistema operativo es el software central que gestiona el hardware y coordina la ejecuci&#243;n de aplicaciones en un dispositivo.</div>
+        <div class="flashcard-example">Example: El sistema operativo Linux facilita la ejecuci&#243;n de aplicaciones web y procesos de aprendizaje autom&#225;tico en servidores de Azure.</div>
+        <div class="flashcard-context">Context: Aunque el texto se centra en tecnolog&#237;as como AIML y aplicaciones web en la nube, el sistema operativo sigue siendo el componente b&#225;sico que permite la operaci&#243;n y gesti&#243;n de estos servicios.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">seguridad inform&#225;tica<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">La seguridad inform&#225;tica es el conjunto de medidas y protocolos para proteger sistemas y datos contra accesos no autorizados, vulnerabilidades y ataques.</div>
+        <div class="flashcard-example">Example: La empresa fortaleci&#243; su seguridad inform&#225;tica implementando autenticaci&#243;n multifactor en todos sus sistemas.</div>
+        <div class="flashcard-context">Context: En este contexto, la seguridad inform&#225;tica es fundamental para proteger tanto los procesos de aprendizaje autom&#225;tico como las aplicaciones web desplegadas en Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ciberseguridad<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">La ciberseguridad es la disciplina que protege sistemas, redes, aplicaciones y datos de accesos no autorizados y ataques cibern&#233;ticos.</div>
+        <div class="flashcard-example">Example: Implementar ciberseguridad en una aplicaci&#243;n web en Azure es esencial para proteger informaci&#243;n sensible.</div>
+        <div class="flashcard-context">Context: En este escenario de inform&#225;tica con AIML, aprendizaje autom&#225;tico y uso de Azure, la ciberseguridad es fundamental para salvaguardar los sistemas y datos en entornos tecnol&#243;gicos avanzados.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">criptograf&#237;a<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">La criptograf&#237;a es la pr&#225;ctica que aplica m&#233;todos matem&#225;ticos para asegurar la confidencialidad, integridad y autenticidad de la informaci&#243;n mediante el uso de cifrados.</div>
+        <div class="flashcard-example">Example: El mensaje fue cifrado usando criptograf&#237;a para proteger su contenido de accesos no autorizados.</div>
+        <div class="flashcard-context">Context: En el &#225;mbito de la inform&#225;tica y aplicaciones en Azure, se utiliza criptograf&#237;a para garantizar la seguridad de datos y comunicaciones en plataformas y servicios web.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">servidor<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Computadora o programa que gestiona y ofrece recursos o servicios a otros dispositivos en una red.</div>
+        <div class="flashcard-example">Example: El servidor aloja la aplicaci&#243;n web para que los usuarios puedan acceder a ella.</div>
+        <div class="flashcard-context">Context: Se refiere a un recurso en la nube de Azure que dispone servicios backend para la inform&#225;tica, AIML y aplicaciones web.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">cliente<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">In computing, a &#39;cliente&#39; is a software or device that requests and uses services from a server.</div>
+        <div class="flashcard-example">Example: El cliente envi&#243; una solicitud al servidor para obtener los datos necesarios.</div>
+        <div class="flashcard-context">Context: Here, the term refers to the component (often a web application) that interacts with Azure services in an IT environment.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">memoria<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Memoria refers to a computer&#39;s capacity to store and retrieve data, either temporarily or permanently.</div>
+        <div class="flashcard-example">Example: El programa se ejecuta de manera eficiente gracias a una buena gesti&#243;n de la memoria.</div>
+        <div class="flashcard-context">Context: In this snippet about inform&#225;tica, memoria underlies components like AI/ML systems and web applications running on platforms like Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">almacenamiento<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">Almacenamiento se refiere al proceso y m&#233;todo de guardar y gestionar datos en sistemas inform&#225;ticos.</div>
+        <div class="flashcard-example">Example: El almacenamiento en Azure permite conservar grandes vol&#250;menes de informaci&#243;n de forma segura.</div>
+        <div class="flashcard-context">Context: En este contexto, se relaciona con la gesti&#243;n y retenci&#243;n de datos dentro de soluciones de inform&#225;tica y servicios en la nube, como Azure.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">virtualizaci&#243;n<span class="language-tag translated-tag"></span></div>
+        <div class="flashcard-definition">La virtualizaci&#243;n es el proceso de crear entornos virtuales que simulan recursos f&#237;sicos, permitiendo ejecutar m&#250;ltiples sistemas operativos o aplicaciones en un solo hardware.</div>
+        <div class="flashcard-example">Example: La empresa implement&#243; virtualizaci&#243;n para optimizar el uso de sus servidores en la nube.</div>
+        <div class="flashcard-context">Context: En este contexto, se refiere a utilizar tecnolog&#237;as como Azure para ejecutar servicios de inform&#225;tica, AIML y aplicaciones web en entornos virtualizados.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function showLanguage(language) {
+      const originalSection = document.getElementById('original-section');
+      const translatedSection = document.getElementById('translated-section');
+      const buttons = document.querySelectorAll('.language-btn');
+      
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      if (language === 'original') {
+        originalSection.style.display = 'block';
+        translatedSection.style.display = 'none';
+        buttons[0].classList.add('active');
+      } else if (language === 'translated') {
+        originalSection.style.display = 'none';
+        translatedSection.style.display = 'block';
+        buttons[1].classList.add('active');
+      } else {
+        originalSection.style.display = 'block';
+        translatedSection.style.display = 'block';
+        buttons[2].classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>

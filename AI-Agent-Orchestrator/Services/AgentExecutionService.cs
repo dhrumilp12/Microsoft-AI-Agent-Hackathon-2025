@@ -114,29 +114,32 @@ public class AgentExecutionService
                 // If not the last agent, pass output to the next agent if we have a mapping
                 if (!isLastAgent && workflow.OutputMappings.ContainsKey(agent.Name))
                 {
-                    var outputPath = workflow.OutputMappings[agent.Name];
+                    var outputPaths = workflow.OutputMappings[agent.Name];
                     var nextAgent = workflow.Agents[i + 1];
                     
                     _logger.LogInformation($"Passing output from {agent.Name} to {nextAgent.Name}");
                     AnsiConsole.MarkupLine($"\n[bold blue]Passing output from {agent.Name} to {nextAgent.Name}[/]");
                     
-                    // Resolve output path relative to agent's working directory
-                    string fullOutputPath = Path.IsPathRooted(outputPath) ? 
-                        outputPath : Path.GetFullPath(Path.Combine(agent.WorkingDirectory, outputPath));
-                    
-                    // Check if the output file exists
-                    if (File.Exists(fullOutputPath))
+                    foreach (var outputPath in outputPaths)
                     {
-                        // Add the file to the next agent's arguments
-                        if (!nextAgent.Arguments.Contains(fullOutputPath))
+                        // Resolve output path relative to agent's working directory
+                        string fullOutputPath = Path.IsPathRooted(outputPath) ? 
+                            outputPath : Path.GetFullPath(Path.Combine(agent.WorkingDirectory, outputPath));
+                        
+                        // Check if the output file exists
+                        if (File.Exists(fullOutputPath))
                         {
-                            nextAgent.Arguments.Add(fullOutputPath);
-                            AnsiConsole.MarkupLine($"[dim]Added file to next agent: {fullOutputPath}[/]");
+                            // Add the file to the next agent's arguments
+                            if (!nextAgent.Arguments.Contains(fullOutputPath))
+                            {
+                                nextAgent.Arguments.Add(fullOutputPath);
+                                AnsiConsole.MarkupLine($"[dim]Added file to next agent: {fullOutputPath}[/]");
+                            }
                         }
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Output file not found at {fullOutputPath}");
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[yellow]Warning:[/] Output file not found at {fullOutputPath}");
+                        }
                     }
                 }
             }

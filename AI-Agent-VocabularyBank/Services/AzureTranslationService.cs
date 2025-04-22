@@ -16,9 +16,9 @@ namespace VocabularyBank.Services
     public class AzureTranslationService : ITranslationService
     {
         private readonly HttpClient _httpClient;
-        private readonly string _subscriptionKey;
-        private readonly string _endpoint;
-        private readonly string _region;
+        private readonly string _subscriptionKey = "";
+        private readonly string _endpoint = "";
+        private readonly string _region = "";
         private readonly bool _debug;
         private Dictionary<string, string>? _cachedLanguages = null;
         
@@ -115,7 +115,7 @@ namespace VocabularyBank.Services
                     using (JsonDocument doc = JsonDocument.Parse(responseContent))
                     {
                         var translations = doc.RootElement[0].GetProperty("translations");
-                        string translatedText = translations[0].GetProperty("text").GetString();
+                        string translatedText = translations[0].GetProperty("text").GetString() ?? string.Empty;
                         
                         if (!string.IsNullOrEmpty(translatedText))
                         {
@@ -228,7 +228,7 @@ namespace VocabularyBank.Services
                 // Parse the JSON response
                 var detectionResult = JsonSerializer.Deserialize<List<LanguageDetectionResult>>(responseContent);
                 
-                if (detectionResult != null && detectionResult.Count > 0)
+                if (detectionResult != null && detectionResult.Count > 0 && detectionResult[0].Language != null)
                 {
                     return detectionResult[0].Language;
                 }

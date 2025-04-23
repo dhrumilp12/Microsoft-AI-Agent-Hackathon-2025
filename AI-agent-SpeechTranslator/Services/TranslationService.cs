@@ -4,6 +4,7 @@ using Azure.Core;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace SpeechTranslator.Services
 {
@@ -11,9 +12,12 @@ namespace SpeechTranslator.Services
     {
         private readonly TextTranslationClient _client;
 
-        public TranslationService(string translatorKey, string translatorEndpoint, string translatorRegion)
+        private readonly ILogger _logger;
+
+        public TranslationService(string translatorKey, string translatorEndpoint, string translatorRegion, ILogger logger)
         {
             _client = new TextTranslationClient(new AzureKeyCredential(translatorKey), new Uri(translatorEndpoint), translatorRegion);
+            _logger = logger;
         }
 
         public async Task<string> TranslateTextAsync(string sourceLang, string targetLanguage, string text)

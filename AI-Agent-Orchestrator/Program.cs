@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using System.Diagnostics;
 using System.Net;
 using System.Globalization;
+using Serilog;
+using Serilog.Sinks.File;
 
 namespace AI_Agent_Orchestrator;
 
@@ -51,17 +53,29 @@ public class Program
             return;
         }
 
+        // Configure Serilog for file logging
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "logs", "application.log"), rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+        var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            builder.AddSerilog();
+        });
+
+        var logger = loggerFactory.CreateLogger<Program>();
+
         // Set up dependency injection
         var services = new ServiceCollection()
             .AddSingleton<IConfiguration>(configuration)
-            .AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information))
+            .AddLogging(builder => builder.AddSerilog())
             .AddSingleton<AgentDiscoveryService>()
             .AddSingleton<AgentExecutionService>()
             .AddSingleton<SemanticKernelService>()
             .BuildServiceProvider();
         
         // Get required services
-        var logger = services.GetRequiredService<ILogger<Program>>();
         var agentDiscoveryService = services.GetRequiredService<AgentDiscoveryService>();
         var agentExecutionService = services.GetRequiredService<AgentExecutionService>();
         var semanticKernelService = services.GetRequiredService<SemanticKernelService>();
@@ -220,6 +234,44 @@ public class Program
                         }
                     }
                 }
+
+                // Call the summarization agent if available
+                var summarizationAgent = agents.FirstOrDefault(a => a.Name.Contains("Summarization Agent", StringComparison.OrdinalIgnoreCase));
+                if (summarizationAgent != null)
+                {
+                    AnsiConsole.MarkupLine("[bold green]Executing Summarization Agent...[/]");
+                    var result = await agentExecutionService.ExecuteAgentAsync(summarizationAgent);
+
+                    if (result)
+                    {
+                        AnsiConsole.MarkupLine($"[bold green]Agent {summarizationAgent.Name} executed successfully.[/]");
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[bold red]Agent {summarizationAgent.Name} execution failed.[/]");
+                    }
+                }
+
+                // Call the diagram generator agent if available
+                var diagramGeneratorAgent = agents.FirstOrDefault(a => a.Name.Contains("Diagram", StringComparison.OrdinalIgnoreCase));
+                if (diagramGeneratorAgent != null)
+                {
+                    AnsiConsole.MarkupLine("[bold green]Executing Diagram Generator Agent...[/]");
+                    var result = await agentExecutionService.ExecuteAgentAsync(diagramGeneratorAgent);
+
+                    if (result)
+                    {
+                        AnsiConsole.MarkupLine($"[bold green]Agent {diagramGeneratorAgent.Name} executed successfully.[/]");
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[bold red]Agent {diagramGeneratorAgent.Name} execution failed.[/]");
+                    }
+                }
+
+                // Wait for user input before continuing
+                AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+                Console.ReadKey(true);
             }
         }
         catch (Exception ex)

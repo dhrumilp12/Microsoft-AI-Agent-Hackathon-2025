@@ -4,23 +4,26 @@ using System.Threading.Tasks;
 using System.IO;
 using Microsoft.CognitiveServices.Speech.Audio;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace SpeechTranslator.Services
 {
     public class SpeechToTextService
     {
         private readonly SpeechConfig _speechConfig;
-
         private readonly TranslationService _translationService;
+        private readonly ILogger _logger;
 
-        public SpeechToTextService(string speechEndpoint, string speechKey)
+        public SpeechToTextService(string speechEndpoint, string speechKey, ILogger logger)
         {
             _speechConfig = SpeechConfig.FromEndpoint(new Uri(speechEndpoint), speechKey);
             _translationService = new TranslationService(
                 Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY"),
                 Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT"),
-                Environment.GetEnvironmentVariable("TRANSLATOR_REGION")
+                Environment.GetEnvironmentVariable("TRANSLATOR_REGION"),
+                logger
             );
+            _logger = logger;
         }
 
         public SpeechConfig GetSpeechConfig()

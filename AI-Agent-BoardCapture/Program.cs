@@ -87,11 +87,16 @@ namespace ClassroomBoardCapture
                     services.AddSingleton<ITranslationService, TranslationService>();
                     services.AddSingleton<IImageAnalysisService, ImageAnalysisService>();
                     
+                    // Configure Serilog for file logging
+                    Log.Logger = new LoggerConfiguration()
+                        .MinimumLevel.Information()
+                        .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "logs", "application.log"), rollingInterval: RollingInterval.Day)
+                        .CreateLogger();
+
                     // Configure logging
                     services.AddLogging(builder =>
                     {
-                        builder.AddConsole();
-                        builder.AddDebug();
+                        builder.AddSerilog()
                     });
                 });
     }

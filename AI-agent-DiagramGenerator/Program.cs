@@ -119,7 +119,13 @@ namespace DiagramGenerator
         
         private static void ConfigureServices(ServiceCollection services, IConfiguration configuration)
         {
-            services.AddLogging(configure => configure.AddConsole())
+            // Configure Serilog for file logging
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "logs", "application.log"), rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
+            services.AddLogging(configure => configure.AddSerilog())
                 .Configure<LoggerFilterOptions>(options => options.MinLevel = LogLevel.Information);
                 
             services.AddSingleton<IConfiguration>(configuration);

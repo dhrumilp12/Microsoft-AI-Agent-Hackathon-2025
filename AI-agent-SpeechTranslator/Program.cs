@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.CognitiveServices.Speech;
 using System.Globalization;
+using Serilog;
+using Serilog.Sinks.File;
 
 namespace SpeechTranslator
 {
@@ -37,17 +39,22 @@ namespace SpeechTranslator
             translatorApiKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? translatorApiKey;
             translatorRegion = Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? translatorRegion;
 
-            // Initialize services
-            var speechService = new SpeechToTextService(speechEndpoint, speechApiKey);
-            var translationService = new TranslationService(translatorApiKey, "https://api.cognitive.microsofttranslator.com/", translatorRegion);
+            // Configure Serilog for file logging
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .WriteTo.File(Path.Combine(Directory.GetCurrentDirectory(), "logs", "application.log"), rollingInterval: RollingInterval.Day)
+                .CreateLogger();
 
-            // Add logging configuration
             var loggerFactory = LoggerFactory.Create(builder =>
             {
-                builder.AddConsole();
-                builder.AddDebug();
+                builder.AddSerilog();
             });
+
             var logger = loggerFactory.CreateLogger<Program>();
+
+            // Pass logger to SpeechToTextService and TranslationService
+            var speechService = new SpeechToTextService(speechEndpoint, speechApiKey, logger);
+            var translationService = new TranslationService(translatorApiKey, "https://api.cognitive.microsofttranslator.com/", translatorRegion, logger);
 
             logger.LogInformation("Application started.");
 
@@ -102,10 +109,7 @@ namespace SpeechTranslator
                 }
                 Console.ResetColor();
 
-                Console.ForegroundColor = ConsoleColor.Magenta;
                 string targetLanguage = args.Length > 0 ? args[0] : "en"; // Default to English if no argument is provided
-                Console.WriteLine("Enter the target language:");
-                Console.ResetColor();
 
                 logger.LogInformation("Starting speech-to-text and translation process.");
                 Console.ForegroundColor = ConsoleColor.Green;

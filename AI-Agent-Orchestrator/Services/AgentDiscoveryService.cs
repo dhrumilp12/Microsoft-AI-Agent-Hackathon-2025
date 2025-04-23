@@ -183,7 +183,7 @@ public class AgentDiscoveryService
                             "Output/translated_transcript.txt"
                         } },
                         { "Vocabulary Bank & Flashcards Generator", new List<string> {
-                            "sample_transcript_flashcards.json"
+                            "Output/recognized_transcript_flashcards.json"
                         } }
                     },
                     Keywords = new[] { 
@@ -193,6 +193,23 @@ public class AgentDiscoveryService
                     },
                     Category = "Education Assistant"
                 });
+                
+                // Update the summarization agent's arguments for the workflow to include the translated transcript and vocabulary data
+                if (_discoveredWorkflows.Count > 0)
+                {
+                    var workflow = _discoveredWorkflows[0];
+                    var summaryAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("AI Summarization Agent"));
+                    if (summaryAgent != null)
+                    {
+                        summaryAgent.Arguments = new List<string> { 
+                            "run", "--project", ".",
+                            "--", 
+                            "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
+                            "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json" 
+                        };
+                        _logger.LogInformation("Updated summarization agent arguments to use translated transcript and vocabulary data");
+                    }
+                }
                 
                 _logger.LogInformation("Created comprehensive audio learning workflow with translation, vocabulary, and summarization");
             }

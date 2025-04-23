@@ -51,7 +51,11 @@ class Program
             if (args.Length > 0 && File.Exists(args[0]))
             {
                 transcriptPath = args[0];
-                Console.WriteLine($"Using provided transcript file: {transcriptPath}");
+                Console.WriteLine($"Using provided transcript file: {Path.GetFullPath(transcriptPath)}");
+            }
+            else
+            {
+                Console.WriteLine($"Using default transcript file: {Path.GetFullPath(transcriptPath)}");
             }
             
             // Also check for vocabulary output file (JSON)
@@ -61,15 +65,29 @@ class Program
                 try
                 {
                     vocabularyData = await File.ReadAllTextAsync(args[1]);
-                    Console.WriteLine($"Loaded vocabulary data from: {args[1]}");
+                    Console.WriteLine($"Loaded vocabulary data from: {Path.GetFullPath(args[1])}");
+                    
+                    // Validate that it's actual JSON data
+                    try {
+                        var jsonDoc = JsonDocument.Parse(vocabularyData);
+                        Console.WriteLine("Vocabulary data successfully validated as JSON.");
+                    }
+                    catch (JsonException) {
+                        Console.WriteLine("Warning: Vocabulary file does not contain valid JSON. Will be treated as plain text.");
+                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Warning: Could not read vocabulary file: {ex.Message}");
                 }
             }
+            else if (args.Length > 1)
+            {
+                Console.WriteLine($"Provided second argument is not a valid JSON file: {args[1]}");
+            }
             
             var promptPath = "data/prompt.txt";
+            Console.WriteLine($"Using prompt file: {Path.GetFullPath(promptPath)}");
 
             // Check if input files are present
             if (!File.Exists(transcriptPath) || !File.Exists(promptPath))
@@ -81,6 +99,8 @@ class Program
             // Read the contents of both input files
             string transcript = await File.ReadAllTextAsync(transcriptPath);
             string prompt = await File.ReadAllTextAsync(promptPath);
+
+            Console.WriteLine("\nProcessing input files...");
 
             // Combine the prompt, transcript, and vocabulary data if available
             string fullInput;
@@ -95,11 +115,20 @@ class Program
 
             if (!string.IsNullOrWhiteSpace(fullInput))
             {
+                Console.WriteLine("Generating summary. Please wait...");
+                
                 // Send the full input to the summarization service
                 var summary = await summarizationService.SummarizeTextAsync(fullInput);
 
                 // Define output directory and make sure it exists
                 string outputDir = "data/outputs";
+                
+                // Create the directory if it doesn't exist
+                if (!Directory.Exists(outputDir))
+                {
+                    Console.WriteLine($"Creating output directory: {outputDir}");
+                    Directory.CreateDirectory(outputDir);
+                }
 
                 // Create a timestamp for the output filename
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
@@ -126,7 +155,11 @@ class Program
                 // Save the JSON summary to file
                 await File.WriteAllTextAsync(outputPath, jsonOutput);
 
-                Console.WriteLine($"\nSummary saved to JSON:\n{summary}");
+                Console.WriteLine("\n===================================");
+                Console.WriteLine($"✅ Summary successfully generated!");
+                Console.WriteLine($"📄 Output file: {Path.GetFullPath(outputPath)}");
+                Console.WriteLine("===================================\n");
+                Console.WriteLine($"Summary content:\n{summary}");
             }
             else
             {

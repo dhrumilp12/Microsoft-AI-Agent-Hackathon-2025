@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Spectre.Console;
+using System.Text.Json;
 
 namespace AI_Agent_Orchestrator.Services;
 
@@ -71,6 +72,13 @@ public class AgentExecutionService
             if (process.HasExited)
             {
                 _logger.LogInformation($"Agent {agent.Name} completed with exit code: {process.ExitCode}");
+                
+                // Display the summary content if this was the summarization agent
+                if (agent.Name.Contains("Summarization Agent", StringComparison.OrdinalIgnoreCase))
+                {
+                    await DisplaySummaryContentAsync(agent.WorkingDirectory);
+                }
+                
                 return process.ExitCode == 0;
             }
             
@@ -84,6 +92,60 @@ public class AgentExecutionService
         }
     }
     
+    private async Task DisplaySummaryContentAsync(string workingDirectory)
+    {
+        try
+        {
+            // Find the most recent summary file in the output directory
+            string outputDir = Path.Combine(workingDirectory, "data", "outputs");
+            if (!Directory.Exists(outputDir))
+            {
+                AnsiConsole.MarkupLine("[yellow]No summary output directory found.[/]");
+                return;
+            }
+            
+            var summaryFiles = Directory.GetFiles(outputDir, "summary_*.json")
+                                       .OrderByDescending(f => new FileInfo(f).CreationTime)
+                                       .ToArray();
+            
+            if (summaryFiles.Length == 0)
+            {
+                AnsiConsole.MarkupLine("[yellow]No summary files found in output directory.[/]");
+                return;
+            }
+            
+            var latestSummaryFile = summaryFiles[0];
+            AnsiConsole.MarkupLine($"[green]Found summary file:[/] {latestSummaryFile}");
+            
+            // Read and parse the summary file
+            string jsonContent = await File.ReadAllTextAsync(latestSummaryFile);
+            using var document = JsonDocument.Parse(jsonContent);
+            
+            if (document.RootElement.TryGetProperty("Summary", out var summaryElement))
+            {
+                string summary = summaryElement.GetString() ?? "No summary content available";
+                
+                // Display the summary in a panel with formatting
+                AnsiConsole.WriteLine();
+                AnsiConsole.Write(new Panel(summary)
+                    .Header("Summary Content")
+                    .Expand()
+                    .BorderColor(Color.Green)
+                    .RoundedBorder());
+                AnsiConsole.WriteLine();
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[yellow]Could not find Summary property in the JSON file.[/]");
+            }
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.MarkupLine($"[red]Error displaying summary: {ex.Message}[/]");
+            _logger.LogError(ex, "Error displaying summary content");
+        }
+    }
+    
     public async Task<bool> ExecuteWorkflowAsync(AgentWorkflow workflow)
     {
         _logger.LogInformation($"Executing workflow: {workflow.Name}");
@@ -94,6 +156,39 @@ public class AgentExecutionService
             {
                 var agent = workflow.Agents[i];
                 bool isLastAgent = (i == workflow.Agents.Count - 1);
+                
+                // Special case handling for summarization agent
+                if (agent.Name.Contains("AI Summarization Agent") && i > 0)
+                {
+                    // Check for the existence of the required files
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
+                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "recognized_transcript_flashcards.json"));
+                    
+                    // Verify the files exist before adding them to arguments
+                    if (File.Exists(translatedTranscriptPath))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Found translated transcript at:[/] {translatedTranscriptPath}");
+                        // Update the agent arguments to use the translated transcript
+                        agent.Arguments.RemoveAll(arg => arg.Contains("translated_transcript.txt"));
+                        agent.Arguments.Add(translatedTranscriptPath);
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Translated transcript not found at expected location: {translatedTranscriptPath}");
+                    }
+                    
+                    if (File.Exists(vocabularyDataPath))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Found vocabulary data at:[/] {vocabularyDataPath}");
+                        // Update the agent arguments to use the vocabulary data
+                        agent.Arguments.RemoveAll(arg => arg.Contains("flashcards.json"));
+                        agent.Arguments.Add(vocabularyDataPath);
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Vocabulary data not found at expected location: {vocabularyDataPath}");
+                    }
+                }
                 
                 AnsiConsole.MarkupLine($"\n[bold cyan]Executing workflow step {i+1}/{workflow.Agents.Count}:[/] [green]{agent.Name}[/]");
                 

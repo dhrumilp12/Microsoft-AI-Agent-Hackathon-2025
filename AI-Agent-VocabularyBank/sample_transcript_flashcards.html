@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary Flashcards</title>
+  <style>
+    body { background-color: #f9f9f9; padding: 20px; font-family: Arial, sans-serif; }
+    header { text-align: center; margin-bottom: 40px; }
+    h1 { color: #3498db; font-size: 28px; }
+    h2 { color: #2c3e50; font-size: 22px; margin-top: 30px; margin-bottom: 20px; }
+    .language-switcher { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; }
+    .language-btn { padding: 8px 16px; background-color: #ecf0f1; border: none; border-radius: 4px; cursor: pointer; }
+    .language-btn.active { background-color: #3498db; color: white; font-weight: bold; }
+    .flashcard-container { display: flex; flex-wrap: wrap; gap: 20px; }
+    .flashcard { width: 300px; min-height: 200px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; background-color: #fff; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .flashcard:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .flashcard-term { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #e0e0e0; }
+    .flashcard-definition { font-size: 15px; margin-bottom: 15px; color: #34495e; }
+    .flashcard-example { font-size: 14px; font-style: italic; color: #7f8c8d; margin-bottom: 15px; }
+    .flashcard-context { font-size: 13px; color: #95a5a6; }
+    .flashcard-date { font-size: 12px; color: #bdc3c7; text-align: right; margin-top: 15px; }
+    .language-tag { font-size: 12px; padding: 3px 8px; border-radius: 3px; display: inline-block; margin-left: 10px; }
+    .original-tag { background-color: #e8f4f8; color: #3498db; }
+    .translated-tag { background-color: #f8e8f4; color: #9b59b6; }
+    .language-section { margin-bottom: 40px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Vocabulary Flashcards</h1>
+  </header>
+  <div class="language-switcher">
+    <button class="language-btn active" onclick="showLanguage('original')">Unknown Language</button>
+    <button class="language-btn" onclick="showLanguage('translated')">Gujarati</button>
+    <button class="language-btn" onclick="showLanguage('both')">Both Languages</button>
+  </div>
+  <div id="original-section" class="language-section">
+    <h2>Original Language (Unknown Language)</h2>
+    <div class="flashcard-container">
+      <div class="flashcard">
+        <div class="flashcard-term">learning<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Learning in this context is the process by which computer systems extract patterns and improve performance based on data without explicit programming.</div>
+        <div class="flashcard-example">Example: The algorithm learned to identify spam emails after analyzing large datasets.</div>
+        <div class="flashcard-context">Context: Within machine learning, learning refers to the system&#39;s ability to enhance its decision-making and predictions purely through statistical analysis of data.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">machine<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">A machine is a computer system that executes algorithms to process and learn from data.</div>
+        <div class="flashcard-example">Example: The machine adjusted its parameters to improve predictions without direct programming.</div>
+        <div class="flashcard-context">Context: In machine learning, &#39;machine&#39; refers to computational systems that autonomously learn and adapt based on data inputs.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">data<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Data refers to the raw information, facts, or measurements used as input for analysis and learning in machine learning processes.</div>
+        <div class="flashcard-example">Example: The machine learning model improved its performance by analyzing a large set of data.</div>
+        <div class="flashcard-context">Context: In this context, data is the foundational input from which machine learning systems extract patterns and insights.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">input<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Data provided to a machine learning system, serving as the basis for processing and analysis.</div>
+        <div class="flashcard-example">Example: The neural network processed the input to classify the image.</div>
+        <div class="flashcard-context">Context: In machine learning, input refers to the raw data (like sensory data) that a model uses for learning and making predictions.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">artificial<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">In this context, &#39;artificial&#39; means designed or created by humans, particularly referring to systems that mimic natural intelligence.</div>
+        <div class="flashcard-example">Example: Researchers developed an artificial neural network that performs complex pattern recognition.</div>
+        <div class="flashcard-context">Context: It distinguishes machine-based intelligence from natural human cognition within the field of machine learning.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">without<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Indicates the absence of something; here, it means not having explicit programming instructions.</div>
+        <div class="flashcard-example">Example: The software improved its performance without additional manual coding.</div>
+        <div class="flashcard-context">Context: In this context, &#39;without&#39; stresses that machine learning systems operate by learning from data, as opposed to following explicit programmed rules.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">neural<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Refers to systems or algorithms that mimic the structure and function of the human brain&#39;s neuron networks.</div>
+        <div class="flashcard-example">Example: Neural networks can learn from examples to improve their predictive accuracy.</div>
+        <div class="flashcard-context">Context: In machine learning, &#39;neural&#39; describes computational models inspired by the brain, particularly in neural network architectures.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">networks<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Networks in machine learning are interconnected sets of algorithms designed to mimic neural connections in the human brain to process and learn from data.</div>
+        <div class="flashcard-example">Example: Neural networks have successfully been used to recognize patterns in image recognition tasks.</div>
+        <div class="flashcard-context">Context: In machine learning, networks refer to algorithmic models that learn from data to identify patterns without explicit programming.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">supervised<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">A method where a model is trained using input-output pairs with known labels, enabling it to predict outputs for new inputs.</div>
+        <div class="flashcard-example">Example: In supervised learning, the algorithm is fed labeled images to learn how to classify them correctly.</div>
+        <div class="flashcard-context">Context: In machine learning, supervised learning leverages example pairs to build predictive models without explicit programming for each task.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">function<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">A function is a mapping that associates each input with a unique output based on a specific rule or model.</div>
+        <div class="flashcard-example">Example: For example, a function might take patient data as input and return a diagnosis as output.</div>
+        <div class="flashcard-context">Context: In machine learning, a function represents the model that is learned from data to map inputs to their corresponding outputs.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">output<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">The result or response produced by a machine learning model or function when given an input.</div>
+        <div class="flashcard-example">Example: For instance, in a handwriting recognition system, the output might be the identified character from an image.</div>
+        <div class="flashcard-context">Context: In machine learning, &#39;output&#39; refers to the predicted or computed result generated by mapping input features using a learned function.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">based<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Made or determined using specific data or examples as a foundation.</div>
+        <div class="flashcard-example">Example: The algorithm’s predictions are based on extensive historical data.</div>
+        <div class="flashcard-context">Context: In this machine learning context, &#39;based&#39; indicates that the function mapping is derived from example input-output pairs.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">labeled<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Data that is paired with corresponding output information or tags, indicating the correct answer or category for each sample.</div>
+        <div class="flashcard-example">Example: The model was trained on labeled data to accurately predict future outcomes.</div>
+        <div class="flashcard-context">Context: In machine learning, &#39;labeled&#39; refers to training data that includes explicit annotations or target values for supervised learning.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">training<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Training is the process of using labeled data to adjust a machine learning model&#39;s parameters so it can accurately map inputs to outputs.</div>
+        <div class="flashcard-example">Example: The model underwent training on a dataset of handwritten digits before being tested on unseen examples.</div>
+        <div class="flashcard-context">Context: In machine learning, training refers to teaching a model how to learn from data to make predictions or decisions without explicit programming.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">unsupervised<span class="language-tag original-tag"></span></div>
+        <div class="flashcard-definition">Unsupervised refers to machine learning methods that infer patterns from data without labeled responses.</div>
+        <div class="flashcard-example">Example: The algorithm used unsupervised learning to identify distinct groups in the dataset.</div>
+        <div class="flashcard-context">Context: In this machine learning context, unsupervised implies deriving insights directly from input data without pre-assigned labels.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+    </div>
+  </div>
+  <div id="translated-section" class="language-section" style="display:none;">
+    <h2>Translated Language (Gujarati)</h2>
+    <div class="flashcard-container">
+      <div class="flashcard">
+        <div class="flashcard-term">લર્ન<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">‘લર્ન’ નો અર્થ છે &#39;શીખવું&#39;, જેમાં કમ્પ્યુટર સિસ્ટમ પોતાની કામગીરીને સુધારવા માટે ડેટામાંથી પેટર્ન અને જ્ઞાન મેળવે છે.</div>
+        <div class="flashcard-example">Example: કમ્પ્યુટર આંકડાઓ પરથી વિવિધ પેટર્ન ઓળખવા માટે લર્નિંગ એલ્ગોરિધમનો ઉપયોગ કરે છે.</div>
+        <div class="flashcard-context">Context: આ સંદર્ભમાં ‘લર્ન’ મશીન લર્નિંગથી સંબંધિત છે, જે કમ્પ્યુટર્સને સ્પષ્ટ પ્રોગ્રામિંગ વગર ડેટામાંથી શીખવાની ક્ષમતા આપે છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ઇનપુટ<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">ઇનપુટ તે કાચી, અસંસ્કૃત માહિતી અથવા ડેટા છે જેને મશીન લર્નિંગ મોડેલના પ્રોસ ચરણ માટે શરૂઆતિક સ્ત્રોત તરીકે ઉપયોગમાં લેવામાં આવે છે.</div>
+        <div class="flashcard-example">Example: તેઓ સંવેદનાત્મક ડેટાનું અર્થઘટન એક પ્રકારના મશીન પરસેપ્શન, લેબલિંગ અથવા ક્લસ્ટરિંગ દ્વારા કાચા ઇનપુટ દ્વારા કરે છે.</div>
+        <div class="flashcard-context">Context: આ સંદર્ભમાં, &#39;ઇનપુટ&#39;નો અર્થ એ છે કે મશીન લર્નિંગ મોડેલ પર પ્રોસેસિંગ માટે પૂરું પાડવામાં આવતી મૂળ માહિતી કે ડેટા.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ક્ષણ<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">Definition for &#39;ક્ષણ&#39; could not be generated</div>
+        <div class="flashcard-example">Example: Example could not be generated</div>
+        <div class="flashcard-context">Context: Context information not available</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">કૃત્ર<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">The term &#39;કૃત્ર&#39; appears to be a truncated form of the Gujarati word &#39;કૃત્રિમ&#39;, which means &#39;artificial&#39;.</div>
+        <div class="flashcard-example">Example: For instance, in Gujarati you might say &#39;કૃત્રિમ બુદ્ધિમત્તા&#39; to mean &#39;artificial intelligence&#39;.</div>
+        <div class="flashcard-context">Context: Within the machine learning introduction, the term is used to denote the &#39;artificial&#39; aspect of intelligence or neural networks that are man-made and designed to learn from data.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ક્ષેત્ર<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">&#39;ક્ષેત્ર&#39; is a term that denotes a specific field or domain, particularly an area of study or specialization.</div>
+        <div class="flashcard-example">Example: કૃત્રિમ બુદ્ધિમત્તાનું ક્ષેત્ર વિશિષ્ઠ અભ્યાસનો ક્ષેત્ર છે જેમાં મશીન લર્નિંગનો સમાવેશ થાય છે.</div>
+        <div class="flashcard-context">Context: In the context of an introduction to machine learning, &#39;ક્ષેત્ર&#39; refers to the specialized area within artificial intelligence that focuses on enabling systems to learn from data without explicit programming.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ન્યુરલ<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">‘ન્યુરલ’ એ એવા મોડેલો અને એલ્ગોરીધમ્સ સૂચવે છે જે માનવ મગજના ન્યુરન્સની રચનાને અનુસરતાં હોય છે, જેમ કે ન્યુરલ નેટવર્ક્સ, જે પેટર્નને ઓળખી શકે છે અને ડેટામાંથી શીખી શકે છે.</div>
+        <div class="flashcard-example">Example: ઉદાહરણ તરીકે, &#39;ન્યુરલ નેટવર્ક્સ એલ્ગોરિધમ્સ માનવ મગજની કાર્યપદ્ધતિ પર આધાર રાખી ડેટામાંથી મહત્વપૂર્ણ પેટર્નોને ઓળખે છે.&#39;</div>
+        <div class="flashcard-context">Context: મશીન લર્નિંગના પરિચયમાં, ‘ન્યુરલ’ એ લેક્સિકોનનો ભાગ છે જે મશીન લર્નિંગ મોડેલોનું નિર્માણ તેનાથી જણાવે છે કે તે માનવ મગજની ન્યુરલ રચના અને કાર્યપદ્ધતિને અનુસરતા હોય છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">પ્રક<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">Definition could not be generated due to language processing limits</div>
+        <div class="flashcard-example">Example: Example could not be generated</div>
+        <div class="flashcard-context">Context: Context information not available</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">લેબલ<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">મશીન લર્નિંગમાં &#39;લેબલ&#39; એ એવા સૂચકાંક/વિગતને કહી શકાય છે જે ડેટાના ઉદાહરણ સાથે જોડાયેલ હોય છે અને જે મોડેલને ટ્રેઇન કરતી વખતે સચોટ આઉટપુટ અથવા વર્ગીકરણ બતાવે છે.</div>
+        <div class="flashcard-example">Example: ડેટાસેટમાં દરેક ઇમેજ સાથે યોગ્ય લેબલ પ્રદાન કરવામાં આવે છે જેથી મોડેલ તેને ઓળખી શકે.</div>
+        <div class="flashcard-context">Context: આ સંદર્ભમાં &#39;લેબલ&#39; ડેટા પર કારણ-વિભાગની પ્રક્રિયામાં ઉપયોગ થતો એક મહત્વપૂર્ણ તત્વ છે, જેમાં ઇનપુટ ડેટા પરથી મોડેલને અર્થઘટન કરાવવામાં મદદ મળે છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">ક્લસ્ટર<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">ક્લસ્ટર એટલે ડેટાના એવા જૂથ કે સમૂહ જેને લક્ષણોની સમાનતા આધારે એક સાથે સમૂહબદ્ધ કરવામાં આવે છે. ક્લસ્ટરિંગ એ પરિચાલિત, લેબલ વિનાનું ડેટા વિભાજન કરવાની પદ્ધતિ છે.</div>
+        <div class="flashcard-example">Example: તેઓ સંવેદનાત્મક ડેટાને કાચા ઇનપુટ દ્વારા ક્લસ્ટરિંગ કરીને સમાન જૂથોમાં વહેંચે છે.</div>
+        <div class="flashcard-context">Context: આ સંદર્ભમાં, &#39;ક્લસ્ટર&#39; મશીન લર્નિંગમાં ડેટાની સ્વયંસંચાલિત ગ્રૂપિંગ પ્રક્રિયા દર્શાવે છે, જેમાં એકબીજું સમાન લક્ષણ ધરાવતા ડેટા પોઈન્ટ્સને જૂથોમાં વિભાજિત કરવામાં આવે છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">અનુમ<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">અનુમ (અનુમાન) એ એવા મૂલ્યાંકન અથવા આગાહી કરવાની પ્રક્રિયા છે, જેમાં તાલીમ ડેટા પરથી કોઇ મોડેલ તદ્દન પરિણામ અથવા વર્ગીકરણ ની આગાહી કરે છે.</div>
+        <div class="flashcard-example">Example: તે લેબલ કરેલા તાલીમ ડેટામાંથી ફંક્શનનું અનુમાન (અનુમ) કરે છે.</div>
+        <div class="flashcard-context">Context: મશીન લર્નિંગના સંદર્ભમાં, &#39;અનુમ&#39; એ તે ક્ષમતા છે જેમાં મોડેલ આપેલી તાલીમ ડેટા પરથી નવા અથવા અજાણ્યા ડેટા માટે પરિણામની આગાહી કરે છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+      <div class="flashcard">
+        <div class="flashcard-term">પદ્ધત<span class="language-tag translated-tag">GU</span></div>
+        <div class="flashcard-definition">પદ્ધતિનો અર્થ એ છે કે કોઈ કાર્ય કે સમસ્યાને હલ કરવા માટે અપનાવવામાં આવતો નિયમિત અને પદ્ધતિબદ્ધ પ્રક્રિયા કે રીત.</div>
+        <div class="flashcard-example">Example: સૌથી સામાન્ય બિનસલાહભર્યા શીખવાની પદ્ધતિ એ ક્લસ્ટર વિશ્લેષણ છે.</div>
+        <div class="flashcard-context">Context: મશીન લર્નિંગના પરિચયમાં, પદ્ધતિ જણાવે છે કે કેવી રીતે અલગ-અલગ ડેટા સેટ અને આંકડાકીય મોડેલ્સનો ઉપયોગ કરીને કમ્પ્યુટર સિસ્ટમને શીખવાની પ્રક્રિયા પૂર્ણ કરવામાં આવે છે.</div>
+        <div class="flashcard-date">2025-04-22</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function showLanguage(language) {
+      const originalSection = document.getElementById('original-section');
+      const translatedSection = document.getElementById('translated-section');
+      const buttons = document.querySelectorAll('.language-btn');
+      
+      buttons.forEach(btn => btn.classList.remove('active'));
+      
+      if (language === 'original') {
+        originalSection.style.display = 'block';
+        translatedSection.style.display = 'none';
+        buttons[0].classList.add('active');
+      } else if (language === 'translated') {
+        originalSection.style.display = 'none';
+        translatedSection.style.display = 'block';
+        buttons[1].classList.add('active');
+      } else {
+        originalSection.style.display = 'block';
+        translatedSection.style.display = 'block';
+        buttons[2].classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>

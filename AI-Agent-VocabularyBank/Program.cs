@@ -54,8 +54,15 @@ namespace VocabularyBank
                 var transcriptProcessor = serviceProvider.GetService<ITranscriptProcessorService>();
                 string transcript = await transcriptProcessor.LoadTranscriptAsync(transcriptPath);
                 
+                // Check if we have a second argument which is likely the translated file
+                string translatedPath = null;
+                if (args.Length > 1 && File.Exists(args[1]))
+                {
+                    translatedPath = args[1];
+                }
+                
                 // Offer translation option
-                TranslatedContent translatedContent = await PromptForTranslationAsync(transcript, transcriptPath, serviceProvider);
+                TranslatedContent translatedContent = await PromptForTranslationAsync(transcript, transcriptPath, serviceProvider, translatedPath);
                 if (translatedContent != null)
                 {
                     // Process both original and translated text for vocabulary extraction
@@ -629,9 +636,61 @@ Deep learning is part of a broader family of machine learning methods based on a
         /// <param name="transcript">The original transcript text</param>
         /// <param name="transcriptPath">The path to the original transcript file</param>
         /// <param name="serviceProvider">The service provider for dependency injection</param>
+        /// <param name="translatedPath">Optional path to an existing translated file</param>
         /// <returns>TranslatedContent if translation was performed, null otherwise</returns>
-        private static async Task<TranslatedContent> PromptForTranslationAsync(string transcript, string transcriptPath, ServiceProvider serviceProvider)
+        private static async Task<TranslatedContent> PromptForTranslationAsync(
+            string transcript, 
+            string transcriptPath, 
+            ServiceProvider serviceProvider, 
+            string translatedPath = null)
         {
+            // If we already have a translated path provided via arguments (from the workflow),
+            // automatically use it without prompting
+            if (!string.IsNullOrEmpty(translatedPath) && File.Exists(translatedPath))
+            {
+                Console.WriteLine($"Using provided translated file: {translatedPath}");
+                
+                // Get the translation service
+                var translationSvc = serviceProvider.GetService<ITranslationService>();
+                
+                // Load the translated content
+                string translatedFileContent = await File.ReadAllTextAsync(translatedPath);
+                
+                if (string.IsNullOrWhiteSpace(translatedFileContent))
+                {
+                    Console.WriteLine("Warning: Translated file is empty. Proceeding with original text only.");
+                    return null;
+                }
+                
+                // Detect the languages
+                DisplayProcessingStage("Detecting source language");
+                string sourceLang = await translationSvc.DetectLanguageAsync(transcript);
+                string translatedLang = await translationSvc.DetectLanguageAsync(translatedFileContent);
+                
+                // Get available languages
+                var availableLanguages = await translationSvc.GetAvailableLanguagesAsync();
+                
+                // Determine language name
+                string translatedLanguageName = availableLanguages.ContainsKey(translatedLang) 
+                    ? availableLanguages[translatedLang]
+                    : translatedLang;
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"✓ Using original text in {sourceLang} and translated text in {translatedLanguageName}!");
+                Console.ResetColor();
+                
+                // Return the translated content
+                return new TranslatedContent
+                {
+                    OriginalText = transcript,
+                    OriginalLanguage = sourceLang,
+                    TranslatedText = translatedFileContent,
+                    TargetLanguage = translatedLang,
+                    TargetLanguageDisplayName = translatedLanguageName
+                };
+            }
+            
+            // Otherwise proceed with the normal prompt flow
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\nHow would you like to handle translation?");
             Console.ResetColor();

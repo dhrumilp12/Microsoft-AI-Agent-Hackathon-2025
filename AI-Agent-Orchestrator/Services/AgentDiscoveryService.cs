@@ -164,14 +164,17 @@ public class AgentDiscoveryService
             
             if (speechTranslator != null && vocabularyBank != null)
             {
-                // Create a workflow that connects them with more comprehensive keywords
+                // Create a workflow that connects them with both original and translated text
                 _discoveredWorkflows.Add(new AgentWorkflow
                 {
                     Name = "Audio Translation to Vocabulary",
-                    Description = "Records and translates speech, then generates vocabulary flashcards",
+                    Description = "Records and translates speech, then generates vocabulary flashcards from both original and translated text",
                     Agents = new List<AgentInfo> { speechTranslator, vocabularyBank },
-                    OutputMappings = new Dictionary<string, string> { 
-                        { "Speech Translator", "Output/recognized_transcript.txt" } 
+                    OutputMappings = new Dictionary<string, List<string>> { 
+                        { "Speech Translator", new List<string> {
+                            "Output/recognized_transcript.txt",
+                            "Output/translated_transcript.txt"
+                        } }
                     },
                     Keywords = new[] { 
                         "audio", "speech", "translate", "translator", 
@@ -181,7 +184,7 @@ public class AgentDiscoveryService
                     Category = "Language Learning"
                 });
                 
-                _logger.LogInformation("Created Speech-to-Vocabulary workflow");
+                _logger.LogInformation("Created Speech-to-Vocabulary workflow with both original and translated text");
             }
             
             // Save discovered workflows to a local file for future use

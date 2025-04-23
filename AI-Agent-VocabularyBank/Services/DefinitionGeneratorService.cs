@@ -167,7 +167,7 @@ Be concise. No need for additional text or explanation.";
                     };
                 }
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
                 // If JSON parsing fails for non-Latin scripts, try the fallback approach
                 if (script != "Latin" && script != "Unknown")
@@ -178,9 +178,9 @@ Be concise. No need for additional text or explanation.";
                 // Fallback if JSON parsing fails
                 return CreateFallbackTerm(term, "Definition could not be generated - JSON parsing error", contextText);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return CreateFallbackTerm(term, $"Definition could not be generated - {ex.GetType().Name}", contextText);
+                return CreateFallbackTerm(term, $"Definition could not be generated - Exception occurred", contextText);
             }
         }
         
@@ -255,7 +255,7 @@ Return your response as JSON with these fields:
                     };
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return CreateFallbackTerm(term, $"Definition for '{term}' could not be generated", contextText);
             }
@@ -325,16 +325,23 @@ Return your response as JSON with these fields:
         /// </summary>
         private int CountOccurrences(string text, string term)
         {
-            int count = 0;
-            int index = 0;
-            
-            while ((index = text.IndexOf(term, index, StringComparison.OrdinalIgnoreCase)) != -1)
+            try
             {
-                count++;
-                index += term.Length;
+                int count = 0;
+                int index = 0;
+                
+                while ((index = text.IndexOf(term, index, StringComparison.OrdinalIgnoreCase)) != -1)
+                {
+                    count++;
+                    index += term.Length;
+                }
+                
+                return count;
             }
-            
-            return count;
+            catch (Exception)
+            {
+                return 0;
+            }
         }
     }
 }

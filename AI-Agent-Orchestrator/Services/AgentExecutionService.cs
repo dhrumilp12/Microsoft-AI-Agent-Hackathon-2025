@@ -190,6 +190,70 @@ public class AgentExecutionService
                     }
                 }
                 
+                // Special case handling for diagram generator agent
+                if (agent.Name.Contains("Diagram Generator") && i > 0)
+                {
+                    // Find the latest summary file from the summarization agent
+                    string summaryDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Summarization-agent", "data", "outputs"));
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
+                    
+                    if (Directory.Exists(summaryDir))
+                    {
+                        var summaryFiles = Directory.GetFiles(summaryDir, "summary_*.json")
+                                                  .OrderByDescending(f => new FileInfo(f).CreationTime)
+                                                  .ToArray();
+                        
+                        if (summaryFiles.Length > 0)
+                        {
+                            string latestSummaryFile = summaryFiles[0];
+                            
+                            // Create a symbolic link to the latest summary for consistency in naming
+                            string latestSummaryLink = Path.Combine(summaryDir, "latest_summary.json");
+                            
+                            try
+                            {
+                                // Remove existing link if it exists
+                                if (File.Exists(latestSummaryLink))
+                                {
+                                    File.Delete(latestSummaryLink);
+                                }
+                                
+                                // On Windows, create a hard link as symbolic links require admin privileges
+                                File.Copy(latestSummaryFile, latestSummaryLink, true);
+                                
+                                AnsiConsole.MarkupLine($"[green]Created link to latest summary:[/] {latestSummaryLink}");
+                                
+                                // Update the agent arguments to use the latest summary
+                                agent.Arguments.RemoveAll(arg => arg.Contains("summary"));
+                                agent.Arguments.Add(latestSummaryLink);
+                            }
+                            catch (Exception ex)
+                            {
+                                AnsiConsole.MarkupLine($"[yellow]Warning:[/] Could not create link to latest summary: {ex.Message}");
+                                // Add the direct file as fallback
+                                agent.Arguments.RemoveAll(arg => arg.Contains("summary"));
+                                agent.Arguments.Add(latestSummaryFile);
+                            }
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[yellow]Warning:[/] No summary files found in {summaryDir}");
+                        }
+                    }
+                    
+                    // Also add translated transcript
+                    if (File.Exists(translatedTranscriptPath))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Found translated transcript for diagram generation:[/] {translatedTranscriptPath}");
+                        
+                        if (!agent.Arguments.Contains(translatedTranscriptPath))
+                        {
+                            agent.Arguments.RemoveAll(arg => arg.Contains("transcript"));
+                            agent.Arguments.Add(translatedTranscriptPath);
+                        }
+                    }
+                }
+                
                 AnsiConsole.MarkupLine($"\n[bold cyan]Executing workflow step {i+1}/{workflow.Agents.Count}:[/] [green]{agent.Name}[/]");
                 
                 // Execute the agent

@@ -169,14 +169,14 @@ public class AgentDiscoveryService
                 a.Name.Contains("AI Summarization Agent", StringComparison.OrdinalIgnoreCase));
 
             // Create the complete workflow with summarization if all three agents are available
-            if (speechTranslator != null && vocabularyBank != null && summarizationAgent != null)
+            if (speechTranslator != null && vocabularyBank != null && summarizationAgent != null && diagramGenerator != null)
             {
-                // Create a comprehensive workflow that connects all three agents
+                // Create a comprehensive workflow that connects all four agents
                 _discoveredWorkflows.Add(new AgentWorkflow
                 {
                     Name = "Complete Audio Learning Assistant",
-                    Description = "Records and translates speech, generates vocabulary flashcards, and creates a summarized version of the content",
-                    Agents = new List<AgentInfo> { speechTranslator, vocabularyBank, summarizationAgent },
+                    Description = "Records and translates speech, generates vocabulary flashcards, creates a summarized version of the content, and finally generates a visual diagram of key concepts",
+                    Agents = new List<AgentInfo> { speechTranslator, vocabularyBank, summarizationAgent, diagramGenerator },
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Speech Translator", new List<string> {
                             "Output/recognized_transcript.txt",
@@ -184,17 +184,20 @@ public class AgentDiscoveryService
                         } },
                         { "Vocabulary Bank & Flashcards Generator", new List<string> {
                             "Output/recognized_transcript_flashcards.json"
+                        } },
+                        { "AI Summarization Agent", new List<string> {
+                            "data/outputs/summary_*.json"
                         } }
                     },
                     Keywords = new[] { 
                         "audio", "speech", "translate", "vocabulary", "summary", 
                         "summarize", "flashcards", "comprehensive", "complete", 
-                        "learning", "education", "assistant"
+                        "learning", "education", "assistant", "diagram", "visual"
                     },
                     Category = "Education Assistant"
                 });
                 
-                // Update the summarization agent's arguments for the workflow to include the translated transcript and vocabulary data
+                // Update the summarization agent's arguments
                 if (_discoveredWorkflows.Count > 0)
                 {
                     var workflow = _discoveredWorkflows[0];
@@ -209,9 +212,22 @@ public class AgentDiscoveryService
                         };
                         _logger.LogInformation("Updated summarization agent arguments to use translated transcript and vocabulary data");
                     }
+                    
+                    // Update the diagram generator arguments
+                    var diagramAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("Diagram Generator"));
+                    if (diagramAgent != null)
+                    {
+                        diagramAgent.Arguments = new List<string> { 
+                            "run", "--project", ".",
+                            "--", 
+                            "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
+                            "../AI-Summarization-agent/data/outputs/latest_summary.json" 
+                        };
+                        _logger.LogInformation("Updated diagram generator arguments to use translated transcript and summary output");
+                    }
                 }
                 
-                _logger.LogInformation("Created comprehensive audio learning workflow with translation, vocabulary, and summarization");
+                _logger.LogInformation("Created comprehensive audio learning workflow with translation, vocabulary, summarization, and diagram generation");
             }
 
             if (classroomBoardCapture != null && diagramGenerator != null)

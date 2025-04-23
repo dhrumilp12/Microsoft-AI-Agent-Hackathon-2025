@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using DiagramGenerator.Services;
 using DiagramGenerator.Helpers;
-
+using Serilog;     
 namespace DiagramGenerator
 {
     class Program
@@ -54,7 +54,8 @@ namespace DiagramGenerator
 
                                     if (manifestEntries != null)
                                     {
-                                        filePaths.AddRange(manifestEntries.Select(entry => entry.FileName));
+                                        filePaths.AddRange(
+                                        manifestEntries.Select(entry => (string)entry.FileName)  );
                                     }
                                 }
                             }

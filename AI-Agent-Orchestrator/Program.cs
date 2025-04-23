@@ -165,6 +165,9 @@ public class Program
                     break;
                 }
 
+                // Track which agents have been executed as part of workflows
+                HashSet<string> executedAgents = new HashSet<string>();
+
                 if (userChoice == "Complete Audio Learning")
                 {
                     AnsiConsole.MarkupLine("[bold green]Executing Complete Audio Learning Assistant workflow...[/]");
@@ -174,6 +177,12 @@ public class Program
                     {
                         AnsiConsole.MarkupLine($"[bold green]Executing comprehensive workflow:[/] {audioWorkflow.Name}");
                         var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
+
+                        // Track all agents in this workflow as executed
+                        foreach (var agent in audioWorkflow.Agents)
+                        {
+                            executedAgents.Add(agent.Name);
+                        }
 
                         if (result)
                         {
@@ -197,6 +206,12 @@ public class Program
                     if (boardCaptureWorkflow != null)
                     {
                         var result = await agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
+
+                        // Track all agents in this workflow as executed
+                        foreach (var agent in boardCaptureWorkflow.Agents)
+                        {
+                            executedAgents.Add(agent.Name);
+                        }
 
                         if (result)
                         {
@@ -226,6 +241,17 @@ public class Program
 
                         await Task.WhenAll(audioTask, boardTask);
 
+                        // Track all agents in both workflows as executed
+                        foreach (var agent in completeAudioWorkflow.Agents)
+                        {
+                            executedAgents.Add(agent.Name);
+                        }
+                        
+                        foreach (var agent in boardCaptureWorkflow.Agents)
+                        {
+                            executedAgents.Add(agent.Name);
+                        }
+
                         if (audioTask.Result)
                         {
                             AnsiConsole.MarkupLine($"[bold green]Workflow {completeAudioWorkflow.Name} executed successfully.[/]");
@@ -246,9 +272,9 @@ public class Program
                     }
                 }
 
-                // Call the summarization agent if available
+                // Call the summarization agent only if it hasn't been executed as part of a workflow
                 var summarizationAgent = agents.FirstOrDefault(a => a.Name.Contains("Summarization Agent", StringComparison.OrdinalIgnoreCase));
-                if (summarizationAgent != null)
+                if (summarizationAgent != null && !executedAgents.Contains(summarizationAgent.Name))
                 {
                     AnsiConsole.MarkupLine("[bold green]Executing Summarization Agent...[/]");
                     var result = await agentExecutionService.ExecuteAgentAsync(summarizationAgent);
@@ -263,9 +289,9 @@ public class Program
                     }
                 }
 
-                // Call the diagram generator agent if available
+                // Call the diagram generator agent only if it hasn't been executed as part of a workflow
                 var diagramGeneratorAgent = agents.FirstOrDefault(a => a.Name.Contains("Diagram", StringComparison.OrdinalIgnoreCase));
-                if (diagramGeneratorAgent != null)
+                if (diagramGeneratorAgent != null && !executedAgents.Contains(diagramGeneratorAgent.Name))
                 {
                     AnsiConsole.MarkupLine("[bold green]Executing Diagram Generator Agent...[/]");
                     var result = await agentExecutionService.ExecuteAgentAsync(diagramGeneratorAgent);

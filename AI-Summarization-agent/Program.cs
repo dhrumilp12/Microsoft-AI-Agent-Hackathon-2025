@@ -45,7 +45,30 @@ class Program
             var summarizationService = serviceProvider.GetRequiredService<SummarizationService>();
 
             // Define file paths for transcript and prompt input
-            var transcriptPath = "data/transcript2.txt";
+            var transcriptPath = "data/transcript.txt";
+            
+            // Check if any command line arguments were provided that could be file paths
+            if (args.Length > 0 && File.Exists(args[0]))
+            {
+                transcriptPath = args[0];
+                Console.WriteLine($"Using provided transcript file: {transcriptPath}");
+            }
+            
+            // Also check for vocabulary output file (JSON)
+            string vocabularyData = string.Empty;
+            if (args.Length > 1 && File.Exists(args[1]) && args[1].EndsWith(".json"))
+            {
+                try
+                {
+                    vocabularyData = await File.ReadAllTextAsync(args[1]);
+                    Console.WriteLine($"Loaded vocabulary data from: {args[1]}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: Could not read vocabulary file: {ex.Message}");
+                }
+            }
+            
             var promptPath = "data/prompt.txt";
 
             // Check if input files are present
@@ -59,8 +82,16 @@ class Program
             string transcript = await File.ReadAllTextAsync(transcriptPath);
             string prompt = await File.ReadAllTextAsync(promptPath);
 
-            // Combine the prompt and transcript into a single input string
-            string fullInput = $"{prompt}\n\n{transcript}";
+            // Combine the prompt, transcript, and vocabulary data if available
+            string fullInput;
+            if (!string.IsNullOrEmpty(vocabularyData))
+            {
+                fullInput = $"{prompt}\n\nTranscript:\n{transcript}\n\nVocabulary Data:\n{vocabularyData}";
+            }
+            else
+            {
+                fullInput = $"{prompt}\n\n{transcript}";
+            }
 
             if (!string.IsNullOrWhiteSpace(fullInput))
             {

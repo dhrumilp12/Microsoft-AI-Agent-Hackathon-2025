@@ -143,7 +143,7 @@ public class Program
                 var userChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("[bold yellow]What would you like to do?[/]")
-                        .AddChoices("Audio", "Whiteboard", "Both", "Exit"));
+                        .AddChoices("Complete Audio Learning", "Whiteboard", "Both", "Exit"));
 
                 if (userChoice == "Exit")
                 {
@@ -151,21 +151,28 @@ public class Program
                     break;
                 }
 
-                if (userChoice == "Audio")
+                if (userChoice == "Complete Audio Learning")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing Audio Translation to Vocabulary workflow...[/]");
-                    var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains(userChoice, StringComparison.OrdinalIgnoreCase));
+                    AnsiConsole.MarkupLine("[bold green]Executing Complete Audio Learning Assistant workflow...[/]");
+                    var completeWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
 
-                    AnsiConsole.MarkupLine($"[bold green]Executing workflow:[/] {audioWorkflow.Name}");
-                    var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
-
-                    if (result)
+                    if (completeWorkflow != null)
                     {
-                        AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
+                        AnsiConsole.MarkupLine($"[bold green]Executing comprehensive workflow:[/] {completeWorkflow.Name}");
+                        var result = await agentExecutionService.ExecuteWorkflowAsync(completeWorkflow);
+
+                        if (result)
+                        {
+                            AnsiConsole.MarkupLine($"[bold green]Workflow {completeWorkflow.Name} executed successfully.[/]");
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[bold red]Workflow {completeWorkflow.Name} execution failed.[/]");
+                        }
                     }
                     else
                     {
-                        AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
+                        AnsiConsole.MarkupLine("[bold red]Complete Audio Learning workflow not found.[/]");
                     }
                 }
                 else if (userChoice == "Whiteboard")
@@ -191,23 +198,23 @@ public class Program
                 {
                     AnsiConsole.MarkupLine("[bold green]Executing both workflows in parallel...[/]");
 
-                    var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Audio Translation to Vocabulary", StringComparison.OrdinalIgnoreCase));
+                    var completeAudioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
                     var boardCaptureAgent = agents.FirstOrDefault(a => a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
 
-                    if (audioWorkflow != null && boardCaptureAgent != null)
+                    if (completeAudioWorkflow != null && boardCaptureAgent != null)
                     {
-                        var audioTask = agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
+                        var audioTask = agentExecutionService.ExecuteWorkflowAsync(completeAudioWorkflow);
                         var boardTask = agentExecutionService.ExecuteAgentAsync(boardCaptureAgent);
 
                         await Task.WhenAll(audioTask, boardTask);
 
                         if (audioTask.Result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
+                            AnsiConsole.MarkupLine($"[bold green]Workflow {completeAudioWorkflow.Name} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
+                            AnsiConsole.MarkupLine($"[bold red]Workflow {completeAudioWorkflow.Name} execution failed.[/]");
                         }
 
                         if (boardTask.Result)

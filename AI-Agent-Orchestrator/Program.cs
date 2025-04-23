@@ -7,6 +7,7 @@ using Spectre.Console;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using System.Diagnostics;
 using System.Net;
+using System.Globalization;
 
 namespace AI_Agent_Orchestrator;
 
@@ -69,6 +70,36 @@ public class Program
         {
             DisplayWelcomeScreen();
             
+            // Prompt the user to select their preferred language
+            AnsiConsole.MarkupLine("[bold cyan]Select your preferred language:[/]");
+            var userLanguage = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title("[bold yellow]Choose a language:[/]")
+                    .AddChoices("English", "Spanish", "French", "German", "Chinese", "Japanese", "Hindi", "Other"));
+
+            if (userLanguage == "Other")
+            {
+                AnsiConsole.MarkupLine("[bold yellow]Please type your preferred language:[/]");
+                userLanguage = Console.ReadLine();
+            }
+
+            AnsiConsole.MarkupLine($"[bold green]You have selected:[/] {userLanguage}");
+
+            var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
+                .FirstOrDefault(c => c.EnglishName.Contains(userLanguage, StringComparison.OrdinalIgnoreCase) ||
+                                    c.NativeName.Contains(userLanguage, StringComparison.OrdinalIgnoreCase));
+
+            string languageCode;
+            if (culture != null) {
+                languageCode = culture.TwoLetterISOLanguageName;
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[bold red]Language not recognized. Defaulting to English.[/]");
+                languageCode = "en"; // Default to English if the language is not recognized
+            }
+            AnsiConsole.MarkupLine($"[bold green]Language code selected:[/] {languageCode}");
+
             // Detect root directory location
             var rootDirectory = GetSolutionRootDirectory();
             logger.LogInformation($"Solution root directory: {rootDirectory}");
@@ -83,8 +114,8 @@ public class Program
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
                     
-                    var agents = agentDiscoveryService.DiscoverAgentsAsync().GetAwaiter().GetResult();
-                    var workflows = agentDiscoveryService.DiscoverWorkflowsAsync().GetAwaiter().GetResult();
+                    var agents = agentDiscoveryService.DiscoverAgentsAsync(languageCode).GetAwaiter().GetResult();
+                    var workflows = agentDiscoveryService.DiscoverWorkflowsAsync(languageCode).GetAwaiter().GetResult();
                     
                     if (agents.Count == 0)
                     {
@@ -96,8 +127,8 @@ public class Program
                     }
                 });
                 
-            var agents = await agentDiscoveryService.DiscoverAgentsAsync();
-            var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync();
+            var agents = await agentDiscoveryService.DiscoverAgentsAsync(languageCode);
+            var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync(languageCode);
             
             if (agents.Count == 0)
             {
@@ -108,136 +139,84 @@ public class Program
             
             while (true)
             {
-                Console.Write("Enter a query to find relevant agents or workflows (or type 'exit' to quit): ");
-                string userQuery = Console.ReadLine() ?? "";
+                AnsiConsole.MarkupLine("[bold cyan]Choose an option:[/]");
+                var userChoice = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("[bold yellow]What would you like to do?[/]")
+                        .AddChoices("Audio", "Whiteboard", "Both", "Exit"));
 
-                if (string.Equals(userQuery, "exit", StringComparison.OrdinalIgnoreCase))
+                if (userChoice == "Exit")
                 {
                     AnsiConsole.MarkupLine("[bold red]Exiting the program.[/]");
                     break;
                 }
 
-                // DEBUG: Show all available workflows
-                AnsiConsole.MarkupLine($"[dim]Found {workflows.Count} workflows in total.[/]");
-                
-                // First check if any workflows match the query
-                var relevantWorkflows = await semanticKernelService.FindRelevantWorkflowsAsync(workflows, userQuery);
-                
-                // SPECIAL CASE: If query explicitly mentions speech/translate AND flashcards/vocabulary, always show workflow
-                bool forceWorkflow = userQuery.Contains("speech", StringComparison.OrdinalIgnoreCase) && 
-                    (userQuery.Contains("flashcard", StringComparison.OrdinalIgnoreCase) || 
-                     userQuery.Contains("vocabulary", StringComparison.OrdinalIgnoreCase));
-                
-                // DEBUG: Output workflow matching info
-                AnsiConsole.MarkupLine($"[dim]Query matched {relevantWorkflows.Count} workflows.[/]");
-                
-                // If we have relevant workflows OR we should force workflow selection, offer those first
-                if (relevantWorkflows.Count > 0 || forceWorkflow)
+                if (userChoice == "Audio")
                 {
-                    // If forceWorkflow is true but no workflows were matched, use all workflows
-                    if (forceWorkflow && relevantWorkflows.Count == 0)
+                    AnsiConsole.MarkupLine("[bold green]Executing Audio Translation to Vocabulary workflow...[/]");
+                    var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains(userChoice, StringComparison.OrdinalIgnoreCase));
+
+                    AnsiConsole.MarkupLine($"[bold green]Executing workflow:[/] {audioWorkflow.Name}");
+                    var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
+
+                    if (result)
                     {
-                        relevantWorkflows = workflows;
-                        AnsiConsole.MarkupLine("[yellow]Direct workflow match detected.[/]");
+                        AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
                     }
-                    
-                    AnsiConsole.MarkupLine("[bold cyan]Relevant workflows found:[/]");
-                    foreach (var workflow in relevantWorkflows)
+                    else
                     {
-                        AnsiConsole.MarkupLine($"- [bold]{workflow.Name}[/]: {workflow.Description}");
-                        AnsiConsole.MarkupLine($"  [dim]Steps: {string.Join(" → ", workflow.Agents.Select(a => a.Name))}[/]");
-                    }
-                    
-                    // Prompt to use a workflow
-                    if (AnsiConsole.Confirm("Would you like to execute one of these workflows?", true))
-                    {
-                        var workflowSelection = await PromptForWorkflowSelectionAsync(relevantWorkflows);
-                        if (workflowSelection != null)
-                        {
-                            AnsiConsole.MarkupLine($"[bold green]Executing workflow:[/] {workflowSelection.Name}");
-                            var result = await agentExecutionService.ExecuteWorkflowAsync(workflowSelection);
-                            
-                            if (result)
-                            {
-                                AnsiConsole.MarkupLine($"[bold green]Workflow {workflowSelection.Name} executed successfully.[/]");
-                            }
-                            else
-                            {
-                                AnsiConsole.MarkupLine($"[bold red]Workflow {workflowSelection.Name} execution failed.[/]");
-                            }
-                            
-                            continue;
-                        }
+                        AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
                     }
                 }
-
-                // If no workflow was selected, fall back to individual agents
-                var allAgents = await agentDiscoveryService.DiscoverAgentsAsync();
-                var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(allAgents, userQuery);
-
-                if (relevantAgents.Count == allAgents.Count)
+                else if (userChoice == "Whiteboard")
                 {
-                    AnsiConsole.MarkupLine("[bold yellow]No specific agents were identified. Engaging in a chat with the LLM. Type \"exit\" to stop.[/]");
+                    AnsiConsole.MarkupLine("[bold green]Executing Classroom Board Capture agent...[/]");
+                    var boardCaptureAgent = agents.FirstOrDefault(a => a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
 
-                    // Use the LLM to chat with the user based on the query
-                    var chatResponse = await semanticKernelService.ChatWithLLMAsync(userQuery);
-                    AnsiConsole.MarkupLine("\n[bold green]LinguaLearn Bot:[/]");
-                    AnsiConsole.WriteLine(chatResponse);
-
-                    // Continue engaging in a conversation with the user
-                    while (true)
+                    if (boardCaptureAgent != null)
                     {
-                        AnsiConsole.MarkupLine("\n[bold cyan]You:[/]");
-                        string followUpQuery = Console.ReadLine() ?? "";
+                        var result = await agentExecutionService.ExecuteAgentAsync(boardCaptureAgent);
 
-                        if (string.Equals(followUpQuery, "exit", StringComparison.OrdinalIgnoreCase))
+                        if (result)
                         {
-                            AnsiConsole.MarkupLine("[bold red]Exiting chat with the LLM.[/]");
-                            break;
-                        }
-
-                        var followUpResponse = await semanticKernelService.ChatWithLLMAsync(followUpQuery);
-                        AnsiConsole.MarkupLine("\n[bold green]LinguaLearn Bot:[/]");
-                        AnsiConsole.WriteLine(followUpResponse);
-                    }
-                }
-                else
-                {
-                    AnsiConsole.MarkupLine("[bold cyan]Relevant agents in order:[/]");
-                    foreach (var agent in relevantAgents)
-                    {
-                        AnsiConsole.MarkupLine($"- [bold]{agent.Name}[/]: {agent.Description}");
-                    }
-
-                    // Prompt the user to select an agent
-                    while (true) {
-                        var selectedAgent = await PromptForAgentSelectionAsync(relevantAgents);
-
-                        if (selectedAgent != null)
-                        {
-                            AnsiConsole.MarkupLine($"[bold green]Executing agent:[/] {selectedAgent.Name}");
-                            var result = await agentExecutionService.ExecuteAgentAsync(selectedAgent);
-
-                            if (result)
-                            {
-                                AnsiConsole.MarkupLine($"[bold green]Agent {selectedAgent.Name} executed successfully.[/]");
-                            }
-                            else
-                            {
-                                AnsiConsole.MarkupLine($"[bold red]Agent {selectedAgent.Name} execution failed.[/]");
-                            }
-
-                            relevantAgents.Remove(selectedAgent);
-                            if (relevantAgents.Count == 0)
-                            {
-                                AnsiConsole.MarkupLine("[bold red]No more relevant agents available.[/]");
-                                break;
-                            }
+                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureAgent.Name} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine("[bold yellow]No agent was selected. Returning to the main menu.[/]");
-                            break;
+                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureAgent.Name} execution failed.[/]");
+                        }
+                    }
+                }
+                else if (userChoice == "Both")
+                {
+                    AnsiConsole.MarkupLine("[bold green]Executing both workflows in parallel...[/]");
+
+                    var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Audio Translation to Vocabulary", StringComparison.OrdinalIgnoreCase));
+                    var boardCaptureAgent = agents.FirstOrDefault(a => a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
+
+                    if (audioWorkflow != null && boardCaptureAgent != null)
+                    {
+                        var audioTask = agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
+                        var boardTask = agentExecutionService.ExecuteAgentAsync(boardCaptureAgent);
+
+                        await Task.WhenAll(audioTask, boardTask);
+
+                        if (audioTask.Result)
+                        {
+                            AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
+                        }
+
+                        if (boardTask.Result)
+                        {
+                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureAgent.Name} executed successfully.[/]");
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureAgent.Name} execution failed.[/]");
                         }
                     }
                 }

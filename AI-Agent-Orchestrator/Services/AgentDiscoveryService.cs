@@ -20,7 +20,7 @@ public class AgentDiscoveryService
         _logger = logger;
     }
 
-    public async Task<List<AgentInfo>> DiscoverAgentsAsync()
+    public async Task<List<AgentInfo>> DiscoverAgentsAsync(string targetLanguage)
     {
         _logger.LogInformation("Discovering available AI agents...");
         
@@ -75,7 +75,7 @@ public class AgentDiscoveryService
                     Description = "Translates spoken language in real-time",
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-agent-SpeechTranslator")),
-                    Arguments = new List<string> { "run", "--project", "." },
+                    Arguments = new List<string> { "run", "--project", ".", "--", targetLanguage },
                     Keywords = new[] { "speech", "translate", "language", "audio", "record", "recording" }
                 },
                 new AgentInfo 
@@ -93,7 +93,7 @@ public class AgentDiscoveryService
                     Description = "Captures, analyzes, and translates whiteboard content",
                     ExecutablePath = "dotnet",
                     WorkingDirectory = Path.GetFullPath(Path.Combine(rootDir, "..", "AI-Agent-BoardCapture")),
-                    Arguments = new List<string> { "run", "--project", "." },
+                    Arguments = new List<string> { "run", "--project", ".", "--", targetLanguage },
                     Keywords = new[] { "whiteboard", "capture", "classroom", "ocr", "image" }
                 }
             };
@@ -133,14 +133,14 @@ public class AgentDiscoveryService
         return _discoveredAgents;
     }
     
-    public async Task<List<AgentWorkflow>> DiscoverWorkflowsAsync()
+    public async Task<List<AgentWorkflow>> DiscoverWorkflowsAsync(string targetLanguage)
     {
         _logger.LogInformation("Discovering available AI agent workflows...");
         
         // First ensure we have all agents loaded
         if (_discoveredAgents.Count == 0)
         {
-            await DiscoverAgentsAsync();
+            await DiscoverAgentsAsync(targetLanguage);
         }
         
         // Load predefined workflows from configuration
@@ -171,7 +171,7 @@ public class AgentDiscoveryService
                     Description = "Records and translates speech, then generates vocabulary flashcards",
                     Agents = new List<AgentInfo> { speechTranslator, vocabularyBank },
                     OutputMappings = new Dictionary<string, string> { 
-                        { "Speech Translator", "Output/translated_transcript.txt" } 
+                        { "Speech Translator", "Output/recognized_transcript.txt" } 
                     },
                     Keywords = new[] { 
                         "audio", "speech", "translate", "translator", 

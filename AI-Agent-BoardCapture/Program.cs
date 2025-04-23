@@ -32,6 +32,12 @@ namespace ClassroomBoardCapture
             var captureService = host.Services.GetRequiredService<IImageCaptureService>();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var config = host.Services.GetRequiredService<AppSettings>();
+
+            // Change the target language basd on the arguments
+            if (args.Length > 0)
+            {
+                config.TargetLanguage = args[0];
+            }
             
             // Display configuration information
             Console.WriteLine($"Images will be saved to: {config.CaptureFolder}");

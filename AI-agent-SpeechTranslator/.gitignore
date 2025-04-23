@@ -38,3 +38,6 @@ _ReSharper*/
 
 # Logs
 logs/
+
+# Output folders
+Output/

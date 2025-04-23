@@ -168,20 +168,20 @@ public class Program
                 if (userChoice == "Complete Audio Learning")
                 {
                     AnsiConsole.MarkupLine("[bold green]Executing Complete Audio Learning Assistant workflow...[/]");
-                    var completeWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
+                    var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
 
-                    if (completeWorkflow != null)
+                    if (audioWorkflow != null)
                     {
-                        AnsiConsole.MarkupLine($"[bold green]Executing comprehensive workflow:[/] {completeWorkflow.Name}");
-                        var result = await agentExecutionService.ExecuteWorkflowAsync(completeWorkflow);
+                        AnsiConsole.MarkupLine($"[bold green]Executing comprehensive workflow:[/] {audioWorkflow.Name}");
+                        var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
 
                         if (result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Workflow {completeWorkflow.Name} executed successfully.[/]");
+                            AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Workflow {completeWorkflow.Name} execution failed.[/]");
+                            AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
                         }
                     }
                     else
@@ -191,21 +191,25 @@ public class Program
                 }
                 else if (userChoice == "Whiteboard")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing Classroom Board Capture agent...[/]");
-                    var boardCaptureAgent = agents.FirstOrDefault(a => a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
+                    AnsiConsole.MarkupLine("[bold green]Executing Complete Whiteboard Capture and Diagram Generation workflow...[/]");
+                    var boardCaptureWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Whiteboard", StringComparison.OrdinalIgnoreCase));
 
-                    if (boardCaptureAgent != null)
+                    if (boardCaptureWorkflow != null)
                     {
-                        var result = await agentExecutionService.ExecuteAgentAsync(boardCaptureAgent);
+                        var result = await agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
                         if (result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureAgent.Name} executed successfully.[/]");
+                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureWorkflow.Name} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureAgent.Name} execution failed.[/]");
+                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureWorkflow.Name} execution failed.[/]");
                         }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine("[bold red]Complete Whiteboard Capture and Diagram Generation workflow not found.[/]");
                     }
                 }
                 else if (userChoice == "Both")
@@ -213,12 +217,12 @@ public class Program
                     AnsiConsole.MarkupLine("[bold green]Executing both workflows in parallel...[/]");
 
                     var completeAudioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
-                    var boardCaptureAgent = agents.FirstOrDefault(a => a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
+                    var boardCaptureWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
 
-                    if (completeAudioWorkflow != null && boardCaptureAgent != null)
+                    if (completeAudioWorkflow != null && boardCaptureWorkflow != null)
                     {
                         var audioTask = agentExecutionService.ExecuteWorkflowAsync(completeAudioWorkflow);
-                        var boardTask = agentExecutionService.ExecuteAgentAsync(boardCaptureAgent);
+                        var boardTask = agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
                         await Task.WhenAll(audioTask, boardTask);
 
@@ -233,11 +237,11 @@ public class Program
 
                         if (boardTask.Result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureAgent.Name} executed successfully.[/]");
+                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureWorkflow.Name} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureAgent.Name} execution failed.[/]");
+                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureWorkflow.Name} execution failed.[/]");
                         }
                     }
                 }

@@ -156,15 +156,17 @@ public class AgentDiscoveryService
             // Create predefined workflows based on the diagram
             _discoveredWorkflows = new List<AgentWorkflow>();
             
-            // Find the Speech Translator and Vocabulary Bank agents
+            // Find all of the agents
             var speechTranslator = _discoveredAgents.FirstOrDefault(a => 
                 a.Name.Contains("Speech Translator", StringComparison.OrdinalIgnoreCase));
             var vocabularyBank = _discoveredAgents.FirstOrDefault(a => 
                 a.Name.Contains("Vocabulary Bank", StringComparison.OrdinalIgnoreCase));
+            var classroomBoardCapture = _discoveredAgents.FirstOrDefault(a => 
+                a.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
+            var diagramGenerator = _discoveredAgents.FirstOrDefault(a =>
+                a.Name.Contains("Diagram Generator", StringComparison.OrdinalIgnoreCase));
             var summarizationAgent = _discoveredAgents.FirstOrDefault(a =>
                 a.Name.Contains("AI Summarization Agent", StringComparison.OrdinalIgnoreCase));
-            
-            
 
             // Create the complete workflow with summarization if all three agents are available
             if (speechTranslator != null && vocabularyBank != null && summarizationAgent != null)
@@ -193,6 +195,27 @@ public class AgentDiscoveryService
                 });
                 
                 _logger.LogInformation("Created comprehensive audio learning workflow with translation, vocabulary, and summarization");
+            }
+
+            if (classroomBoardCapture != null && diagramGenerator != null)
+            {
+                // Create a workflow that connects the classroom board capture and diagram generator
+                _discoveredWorkflows.Add(new AgentWorkflow
+                {
+                    Name = "Complete Whiteboard Capture and Diagram Generation",
+                    Description = "Captures whiteboard content and generates visual diagrams",
+                    Agents = new List<AgentInfo> { classroomBoardCapture, diagramGenerator },
+                    OutputMappings = new Dictionary<string, List<string>> { 
+                        { "Classroom Board Capture", new List<string> {
+                            "Captures/capture_manifest.json",
+                        }}
+                    },
+                    Keywords = new[] { 
+                        "whiteboard", "capture", "classroom", "diagram", 
+                        "visual", "chart", "mindmap", "flowchart"
+                    },
+                    Category = "Classroom Assistant"
+                });
             }
             
             // Save discovered workflows to a local file for future use

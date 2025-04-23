@@ -33,58 +33,78 @@ namespace DiagramGenerator
             {
                 logger.LogInformation("Starting Visual Diagram Generator");
                 
-                string filePath;
-                if (args.Length == 0)
+                // Validate and process the manifest file and additional arguments
+                var filePaths = new List<string>();
+
+                if (args.Length > 0)
                 {
-                    // No command-line argument provided, prompt user to select a file
-                    filePath = PromptForFilePath();
-                    if (string.IsNullOrEmpty(filePath))
+                    foreach (var arg in args)
                     {
-                        logger.LogError("No file selected");
-                        return;
+                        if (File.Exists(arg))
+                        {
+                            if (!arg.EndsWith(".json"))
+                            {
+                                filePaths.Add(arg);
+                            }
+                            else
+                            {
+                                if (arg.Contains("manifest")) {
+                                    string manifestContent = await File.ReadAllTextAsync(arg);
+                                    var manifestEntries = JsonSerializer.Deserialize<List<dynamic>>(manifestContent);
+
+                                    if (manifestEntries != null)
+                                    {
+                                        filePaths.AddRange(manifestEntries.Select(entry => entry.FileName));
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                else
+
+                if (filePaths.Count == 0)
                 {
-                    filePath = args[0];
-                }
-                
-                if (!File.Exists(filePath))
-                {
-                    logger.LogError($"File not found: {filePath}");
+                    logger.LogError("No valid files or manifest entries provided.");
                     return;
                 }
-                
-                // Process transcript and generate diagram
-                string transcript = await File.ReadAllTextAsync(filePath);
-                logger.LogInformation($"Processing transcript from {filePath}");
-                
-                // Create a progress handler
-                var conceptExtractionProgress = new Progress<int>(percent => 
+
+                foreach (var filePath in filePaths.Distinct())
                 {
-                    Console.Write($"\rExtracting concepts: {percent}% complete");
-                    if (percent >= 100) Console.WriteLine();
-                });
-                
-                var concepts = await openAIService.ExtractConcepts(transcript, conceptExtractionProgress);
-                logger.LogInformation($"Extracted {concepts.Count} key concepts");
-                
-                string diagramType = GetDiagramTypeFromUser();
-                
-                var diagramProgress = new Progress<int>(percent => 
-                {
-                    Console.Write($"\rGenerating {diagramType} diagram: {percent}% complete");
-                    if (percent >= 100) Console.WriteLine();
-                });
-                
-                var diagram = await openAIService.GenerateDiagram(concepts, diagramType, diagramProgress);
-                
-                // Save and display the diagram
-                string outputPath = await SaveDiagramToFile(diagram, filePath, configuration);
-                logger.LogInformation($"Diagram saved to {outputPath}");
-                
-                Console.WriteLine("\nDiagram generated successfully. What would you like to do next?");
-                await HandleUserInteraction(diagram, concepts, openAIService, outputPath, filePath);
+                    if (!File.Exists(filePath))
+                    {
+                        logger.LogError($"File not found: {filePath}");
+                        continue;
+                    }
+
+                    logger.LogInformation($"Processing file: {filePath}");
+
+                    // Process transcript and generate diagram
+                    string transcript = await File.ReadAllTextAsync(filePath);
+                    logger.LogInformation($"Processing transcript from {filePath}");
+
+                    var conceptExtractionProgress = new Progress<int>(percent => 
+                    {
+                        Console.Write($"\rExtracting concepts: {percent}% complete");
+                        if (percent >= 100) Console.WriteLine();
+                    });
+
+                    var concepts = await openAIService.ExtractConcepts(transcript, conceptExtractionProgress);
+                    logger.LogInformation($"Extracted {concepts.Count} key concepts");
+
+                    string diagramType = GetDiagramTypeFromUser();
+
+                    var diagramProgress = new Progress<int>(percent => 
+                    {
+                        Console.Write($"\rGenerating {diagramType} diagram: {percent}% complete");
+                        if (percent >= 100) Console.WriteLine();
+                    });
+
+                    var diagram = await openAIService.GenerateDiagram(concepts, diagramType, diagramProgress);
+
+                    // Save and display the diagram
+                    string outputPath = await SaveDiagramToFile(diagram, filePath, configuration);
+                    logger.LogInformation($"Diagram saved to {outputPath}");
+                }
             }
             catch (Exception ex)
             {

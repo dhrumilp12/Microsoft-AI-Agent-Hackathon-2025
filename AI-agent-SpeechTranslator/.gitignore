@@ -7,6 +7,8 @@ obj/
 *.exe
 *.pdb
 
+.Output/
+
 # Visual Studio files
 .vs/
 *.user

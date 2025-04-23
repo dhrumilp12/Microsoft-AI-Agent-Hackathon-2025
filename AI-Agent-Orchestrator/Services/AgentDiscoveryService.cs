@@ -161,30 +161,38 @@ public class AgentDiscoveryService
                 a.Name.Contains("Speech Translator", StringComparison.OrdinalIgnoreCase));
             var vocabularyBank = _discoveredAgents.FirstOrDefault(a => 
                 a.Name.Contains("Vocabulary Bank", StringComparison.OrdinalIgnoreCase));
+            var summarizationAgent = _discoveredAgents.FirstOrDefault(a =>
+                a.Name.Contains("AI Summarization Agent", StringComparison.OrdinalIgnoreCase));
             
-            if (speechTranslator != null && vocabularyBank != null)
+            
+
+            // Create the complete workflow with summarization if all three agents are available
+            if (speechTranslator != null && vocabularyBank != null && summarizationAgent != null)
             {
-                // Create a workflow that connects them with both original and translated text
+                // Create a comprehensive workflow that connects all three agents
                 _discoveredWorkflows.Add(new AgentWorkflow
                 {
-                    Name = "Audio Translation to Vocabulary",
-                    Description = "Records and translates speech, then generates vocabulary flashcards from both original and translated text",
-                    Agents = new List<AgentInfo> { speechTranslator, vocabularyBank },
+                    Name = "Complete Audio Learning Assistant",
+                    Description = "Records and translates speech, generates vocabulary flashcards, and creates a summarized version of the content",
+                    Agents = new List<AgentInfo> { speechTranslator, vocabularyBank, summarizationAgent },
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Speech Translator", new List<string> {
                             "Output/recognized_transcript.txt",
                             "Output/translated_transcript.txt"
+                        } },
+                        { "Vocabulary Bank & Flashcards Generator", new List<string> {
+                            "sample_transcript_flashcards.json"
                         } }
                     },
                     Keywords = new[] { 
-                        "audio", "speech", "translate", "translator", 
-                        "vocabulary", "flashcards", "flashcard", "word", 
-                        "language", "learning", "education"
+                        "audio", "speech", "translate", "vocabulary", "summary", 
+                        "summarize", "flashcards", "comprehensive", "complete", 
+                        "learning", "education", "assistant"
                     },
-                    Category = "Language Learning"
+                    Category = "Education Assistant"
                 });
                 
-                _logger.LogInformation("Created Speech-to-Vocabulary workflow with both original and translated text");
+                _logger.LogInformation("Created comprehensive audio learning workflow with translation, vocabulary, and summarization");
             }
             
             // Save discovered workflows to a local file for future use

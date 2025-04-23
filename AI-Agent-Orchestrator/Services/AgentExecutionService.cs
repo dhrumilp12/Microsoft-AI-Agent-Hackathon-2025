@@ -162,6 +162,7 @@ public class AgentExecutionService
                 {
                     // Check for the existence of the required files
                     string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
+                    string capturedImageDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Agent-BoardCapture", "Captures"));
                     string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "recognized_transcript_flashcards.json"));
                     
                     // Verify the files exist before adding them to arguments
@@ -175,6 +176,57 @@ public class AgentExecutionService
                     else
                     {
                         AnsiConsole.MarkupLine($"[yellow]Warning:[/] Translated transcript not found at expected location: {translatedTranscriptPath}");
+                    }
+                    
+                    // If the translated transcript is not found, use the latest captured image text
+                    if (Directory.Exists(capturedImageDir))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Using latest captured image text file:[/] {capturedImageDir}");
+                        
+                        // Find the latest image text file
+                        var imageTextFiles = Directory.GetFiles(capturedImageDir, "capture_*.txt")
+                                                            .Where(f => !f.Contains(".analysis") 
+                                                                && f.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+                                                            )
+                                                            .OrderByDescending(f => new FileInfo(f).CreationTime)
+                                                            .ToArray();
+
+                        if (imageTextFiles.Count() > 0)
+                        {
+                            string latestImageTextFile = imageTextFiles[0];
+                            
+                            // Create a symbolic link to the latest image text file for consistency in naming
+                            string latestImageTextLink = Path.Combine(capturedImageDir, "latest_captured_image_text.txt");
+                            
+                            try
+                            {
+                                // Remove existing link if it exists
+                                if (File.Exists(latestImageTextLink))
+                                {
+                                    File.Delete(latestImageTextLink);
+                                }
+                                
+                                // On Windows, create a hard link as symbolic links require admin privileges
+                                File.Copy(latestImageTextFile, latestImageTextLink, true);
+
+                                AnsiConsole.MarkupLine($"[green]Created link to latest image text:[/] {latestImageTextLink}");
+
+                                agent.Arguments.RemoveAll(arg => arg.Contains("capture"));
+                                agent.Arguments.Add(latestImageTextLink);
+                            }
+                            catch (Exception ex)
+                            {
+                                AnsiConsole.MarkupLine($"[yellow]Warning:[/] Could not create link to latest image text: {ex.Message}");
+                            }
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine($"[yellow]Warning:[/] No image text files found in {capturedImageDir}");
+                        }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Captured image directory not found: {capturedImageDir}");
                     }
                     
                     if (File.Exists(vocabularyDataPath))

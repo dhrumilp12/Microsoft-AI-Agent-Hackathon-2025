@@ -60,19 +60,6 @@ namespace ClassroomBoardCapture
                 logger.LogInformation("User requested application termination");
                 return Task.CompletedTask;
             });
-
-            // Generate a manifest file for captured images and analysis files
-            var manifestFilePath = Path.Combine(config.CaptureFolder, "captures_manifest.json");
-            
-            var manifestEntries = Directory.GetFiles(config.CaptureFolder, "capture_*.analysis.txt")
-                .Select(filePath => new
-                {
-                    FileName = filePath,
-                    Timestamp = File.GetCreationTime(filePath).ToString("o")
-                });
-
-            await File.WriteAllTextAsync(manifestFilePath, JsonSerializer.Serialize(manifestEntries));
-            logger.LogInformation($"Manifest file created at {manifestFilePath}");
             
             Console.WriteLine("Application terminated.");
         }

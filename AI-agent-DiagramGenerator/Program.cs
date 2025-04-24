@@ -42,23 +42,7 @@ namespace DiagramGenerator
                     {
                         if (File.Exists(arg))
                         {
-                            if (!arg.EndsWith(".json"))
-                            {
-                                filePaths.Add(arg);
-                            }
-                            else
-                            {
-                                if (arg.Contains("manifest")) {
-                                    string manifestContent = await File.ReadAllTextAsync(arg);
-                                    var manifestEntries = JsonSerializer.Deserialize<List<dynamic>>(manifestContent);
-
-                                    if (manifestEntries != null)
-                                    {
-                                        filePaths.AddRange(
-                                        manifestEntries.Select(entry => (string)entry.FileName)  );
-                                    }
-                                }
-                            }
+                            filePaths.Add(arg);
                         }
                     }
                 }

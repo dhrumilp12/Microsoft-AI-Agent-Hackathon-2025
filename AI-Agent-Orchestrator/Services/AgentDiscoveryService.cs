@@ -237,14 +237,11 @@ public class AgentDiscoveryService
                 {
                     Name = "Complete Whiteboard Capture, Summarization, and Diagram Generation",
                     Description = "Captures whiteboard content, summarizes it, and generates visual diagrams",
-                    Agents = new List<AgentInfo> { classroomBoardCapture, vocabularyBank, summarizationAgent, diagramGenerator },
+                    Agents = new List<AgentInfo> { classroomBoardCapture, summarizationAgent, diagramGenerator },
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Classroom Board Capture", new List<string> {
                             "Captures/capture_*.txt",
                         }},
-                        { "Vocabulary Bank & Flashcards Generator", new List<string> {
-                            "Output/recognized_transcript_flashcards.json"
-                        } },
                         { "AI Summarization Agent", new List<string> {
                             "data/output/summary_*.json"
                         }}
@@ -265,8 +262,7 @@ public class AgentDiscoveryService
                         summaryAgent.Arguments = new List<string> { 
                             "run", "--project", ".",
                             "--", 
-                            "../AI-Agent-BoardCapture/Captures/capture_*.txt",
-                            "../AI-Agent-VocabularyBank/Output/recognized_transcript_flashcards.json"
+                            "../AI-Agent-BoardCapture/Captures/translated_text.txt"
                         };
                         _logger.LogInformation("Updated summarization agent arguments to use classroom board capture and vocabulary data");
                     }
@@ -277,13 +273,13 @@ public class AgentDiscoveryService
                         diagramAgent.Arguments = new List<string> { 
                             "run", "--project", ".",
                             "--", 
-                            "../AI-Agent-BoardCapture/Captures/latest_captured_image_text.txt",
+                            "../AI-Agent-BoardCapture/Captures/translated_text.txt",
                             "../AI-Summarization-agent/data/outputs/latest_summary.json" 
                         };
                         _logger.LogInformation("Updated diagram generator arguments to use classroom board capture and summary output");
                     }
                 }
-                
+
                 _logger.LogInformation("Created workflow for classroom board capture, summarization, and diagram generation");
             }
             // Save discovered workflows to a local file for future use

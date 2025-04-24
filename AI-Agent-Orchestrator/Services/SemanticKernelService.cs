@@ -238,30 +238,38 @@ Available workflows:
         return result;
     }
 
-    public async Task<string> ChatWithLLMAsync(string userQuery)
+    public async Task<(string botResponse, string updatedConversationHistory)> ChatWithLLMAsync(string userQuery, string conversationHistory)
     {
         if (_kernel == null)
         {
             _logger.LogWarning("Semantic Kernel is not initialized. Cannot engage in chat.");
-            return "Sorry, the chat service is currently unavailable.";
+            return ("Sorry, the chat service is currently unavailable.", conversationHistory);
         }
 
         try
         {
-            // Create a prompt for the LLM
-            var promptText = $"The user has asked: \"{userQuery}\". Please provide a helpful and concise response.";
+            // Append the user's query to the conversation history
+            conversationHistory += $"User: {userQuery}\n";
+
+            // Create a prompt for the LLM with the conversation history
+            var promptText = $"The following is a conversation between a user and an AI assistant:\n{conversationHistory}\nAI:";
 
             // Create the function to call OpenAI
             var function = _kernel.CreateFunctionFromPrompt(promptText);
 
             // Invoke the function
             var result = await _kernel.InvokeAsync(function);
-            return result.GetValue<string>() ?? "No response from the LLM.";
+            var botResponse = result.GetValue<string>() ?? "No response from the LLM.";
+
+            // Append the bot's response to the conversation history
+            conversationHistory += $"AI: {botResponse}\n";
+
+            return (botResponse, conversationHistory);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during chat with LLM");
-            return "An error occurred while trying to chat with the LLM.";
+            return ("An error occurred while trying to chat with the LLM.", conversationHistory);
         }
     }
 }

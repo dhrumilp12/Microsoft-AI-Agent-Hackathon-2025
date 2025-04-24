@@ -157,7 +157,7 @@ public class Program
                 var userChoice = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
                         .Title("[bold yellow]What would you like to do?[/]")
-                        .AddChoices("Complete Audio Learning", "Whiteboard", "Both", "Exit"));
+                        .AddChoices("Complete Audio Learning", "Whiteboard", "Both", "Chat with a Bot", "Exit"));
 
                 if (userChoice == "Exit")
                 {
@@ -271,41 +271,34 @@ public class Program
                         }
                     }
                 }
-
-                // Call the summarization agent only if it hasn't been executed as part of a workflow
-                var summarizationAgent = agents.FirstOrDefault(a => a.Name.Contains("Summarization Agent", StringComparison.OrdinalIgnoreCase));
-                if (summarizationAgent != null && !executedAgents.Contains(summarizationAgent.Name))
+                else if (userChoice == "Chat with a Bot")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing Summarization Agent...[/]");
-                    var result = await agentExecutionService.ExecuteAgentAsync(summarizationAgent);
+                    Console.Clear();
+                    
+                    DisplayChatbotWelcome();
 
-                    if (result)
+                    // Initialize conversation history
+                    string conversationHistory = string.Empty;
+
+                    AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Hello! How can I assist you today?");
+
+                    while (true)
                     {
-                        AnsiConsole.MarkupLine($"[bold green]Agent {summarizationAgent.Name} executed successfully.[/]");
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"[bold red]Agent {summarizationAgent.Name} execution failed.[/]");
+                        AnsiConsole.Markup("[bold cyan]You:[/] ");
+                        string userInput = Console.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(userInput) || userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
+                        {
+                            AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Goodbye! Have a great day!");
+                            break;
+                        }
+
+                        var (botResponse, updatedConversationHistory) = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
+                        conversationHistory = updatedConversationHistory;
+
+                        AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
                     }
                 }
-
-                // Call the diagram generator agent only if it hasn't been executed as part of a workflow
-                var diagramGeneratorAgent = agents.FirstOrDefault(a => a.Name.Contains("Diagram", StringComparison.OrdinalIgnoreCase));
-                if (diagramGeneratorAgent != null && !executedAgents.Contains(diagramGeneratorAgent.Name))
-                {
-                    AnsiConsole.MarkupLine("[bold green]Executing Diagram Generator Agent...[/]");
-                    var result = await agentExecutionService.ExecuteAgentAsync(diagramGeneratorAgent);
-
-                    if (result)
-                    {
-                        AnsiConsole.MarkupLine($"[bold green]Agent {diagramGeneratorAgent.Name} executed successfully.[/]");
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"[bold red]Agent {diagramGeneratorAgent.Name} execution failed.[/]");
-                    }
-                }
-
                 // Wait for user input before continuing
                 AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
                 Console.ReadKey(true);
@@ -346,6 +339,18 @@ public class Program
         
         AnsiConsole.MarkupLine("[bold]Welcome to the AI Agent Orchestrator[/]");
         AnsiConsole.MarkupLine("[dim]Your central hub for accessing all available AI agents[/]");
+        AnsiConsole.WriteLine();
+    }
+
+    private static void DisplayChatbotWelcome()
+    {
+        var figlet = new FigletText("AI Chat") 
+            .LeftJustified()
+            .Color(Color.Green);
+
+        AnsiConsole.Write(figlet);
+        AnsiConsole.MarkupLine("[bold green]Welcome to the AI chat...[/]");
+        AnsiConsole.MarkupLine("You can type 'exit' to stop the conversation at any time.");
         AnsiConsole.WriteLine();
     }
     

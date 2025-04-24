@@ -315,7 +315,7 @@ public class Program
                         var relevantWorkflows = await semanticKernelService.FindRelevantWorkflowsAsync(workflows, userInput);
                         if (relevantWorkflows.Count > 0)
                         {
-                            botResponse = "Based on your input, I suggest the following workflow(s):"
+                            botResponse = "Based on your input, I suggest the following workflow(s):";
                             AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Based on your input, I suggest the following workflow(s):");
                             foreach (var workflow in relevantWorkflows)
                             {
@@ -338,14 +338,13 @@ public class Program
                             }
                             else
                             {
-                                botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory)
+                                botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
+                                AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
                             }
                         }
 
                         // Store the conversation in Cosmos DB
                         await cosmosDbService.AddConversationAsync("user123", userInput, botResponse, conversations);
-
-                        AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
                     }
                 }
                 // Wait for user input before continuing

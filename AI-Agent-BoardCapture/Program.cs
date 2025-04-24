@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Serilog;
+using Serilog.Sinks.File;
 
 namespace ClassroomBoardCapture
 {
@@ -99,7 +101,7 @@ namespace ClassroomBoardCapture
                     // Configure logging
                     services.AddLogging(builder =>
                     {
-                        builder.AddSerilog()
+                        builder.AddSerilog();
                     });
                 });
     }

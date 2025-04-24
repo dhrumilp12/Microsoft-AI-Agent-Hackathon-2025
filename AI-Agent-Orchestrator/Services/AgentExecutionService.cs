@@ -156,40 +156,20 @@ public class AgentExecutionService
             {
                 var agent = workflow.Agents[i];
                 bool isLastAgent = (i == workflow.Agents.Count - 1);
-                
-                // Special case handling for summarization agent
-                if (agent.Name.Contains("AI Summarization Agent") && i > 0)
+
+                if (agent.Name.Contains("Vocabulary") && workflow.Name.Contains("Whiteboard"))
                 {
-                    // Check for the existence of the required files
-                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
                     string capturedImageDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Agent-BoardCapture", "Captures"));
-                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "recognized_transcript_flashcards.json"));
                     
-                    // Verify the files exist before adding them to arguments
-                    if (File.Exists(translatedTranscriptPath))
-                    {
-                        AnsiConsole.MarkupLine($"[green]Found translated transcript at:[/] {translatedTranscriptPath}");
-                        // Update the agent arguments to use the translated transcript
-                        agent.Arguments.RemoveAll(arg => arg.Contains("translated_transcript.txt"));
-                        agent.Arguments.Add(translatedTranscriptPath);
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Translated transcript not found at expected location: {translatedTranscriptPath}");
-                    }
-                    
-                    // If the translated transcript is not found, use the latest captured image text
-                    if (Directory.Exists(capturedImageDir))
+                    // If the whiteboard workflow is executed, use the latest captured image text
+                    if (Directory.Exists(capturedImageDir) && workflow.Name.Contains("Whiteboard"))
                     {
                         AnsiConsole.MarkupLine($"[green]Using latest captured image text file:[/] {capturedImageDir}");
                         
                         // Find the latest image text file
                         var imageTextFiles = Directory.GetFiles(capturedImageDir, "capture_*.txt")
-                                                            .Where(f => !f.Contains(".analysis") 
-                                                                && f.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
-                                                            )
-                                                            .OrderByDescending(f => new FileInfo(f).CreationTime)
-                                                            .ToArray();
+                                                    .OrderByDescending(f => new FileInfo(f).CreationTime)
+                                                    .ToArray();
 
                         if (imageTextFiles.Count() > 0)
                         {
@@ -223,6 +203,41 @@ public class AgentExecutionService
                         {
                             AnsiConsole.MarkupLine($"[yellow]Warning:[/] No image text files found in {capturedImageDir}");
                         }
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Captured image directory not found: {capturedImageDir}");
+                    }
+                }
+                
+                // Special case handling for summarization agent
+                if (agent.Name.Contains("AI Summarization Agent") && i > 0)
+                {
+                    // Check for the existence of the required files
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
+                    string capturedImagePath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Agent-BoardCapture", "Captures", "latest_captured_image_text.txt"));
+                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "recognized_transcript_flashcards.json"));
+                    
+                    // Verify the files exist before adding them to arguments
+                    if (File.Exists(translatedTranscriptPath) && workflow.Name.Contains("Audio"))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Found translated transcript at:[/] {translatedTranscriptPath}");
+                        // Update the agent arguments to use the translated transcript
+                        agent.Arguments.RemoveAll(arg => arg.Contains("translated_transcript.txt"));
+                        agent.Arguments.Add(translatedTranscriptPath);
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine($"[yellow]Warning:[/] Translated transcript not found at expected location: {translatedTranscriptPath}");
+                    }
+                    
+                    // If the whiteboard workflow is executed, use the latest captured image text
+                    if (File.Exists(capturedImagePath) && workflow.Name.Contains("Whiteboard"))
+                    {
+                        AnsiConsole.MarkupLine($"[green]Using latest captured image text file:[/] {capturedImageDir}");
+                        
+                        agent.Arguments.RemoveAll(arg => arg.Contains("capture"));
+                        agent.Arguments.Add(capturedImagePath);
                     }
                     else
                     {

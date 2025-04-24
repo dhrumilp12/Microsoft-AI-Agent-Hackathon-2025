@@ -238,38 +238,32 @@ Available workflows:
         return result;
     }
 
-    public async Task<(string botResponse, string updatedConversationHistory)> ChatWithLLMAsync(string userQuery, string conversationHistory)
+    public async Task<string> ChatWithLLMAsync(string userQuery, string conversationHistory)
     {
         if (_kernel == null)
         {
             _logger.LogWarning("Semantic Kernel is not initialized. Cannot engage in chat.");
-            return ("Sorry, the chat service is currently unavailable.", conversationHistory);
+            return "Sorry, the chat service is currently unavailable.";
         }
 
         try
         {
-            // Append the user's query to the conversation history
-            conversationHistory += $"User: {userQuery}\n";
-
             // Create a prompt for the LLM with the conversation history
-            var promptText = $"The following is a conversation between a user and an AI assistant:\n{conversationHistory}\nAI:";
+            var promptText = string.IsNullOrWhiteSpace(conversationHistory)
+                ? $"The following is a conversation between a user and an AI assistant. The user just started the conversation:\nUser: {userQuery}\n"
+                : $"The following is a conversation between a user and an AI assistant:\n{conversationHistory}\n The user has just entered {userQuery}. Please provide a clear and concise response to the query.\n";
 
             // Create the function to call OpenAI
             var function = _kernel.CreateFunctionFromPrompt(promptText);
 
             // Invoke the function
             var result = await _kernel.InvokeAsync(function);
-            var botResponse = result.GetValue<string>() ?? "No response from the LLM.";
-
-            // Append the bot's response to the conversation history
-            conversationHistory += $"AI: {botResponse}\n";
-
-            return (botResponse, conversationHistory);
+            return result.GetValue<string>() ?? "No response from the LLM.";
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during chat with LLM");
-            return ("An error occurred while trying to chat with the LLM.", conversationHistory);
+            return "An error occurred while trying to chat with the LLM.";
         }
     }
 }

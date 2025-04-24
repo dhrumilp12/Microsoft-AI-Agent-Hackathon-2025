@@ -42,6 +42,15 @@ public class Program
             configuration["AzureOpenAI:Endpoint"] = azureOpenAIConfig.Endpoint;
             configuration["AzureOpenAI:ApiKey"] = azureOpenAIConfig.ApiKey;
             configuration["AzureOpenAI:DeploymentName"] = azureOpenAIConfig.DeploymentName;
+
+            var cosmosDBConfig = new {
+                ConnectionString = Environment.GetEnvironmentVariable("COSMOSDB_CONNECTION_STRING"),
+                DatabaseName = Environment.GetEnvironmentVariable("COSMOSDB_DATABASENAME"),
+                ContainerName = Environment.GetEnvironmentVariable("COSMOSDB_CONTAINERNAME")
+            };
+            configuration["CosmosDb:ConnectionString"] = cosmosDBConfig.ConnectionString;
+            configuration["CosmosDb:DatabaseName"] = cosmosDBConfig.DatabaseName;
+            configuration["CosmosDb:ContainerName"] = cosmosDBConfig.ContainerName;
         }
 
         // Check if the configuration is valid
@@ -277,13 +286,23 @@ public class Program
                     
                     DisplayChatbotWelcome();
 
-                    // Initialize conversation history
-                    string conversationHistory = string.Empty;
+                    // Initialize Cosmos DB service
+                    var cosmosDbService = new CosmosDbService(
+                        configuration["CosmosDb:ConnectionString"],
+                        configuration["CosmosDb:DatabaseName"],
+                        configuration["CosmosDb:ContainerName"]);
+                    
 
                     AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Hello! How can I assist you today?");
 
                     while (true)
                     {
+                        var conversations = await cosmosDbService.GetConversationsAsync("user123");
+
+                        string conversationHistory = cosmosDbService.ConvertConversationsToString(conversations);
+
+                        logger.LogInformation($"Conversation history: {conversationHistory}");
+
                         AnsiConsole.Markup("[bold cyan]You:[/] ");
                         string userInput = Console.ReadLine();
 
@@ -293,8 +312,10 @@ public class Program
                             break;
                         }
 
-                        var (botResponse, updatedConversationHistory) = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
-                        conversationHistory = updatedConversationHistory;
+                        var botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
+
+                        // Store the conversation in Cosmos DB
+                        await cosmosDbService.AddConversationAsync("user123", userInput, botResponse, conversations);
 
                         AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
                     }

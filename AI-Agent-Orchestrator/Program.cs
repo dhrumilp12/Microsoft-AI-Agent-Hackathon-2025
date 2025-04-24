@@ -82,6 +82,7 @@ public class Program
             .AddSingleton<AgentDiscoveryService>()
             .AddSingleton<AgentExecutionService>()
             .AddSingleton<SemanticKernelService>()
+            .AddSingleton<AzureTranslationService>()
             .BuildServiceProvider();
         
         // Get required services
@@ -94,11 +95,11 @@ public class Program
             DisplayWelcomeScreen();
             
             // Create a translation service to get available languages
-            var translationService = new AzureTranslationService(configuration);
+            var translationService = new AzureTranslationService(configuration, loggerFactory.CreateLogger<AzureTranslationService>());
             var availableLanguages = await translationService.GetAvailableLanguagesAsync();
             
             // Get target language
-            AnsiConsole.MarkupLine("[bold cyan]Select your target language (language to translate to):[/]");
+            await TranslationHelper.MarkupLineAsync("[bold cyan]Select your target language (language to translate to):[/]");
             
             // Display retrieving languages message
             AnsiConsole.Status()
@@ -108,7 +109,7 @@ public class Program
                     ctx.SpinnerStyle(Style.Parse("green"));
                 });
             
-            AnsiConsole.MarkupLine("\n[bold yellow]Available languages:[/]");
+            await TranslationHelper.MarkupLineAsync("\n[bold yellow]Available languages:[/]");
             
             // Display languages in a 3-column format
             const int columns = 3;
@@ -125,38 +126,41 @@ public class Program
             }
             
             Console.WriteLine();
-            AnsiConsole.Markup("[bold yellow]Enter the language code to translate TO:[/] ");
+            await TranslationHelper.MarkupAsync("[bold yellow]Enter the language code to translate TO:[/] ");
             string targetLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "en";
             
             // Validate the target language code
             if (!availableLanguages.ContainsKey(targetLanguageCode))
             {
-                AnsiConsole.MarkupLine($"[bold red]Language code '{targetLanguageCode}' not recognized. Defaulting to English (en).[/]");
+                await TranslationHelper.MarkupLineAsync($"[bold red]Language code '{targetLanguageCode}' not recognized. Defaulting to English (en).[/]");
                 targetLanguageCode = "en";
             }
             else
             {
-                AnsiConsole.MarkupLine($"[bold green]Target language:[/] {availableLanguages[targetLanguageCode]} ({targetLanguageCode})");
+                await TranslationHelper.MarkupLineAsync($"[bold green]Target language:[/] {availableLanguages[targetLanguageCode]} ({targetLanguageCode})");
             }
             
             // Now ask for source language
-            AnsiConsole.Markup("\n[bold yellow]Enter the language code to translate FROM (default: auto-detect):[/] ");
+            await TranslationHelper.MarkupAsync("\n[bold yellow]Enter the language code to translate FROM (default: auto-detect):[/] ");
             string sourceLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "";
             
             // Validate the source language code if provided
             if (!string.IsNullOrEmpty(sourceLanguageCode) && !availableLanguages.ContainsKey(sourceLanguageCode))
             {
-                AnsiConsole.MarkupLine($"[bold red]Language code '{sourceLanguageCode}' not recognized. Auto-detection will be used.[/]");
+                await TranslationHelper.MarkupLineAsync($"[bold red]Language code '{sourceLanguageCode}' not recognized. Auto-detection will be used.[/]");
                 sourceLanguageCode = "";
             }
             else if (!string.IsNullOrEmpty(sourceLanguageCode))
             {
-                AnsiConsole.MarkupLine($"[bold green]Source language:[/] {availableLanguages[sourceLanguageCode]} ({sourceLanguageCode})");
+                await TranslationHelper.MarkupLineAsync($"[bold green]Source language:[/] {availableLanguages[sourceLanguageCode]} ({sourceLanguageCode})");
             }
             else
             {
-                AnsiConsole.MarkupLine("[bold green]Source language:[/] Auto-detect");
+                await TranslationHelper.MarkupLineAsync("[bold green]Source language:[/] Auto-detect");
             }
+
+            // Initialize the translation helper with the selected language
+            TranslationHelper.Initialize(translationService, targetLanguageCode, sourceLanguageCode);
 
             // Detect root directory location
             var rootDirectory = GetSolutionRootDirectory();
@@ -190,36 +194,57 @@ public class Program
             
             if (agents.Count == 0)
             {
-                AnsiConsole.MarkupLine("[bold red]No agents were discovered.[/]");
-                AnsiConsole.MarkupLine("[yellow]Please check the project structure and paths.[/]");
+                await TranslationHelper.MarkupLineAsync("[bold red]No agents were discovered.[/]");
+                await TranslationHelper.MarkupLineAsync("[yellow]Please check the project structure and paths.[/]");
                 return;
             }
             
             while (true)
             {
-                AnsiConsole.MarkupLine("[bold cyan]Choose an option:[/]");
-                var userChoice = AnsiConsole.Prompt(
-                    new SelectionPrompt<string>()
-                        .Title("[bold yellow]What would you like to do?[/]")
-                        .AddChoices("Complete Audio Learning", "Whiteboard", "Both", "Chat with a Bot", "Exit"));
+                // Display the title without using markup in translated text
+                Console.WriteLine(); // Add blank line
+                string optionsTitle = await TranslationHelper.TranslateAsync("Choose an option:");
+                Console.WriteLine(optionsTitle);
+                Console.WriteLine(); // Add blank line after title
 
-                if (userChoice == "Exit")
+                // Get translated choices
+                var choices = new List<string> { "Complete Audio Learning", "Whiteboard", "Both", "Chat with a Bot", "Exit" };
+                var translatedChoices = await TranslationHelper.TranslateListAsync(choices);
+                var choiceMap = choices.Zip(translatedChoices, (original, translated) => new { Original = original, Translated = translated })
+                                       .ToDictionary(x => x.Translated, x => x.Original);
+                
+                // Create a plain selection prompt without translated markup
+                var selectionPrompt = new SelectionPrompt<string>()
+                    .Title("") // Don't use title in the prompt itself
+                    .PageSize(15)
+                    .HighlightStyle(new Style().Foreground(Color.Green))
+                    .AddChoices(translatedChoices);
+                
+                var userChoice = AnsiConsole.Prompt(selectionPrompt);
+
+                // Map back to original choice for code logic
+                string originalChoice = choiceMap.TryGetValue(userChoice, out string? originalValue) ? originalValue : userChoice;
+
+                if (originalChoice == "Exit")
                 {
-                    AnsiConsole.MarkupLine("[bold red]Exiting the program.[/]");
+                    // Use plain text output instead of markup for translated text
+                    string exitMessage = await TranslationHelper.TranslateAsync("Exiting the program.");
+                    Console.WriteLine(exitMessage);
                     break;
                 }
 
                 // Track which agents have been executed as part of workflows
                 HashSet<string> executedAgents = new HashSet<string>();
 
-                if (userChoice == "Complete Audio Learning")
+                if (originalChoice == "Complete Audio Learning")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing Complete Audio Learning Assistant workflow...[/]");
+                    await TranslationHelper.MarkupLineAsync("[bold green]Executing Complete Audio Learning Assistant workflow...[/]");
                     var audioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
 
                     if (audioWorkflow != null)
                     {
-                        AnsiConsole.MarkupLine($"[bold green]Executing comprehensive workflow:[/] {audioWorkflow.Name}");
+                        var translatedName = await TranslationHelper.TranslateAsync(audioWorkflow.Name);
+                        await TranslationHelper.MarkupLineAsync($"[bold green]Executing comprehensive workflow:[/] {translatedName}");
                         var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
 
                         // Track all agents in this workflow as executed
@@ -230,25 +255,26 @@ public class Program
 
                         if (result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Workflow {audioWorkflow.Name} executed successfully.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold green]Workflow {translatedName} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Workflow {audioWorkflow.Name} execution failed.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold red]Workflow {translatedName} execution failed.[/]");
                         }
                     }
                     else
                     {
-                        AnsiConsole.MarkupLine("[bold red]Complete Audio Learning workflow not found.[/]");
+                        await TranslationHelper.MarkupLineAsync("[bold red]Complete Audio Learning workflow not found.[/]");
                     }
                 }
-                else if (userChoice == "Whiteboard")
+                else if (originalChoice == "Whiteboard")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing Complete Whiteboard Capture and Diagram Generation workflow...[/]");
+                    await TranslationHelper.MarkupLineAsync("[bold green]Executing Complete Whiteboard Capture and Diagram Generation workflow...[/]");
                     var boardCaptureWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Whiteboard", StringComparison.OrdinalIgnoreCase));
 
                     if (boardCaptureWorkflow != null)
                     {
+                        var translatedName = await TranslationHelper.TranslateAsync(boardCaptureWorkflow.Name);
                         var result = await agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
                         // Track all agents in this workflow as executed
@@ -259,27 +285,30 @@ public class Program
 
                         if (result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureWorkflow.Name} executed successfully.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold green]Workflow {translatedName} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureWorkflow.Name} execution failed.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold red]Workflow {translatedName} execution failed.[/]");
                         }
                     }
                     else
                     {
-                        AnsiConsole.MarkupLine("[bold red]Complete Whiteboard Capture and Diagram Generation workflow not found.[/]");
+                        await TranslationHelper.MarkupLineAsync("[bold red]Complete Whiteboard Capture and Diagram Generation workflow not found.[/]");
                     }
                 }
-                else if (userChoice == "Both")
+                else if (originalChoice == "Both")
                 {
-                    AnsiConsole.MarkupLine("[bold green]Executing both workflows in parallel...[/]");
+                    await TranslationHelper.MarkupLineAsync("[bold green]Executing both workflows in parallel...[/]");
 
                     var completeAudioWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning", StringComparison.OrdinalIgnoreCase));
                     var boardCaptureWorkflow = workflows.FirstOrDefault(w => w.Name.Contains("Classroom Board Capture", StringComparison.OrdinalIgnoreCase));
 
                     if (completeAudioWorkflow != null && boardCaptureWorkflow != null)
                     {
+                        var translatedAudioName = await TranslationHelper.TranslateAsync(completeAudioWorkflow.Name);
+                        var translatedBoardName = await TranslationHelper.TranslateAsync(boardCaptureWorkflow.Name);
+                        
                         var audioTask = agentExecutionService.ExecuteWorkflowAsync(completeAudioWorkflow);
                         var boardTask = agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
@@ -298,28 +327,28 @@ public class Program
 
                         if (audioTask.Result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Workflow {completeAudioWorkflow.Name} executed successfully.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold green]Workflow {translatedAudioName} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Workflow {completeAudioWorkflow.Name} execution failed.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold red]Workflow {translatedAudioName} execution failed.[/]");
                         }
 
                         if (boardTask.Result)
                         {
-                            AnsiConsole.MarkupLine($"[bold green]Agent {boardCaptureWorkflow.Name} executed successfully.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold green]Workflow {translatedBoardName} executed successfully.[/]");
                         }
                         else
                         {
-                            AnsiConsole.MarkupLine($"[bold red]Agent {boardCaptureWorkflow.Name} execution failed.[/]");
+                            await TranslationHelper.MarkupLineAsync($"[bold red]Workflow {translatedBoardName} execution failed.[/]");
                         }
                     }
                 }
-                else if (userChoice == "Chat with a Bot")
+                else if (originalChoice == "Chat with a Bot")
                 {
                     Console.Clear();
                     
-                    DisplayChatbotWelcome();
+                    await DisplayChatbotWelcomeAsync();
 
                     // Initialize Cosmos DB service
                     var cosmosDbService = new CosmosDbService(
@@ -327,8 +356,8 @@ public class Program
                         configuration["CosmosDb:DatabaseName"],
                         configuration["CosmosDb:ContainerName"]);
                     
-
-                    AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Hello! How can I assist you today?");
+                    var chatbotGreeting = await TranslationHelper.TranslateAsync("Hello! How can I assist you today?");
+                    await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {chatbotGreeting}");
 
                     while (true)
                     {
@@ -338,36 +367,56 @@ public class Program
 
                         logger.LogInformation($"Conversation history: {conversationHistory}");
 
-                        AnsiConsole.Markup("[bold cyan]You:[/] ");
-                        string userInput = Console.ReadLine();
+                        await TranslationHelper.MarkupAsync("[bold cyan]You:[/] ");
+                        string userInput = Console.ReadLine() ?? "";
 
                         if (string.IsNullOrWhiteSpace(userInput) || userInput.Equals("exit", StringComparison.OrdinalIgnoreCase))
                         {
-                            AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Goodbye! Have a great day!");
+                            var goodbyeMsg = await TranslationHelper.TranslateAsync("Goodbye! Have a great day!");
+                            await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {goodbyeMsg}");
                             break;
                         }
 
-                        var botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
+                        // If user is not typing in English, translate the input to English for the LLM
+                        string llmInput = userInput;
+                        if (_targetLanguage != "en" && !string.IsNullOrEmpty(_targetLanguage))
+                        {
+                            // Translate user input to English for the LLM
+                            llmInput = await translationService.TranslateTextAsync(userInput, "en", _targetLanguage);
+                        }
 
-                        // Store the conversation in Cosmos DB
+                        var botResponse = await semanticKernelService.ChatWithLLMAsync(llmInput, conversationHistory);
+                        
+                        // Translate bot response to target language
+                        string translatedResponse = botResponse;
+                        if (_targetLanguage != "en" && !string.IsNullOrEmpty(_targetLanguage))
+                        {
+                            translatedResponse = await translationService.TranslateTextAsync(botResponse, _targetLanguage);
+                        }
+
+                        // Store the conversation in Cosmos DB (store original English response for future context)
                         await cosmosDbService.AddConversationAsync("user123", userInput, botResponse, conversations);
 
-                        AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
+                        await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {translatedResponse}");
                     }
                 }
                 // Wait for user input before continuing
-                AnsiConsole.MarkupLine("[dim]Press any key to continue...[/]");
+                await TranslationHelper.MarkupLineAsync("[dim]Press any key to continue...[/]");
                 Console.ReadKey(true);
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred in the AI Agent Orchestrator");
-            AnsiConsole.MarkupLine($"[bold red]Error:[/] {ex.Message}");
-            AnsiConsole.MarkupLine("[dim]Press any key to exit...[/]");
+            await TranslationHelper.MarkupLineAsync($"[bold red]Error:[/] {ex.Message}");
+            await TranslationHelper.MarkupLineAsync("[dim]Press any key to exit...[/]");
             Console.ReadKey();
         }
     }
+    
+    // Track language settings as class variables to use throughout the program
+    private static string _targetLanguage = "en";
+    private static string _sourceLanguage = "";
     
     private static string GetSolutionRootDirectory()
     {
@@ -393,20 +442,20 @@ public class Program
             .Color(Color.Blue);
         AnsiConsole.Write(figlet);
         
-        AnsiConsole.MarkupLine("[bold]Welcome to the AI Agent Orchestrator[/]");
-        AnsiConsole.MarkupLine("[dim]Your central hub for accessing all available AI agents[/]");
+        TranslationHelper.MarkupLineAsync("[bold]Welcome to the AI Agent Orchestrator[/]").Wait();
+        TranslationHelper.MarkupLineAsync("[dim]Your central hub for accessing all available AI agents[/]").Wait();
         AnsiConsole.WriteLine();
     }
 
-    private static void DisplayChatbotWelcome()
+    private static async Task DisplayChatbotWelcomeAsync()
     {
         var figlet = new FigletText("AI Chat") 
             .LeftJustified()
             .Color(Color.Green);
 
         AnsiConsole.Write(figlet);
-        AnsiConsole.MarkupLine("[bold green]Welcome to the AI chat...[/]");
-        AnsiConsole.MarkupLine("You can type 'exit' to stop the conversation at any time.");
+        await TranslationHelper.MarkupLineAsync("[bold green]Welcome to the AI chat...[/]");
+        await TranslationHelper.MarkupLineAsync("You can type 'exit' to stop the conversation at any time.");
         AnsiConsole.WriteLine();
     }
     

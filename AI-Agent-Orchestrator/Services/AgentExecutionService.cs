@@ -28,7 +28,8 @@ public class AgentExecutionService
             if (!Directory.Exists(agent.WorkingDirectory))
             {
                 _logger.LogError($"Working directory not found: {agent.WorkingDirectory}");
-                Console.WriteLine($"Error: Working directory not found: {agent.WorkingDirectory}");
+                string errorMsg = await TranslationHelper.TranslateAsync($"Error: Working directory not found: {agent.WorkingDirectory}");
+                Console.WriteLine(errorMsg);
                 return false;
             }
             
@@ -54,9 +55,15 @@ public class AgentExecutionService
             }
             
             _logger.LogInformation($"Agent started with PID: {process.Id}");
-            Console.WriteLine($"Agent {agent.Name} started (PID: {process.Id})");
-            Console.WriteLine($"Working directory: {agent.WorkingDirectory}");
-            Console.WriteLine("Press any key in this window to return when done...");
+            
+            string agentName = await TranslationHelper.TranslateAsync(agent.Name);
+            string startedMsg = await TranslationHelper.TranslateAsync($"Agent {agentName} started (PID: {process.Id})");
+            string workingDirMsg = await TranslationHelper.TranslateAsync($"Working directory: {agent.WorkingDirectory}");
+            string pressKeyMsg = await TranslationHelper.TranslateAsync("Press any key in this window to return when done...");
+            
+            Console.WriteLine(startedMsg);
+            Console.WriteLine(workingDirMsg);
+            Console.WriteLine(pressKeyMsg);
             
             // Wait for user to acknowledge before continuing
             await Task.Run(() => Console.ReadKey(true));
@@ -64,7 +71,8 @@ public class AgentExecutionService
             // Check if process is still running
             if (!process.HasExited)
             {
-                Console.WriteLine("Agent is still running. Wait for it to complete or press any key again to force return.");
+                string stillRunningMsg = await TranslationHelper.TranslateAsync("Agent is still running. Wait for it to complete or press any key again to force return.");
+                Console.WriteLine(stillRunningMsg);
                 await Task.Run(() => Console.ReadKey(true));
             }
             
@@ -87,7 +95,8 @@ public class AgentExecutionService
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error executing agent {agent.Name}");
-            Console.WriteLine($"Error executing agent: {ex.Message}");
+            string errorMsg = await TranslationHelper.TranslateAsync($"Error executing agent: {ex.Message}");
+            Console.WriteLine(errorMsg);
             return false;
         }
     }
@@ -100,7 +109,7 @@ public class AgentExecutionService
             string outputDir = Path.Combine(workingDirectory, "data", "outputs");
             if (!Directory.Exists(outputDir))
             {
-                AnsiConsole.MarkupLine("[yellow]No summary output directory found.[/]");
+                await TranslationHelper.MarkupLineAsync("[yellow]No summary output directory found.[/]");
                 return;
             }
             
@@ -110,12 +119,12 @@ public class AgentExecutionService
             
             if (summaryFiles.Length == 0)
             {
-                AnsiConsole.MarkupLine("[yellow]No summary files found in output directory.[/]");
+                await TranslationHelper.MarkupLineAsync("[yellow]No summary files found in output directory.[/]");
                 return;
             }
             
             var latestSummaryFile = summaryFiles[0];
-            AnsiConsole.MarkupLine($"[green]Found summary file:[/] {latestSummaryFile}");
+            await TranslationHelper.MarkupLineAsync($"[green]Found summary file:[/] {latestSummaryFile}");
             
             // Read and parse the summary file
             string jsonContent = await File.ReadAllTextAsync(latestSummaryFile);
@@ -125,10 +134,14 @@ public class AgentExecutionService
             {
                 string summary = summaryElement.GetString() ?? "No summary content available";
                 
+                // Translate the summary
+                string translatedSummary = await TranslationHelper.TranslateAsync(summary);
+                string translatedHeader = await TranslationHelper.TranslateAsync("Summary Content");
+                
                 // Display the summary in a panel with formatting
                 AnsiConsole.WriteLine();
-                AnsiConsole.Write(new Panel(summary)
-                    .Header("Summary Content")
+                AnsiConsole.Write(new Panel(translatedSummary)
+                    .Header(translatedHeader)
                     .Expand()
                     .BorderColor(Color.Green)
                     .RoundedBorder());
@@ -136,12 +149,12 @@ public class AgentExecutionService
             }
             else
             {
-                AnsiConsole.MarkupLine("[yellow]Could not find Summary property in the JSON file.[/]");
+                await TranslationHelper.MarkupLineAsync("[yellow]Could not find Summary property in the JSON file.[/]");
             }
         }
         catch (Exception ex)
         {
-            AnsiConsole.MarkupLine($"[red]Error displaying summary: {ex.Message}[/]");
+            await TranslationHelper.MarkupLineAsync($"[red]Error displaying summary: {ex.Message}[/]");
             _logger.LogError(ex, "Error displaying summary content");
         }
     }
@@ -365,7 +378,7 @@ public class AgentExecutionService
             // Display summary of generated files for Complete Audio Learning Assistant workflow
             if (workflow.Name.Contains("Complete Audio Learning Assistant"))
             {
-                DisplayWorkflowOutputSummary(generatedFiles);
+                await DisplayWorkflowOutputSummary(generatedFiles);
             }
             
             return true;
@@ -526,10 +539,10 @@ public class AgentExecutionService
         }
     }
     
-    private void DisplayWorkflowOutputSummary(Dictionary<string, List<string>> generatedFiles)
+    private async Task DisplayWorkflowOutputSummary(Dictionary<string, List<string>> generatedFiles)
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.Write(new Rule("[bold blue]Complete Audio Learning Workflow - Generated Documents[/]")
+        AnsiConsole.Write(new Rule(await TranslationHelper.TranslateAsync("[bold blue]Complete Audio Learning Workflow - Generated Documents[/]"))
             .LeftJustified()
             .RuleStyle("blue dim"));
         AnsiConsole.WriteLine();
@@ -540,8 +553,8 @@ public class AgentExecutionService
         var table = new Table();
         table.Border(TableBorder.Rounded);
         table.BorderColor(Color.Blue);
-        table.AddColumn(new TableColumn("[green]Agent[/]"));
-        table.AddColumn(new TableColumn("[green]Generated Files[/]").Centered());
+        table.AddColumn(new TableColumn(await TranslationHelper.TranslateAsync("[green]Agent[/]")));
+        table.AddColumn(new TableColumn(await TranslationHelper.TranslateAsync("[green]Generated Files[/]")).Centered());
         
         // Sort the keys to display in a consistent order
         var orderedAgents = new List<string> {
@@ -550,6 +563,11 @@ public class AgentExecutionService
             "Summarization Agent",
             "Diagram Generator"
         };
+        
+        // Translate agent names
+        var translatedAgentNames = await TranslationHelper.TranslateListAsync(orderedAgents);
+        var agentNameMap = orderedAgents.Zip(translatedAgentNames, (original, translated) => new { Original = original, Translated = translated })
+                                      .ToDictionary(x => x.Original, x => x.Translated);
         
         bool isFirstAgent = true;
         foreach (var agentName in orderedAgents)
@@ -567,6 +585,8 @@ public class AgentExecutionService
                 
                 isFirstAgent = false;
                 
+                string translatedName = agentNameMap.ContainsKey(agentName) ? agentNameMap[agentName] : agentName;
+                
                 // Format the file paths differently depending on the agent
                 if (agentName == "Speech Translator")
                 {
@@ -574,29 +594,30 @@ public class AgentExecutionService
                     var fileRows = new List<string>();
                     foreach (var file in generatedFiles[agentName])
                     {
-                        string label = "";
+                        string labelKey = "";
                         if (file.Contains("recognized_transcript"))
-                            label = "[bold blue]Original Text:[/] ";
+                            labelKey = "Original Text";
                         else if (file.Contains("translated_transcript"))
-                            label = "[bold green]Translated Text:[/] ";
+                            labelKey = "Translated Text";
                             
-                        fileRows.Add($"{label}[cyan]{Path.GetFullPath(file)}[/]");
+                        string translatedLabel = await TranslationHelper.TranslateAsync(labelKey);
+                        fileRows.Add($"[bold blue]{translatedLabel}:[/] [cyan]{Path.GetFullPath(file)}[/]");
                     }
                     
-                    table.AddRow(new Markup($"[yellow]{agentName}[/]"), new Markup(string.Join("\n", fileRows)));
+                    table.AddRow(new Markup($"[yellow]{translatedName}[/]"), new Markup(string.Join("\n", fileRows)));
                 }
                 else
                 {
                     // Standard formatting for other agents
                     var filesList = string.Join("\n", generatedFiles[agentName].Select(f => $"[cyan]{Path.GetFullPath(f)}[/]"));
-                    table.AddRow(new Markup($"[yellow]{agentName}[/]"), new Markup(filesList));
+                    table.AddRow(new Markup($"[yellow]{translatedName}[/]"), new Markup(filesList));
                 }
             }
         }
         
         if (table.Rows.Count == 0)
         {
-            AnsiConsole.MarkupLine("[yellow]No output files were found for this workflow.[/]");
+            await TranslationHelper.MarkupLineAsync("[yellow]No output files were found for this workflow.[/]");
         }
         else
         {

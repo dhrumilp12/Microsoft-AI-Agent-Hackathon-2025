@@ -100,8 +100,8 @@ public class Program
             AnsiConsole.MarkupLine($"[bold green]You have selected:[/] {userLanguage}");
 
             var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                .FirstOrDefault(c => c.EnglishName.Contains(userLanguage, StringComparison.OrdinalIgnoreCase) ||
-                                    c.NativeName.Contains(userLanguage, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(c => c.EnglishName.Contains(userLanguage ?? "", StringComparison.OrdinalIgnoreCase) || 
+                                    c.NativeName.Contains(userLanguage ?? "", StringComparison.OrdinalIgnoreCase));
 
             string languageCode;
             if (culture != null) {
@@ -349,12 +349,12 @@ public class Program
         AnsiConsole.WriteLine();
     }
     
-    private static async Task<AgentWorkflow?> PromptForWorkflowSelectionAsync(List<AgentWorkflow> workflows)
+    private static AgentWorkflow? PromptForWorkflowSelectionAsync(List<AgentWorkflow> workflows)
     {
         AnsiConsole.Clear();
         var figlet = new FigletText("AI Workflow Hub") 
             .LeftJustified()
-            .Color(Color.Purple); // Fix: Change from Magenta to Purple which exists in Spectre.Console
+            .Color(Color.Purple);
         AnsiConsole.Write(figlet);
         
         var selectionPrompt = new SelectionPrompt<string>()
@@ -381,7 +381,7 @@ public class Program
         return workflows.FirstOrDefault(w => w.Name == selection);
     }
     
-    private static async Task<AgentInfo?> PromptForAgentSelectionAsync(List<AgentInfo> agents)
+    private static AgentInfo? PromptForAgentSelectionAsync(List<AgentInfo> agents)
     {
         AnsiConsole.Clear();
         var figlet = new FigletText("AI Agent Hub")

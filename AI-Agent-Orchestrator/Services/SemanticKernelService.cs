@@ -48,6 +48,9 @@ public class SemanticKernelService
             
             _kernel = builder.Build();
             
+            // Add a simple await to make this properly async
+            await Task.Delay(1); // Minimal delay to make this truly async
+            
             _logger.LogInformation("Semantic Kernel initialized successfully");
         }
         catch (Exception ex)

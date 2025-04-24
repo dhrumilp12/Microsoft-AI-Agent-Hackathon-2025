@@ -201,29 +201,32 @@ public class AgentDiscoveryService
                 if (_discoveredWorkflows.Count > 0)
                 {
                     var workflow = _discoveredWorkflows.FirstOrDefault(w => w.Name.Contains("Complete Audio Learning Assistant"));
-                    var summaryAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("AI Summarization Agent"));
-                    if (summaryAgent != null)
+                    if (workflow != null)
                     {
-                        summaryAgent.Arguments = new List<string> { 
-                            "run", "--project", ".",
-                            "--", 
-                            "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
-                            "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json" 
-                        };
-                        _logger.LogInformation("Updated summarization agent arguments to use translated transcript and vocabulary data");
-                    }
-                    
-                    // Update the diagram generator arguments
-                    var diagramAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("Diagram Generator"));
-                    if (diagramAgent != null)
-                    {
-                        diagramAgent.Arguments = new List<string> { 
-                            "run", "--project", ".",
-                            "--", 
-                            "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
-                            "../AI-Summarization-agent/data/outputs/latest_summary.json" 
-                        };
-                        _logger.LogInformation("Updated diagram generator arguments to use translated transcript and summary output");
+                        var summaryAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("AI Summarization Agent"));
+                        if (summaryAgent != null)
+                        {
+                            summaryAgent.Arguments = new List<string> { 
+                                "run", "--project", ".",
+                                "--", 
+                                "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
+                                "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json" 
+                            };
+                            _logger.LogInformation("Updated summarization agent arguments to use translated transcript and vocabulary data");
+                        }
+                        
+                        // Update the diagram generator arguments
+                        var diagramAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("Diagram Generator"));
+                        if (diagramAgent != null)
+                        {
+                            diagramAgent.Arguments = new List<string> { 
+                                "run", "--project", ".",
+                                "--", 
+                                "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
+                                "../AI-Summarization-agent/data/outputs/latest_summary.json" 
+                            };
+                            _logger.LogInformation("Updated diagram generator arguments to use translated transcript and summary output");
+                        }
                     }
                 }
                 
@@ -232,18 +235,25 @@ public class AgentDiscoveryService
 
             if (classroomBoardCapture != null && diagramGenerator != null && summarizationAgent != null)
             {
+                // Create a list of agents making sure to check for null values
+                var agents = new List<AgentInfo>();
+                if (classroomBoardCapture != null) agents.Add(classroomBoardCapture);
+                if (vocabularyBank != null) agents.Add(vocabularyBank);
+                if (summarizationAgent != null) agents.Add(summarizationAgent);
+                if (diagramGenerator != null) agents.Add(diagramGenerator);
+                
                 // Create a workflow that connects the classroom board capture, summarization, and diagram generator
                 _discoveredWorkflows.Add(new AgentWorkflow
                 {
                     Name = "Complete Whiteboard Capture, Summarization, and Diagram Generation",
                     Description = "Captures whiteboard content, summarizes it, and generates visual diagrams",
-                    Agents = new List<AgentInfo> { classroomBoardCapture, vocabularyBank, summarizationAgent, diagramGenerator },
+                    Agents = agents,
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Classroom Board Capture", new List<string> {
                             "Captures/capture_*.txt",
                         }},
                         { "Vocabulary Bank & Flashcards Generator", new List<string> {
-                            "Output/recognized_transcript_flashcards.json"
+                            "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json"
                         } },
                         { "AI Summarization Agent", new List<string> {
                             "data/output/summary_*.json"
@@ -256,31 +266,34 @@ public class AgentDiscoveryService
                     Category = "Classroom Assistant"
                 });
 
-                if (_discoveredWorkflows.Count > 0)
+                if (_discoveredWorkflows.Count > 1)
                 {
-                    var workflow = _discoveredWorkflows.FirstOrDefault(w => w.Name.Contains("Complete Whiteboard Capture, Summarization, and Diagram Generation"));
-                    var summaryAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("AI Summarization Agent"));
-                    if (summaryAgent != null)
+                    var workflow = _discoveredWorkflows.FirstOrDefault(w => w.Name.Contains("Complete Whiteboard Capture"));
+                    if (workflow != null)
                     {
-                        summaryAgent.Arguments = new List<string> { 
-                            "run", "--project", ".",
-                            "--", 
-                            "../AI-Agent-BoardCapture/Captures/capture_*.txt",
-                            "../AI-Agent-VocabularyBank/Output/recognized_transcript_flashcards.json"
-                        };
-                        _logger.LogInformation("Updated summarization agent arguments to use classroom board capture and vocabulary data");
-                    }
+                        var summaryAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("AI Summarization Agent"));
+                        if (summaryAgent != null)
+                        {
+                            summaryAgent.Arguments = new List<string> { 
+                                "run", "--project", ".",
+                                "--", 
+                                "../AI-Agent-BoardCapture/Captures/capture_*.txt",
+                                "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json"
+                            };
+                            _logger.LogInformation("Updated summarization agent arguments to use classroom board capture and vocabulary data");
+                        }
 
-                    var diagramAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("Diagram Generator"));
-                    if (diagramAgent != null)
-                    {
-                        diagramAgent.Arguments = new List<string> { 
-                            "run", "--project", ".",
-                            "--", 
-                            "../AI-Agent-BoardCapture/Captures/latest_captured_image_text.txt",
-                            "../AI-Summarization-agent/data/outputs/latest_summary.json" 
-                        };
-                        _logger.LogInformation("Updated diagram generator arguments to use classroom board capture and summary output");
+                        var diagramAgent = workflow.Agents.FirstOrDefault(a => a.Name.Contains("Diagram Generator"));
+                        if (diagramAgent != null)
+                        {
+                            diagramAgent.Arguments = new List<string> { 
+                                "run", "--project", ".",
+                                "--", 
+                                "../AI-Agent-BoardCapture/Captures/latest_captured_image_text.txt",
+                                "../AI-Summarization-agent/data/outputs/latest_summary.json" 
+                            };
+                            _logger.LogInformation("Updated diagram generator arguments to use classroom board capture and summary output");
+                        }
                     }
                 }
                 

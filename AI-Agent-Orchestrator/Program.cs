@@ -93,55 +93,69 @@ public class Program
         {
             DisplayWelcomeScreen();
             
-            // Prompt the user to select their preferred language
-            AnsiConsole.MarkupLine("[bold cyan]Select your preferred language:[/]");
-            
             // Create a translation service to get available languages
             var translationService = new AzureTranslationService(configuration);
+            var availableLanguages = await translationService.GetAvailableLanguagesAsync();
+            
+            // Get target language
+            AnsiConsole.MarkupLine("[bold cyan]Select your target language (language to translate to):[/]");
             
             // Display retrieving languages message
             AnsiConsole.Status()
-                .Start("Retrieving available languages...", async ctx => 
+                .Start("Retrieving available languages...", ctx => 
                 {
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
-                    
-                    // Get available languages
-                    var languages = await translationService.GetAvailableLanguagesAsync();
-                    
-                    AnsiConsole.MarkupLine("\n[bold yellow]Available target languages:[/]");
-                    
-                    // Display languages in a 3-column format
-                    const int columns = 3;
-                    var languageList = languages.ToList();
-                    
-                    for (int i = 0; i < languageList.Count; i += columns)
-                    {
-                        for (int j = 0; j < columns && i + j < languageList.Count; j++)
-                        {
-                            var lang = languageList[i + j];
-                            Console.Write($"{lang.Key}: {lang.Value}".PadRight(30));
-                        }
-                        Console.WriteLine();
-                    }
                 });
             
-            Console.WriteLine();
-            AnsiConsole.Markup("[bold yellow]Enter the language code to translate to:[/] ");
-            string languageCode = Console.ReadLine()?.Trim().ToLower() ?? "en";
+            AnsiConsole.MarkupLine("\n[bold yellow]Available languages:[/]");
             
-            // Get languages again to validate the input
-            var availableLanguages = await translationService.GetAvailableLanguagesAsync();
+            // Display languages in a 3-column format
+            const int columns = 3;
+            var languageList = availableLanguages.ToList();
             
-            // Validate the language code
-            if (!availableLanguages.ContainsKey(languageCode))
+            for (int i = 0; i < languageList.Count; i += columns)
             {
-                AnsiConsole.MarkupLine($"[bold red]Language code '{languageCode}' not recognized. Defaulting to English (en).[/]");
-                languageCode = "en";
+                for (int j = 0; j < columns && i + j < languageList.Count; j++)
+                {
+                    var lang = languageList[i + j];
+                    Console.Write($"{lang.Key}: {lang.Value}".PadRight(30));
+                }
+                Console.WriteLine();
+            }
+            
+            Console.WriteLine();
+            AnsiConsole.Markup("[bold yellow]Enter the language code to translate TO:[/] ");
+            string targetLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "en";
+            
+            // Validate the target language code
+            if (!availableLanguages.ContainsKey(targetLanguageCode))
+            {
+                AnsiConsole.MarkupLine($"[bold red]Language code '{targetLanguageCode}' not recognized. Defaulting to English (en).[/]");
+                targetLanguageCode = "en";
             }
             else
             {
-                AnsiConsole.MarkupLine($"[bold green]You have selected:[/] {availableLanguages[languageCode]} ({languageCode})");
+                AnsiConsole.MarkupLine($"[bold green]Target language:[/] {availableLanguages[targetLanguageCode]} ({targetLanguageCode})");
+            }
+            
+            // Now ask for source language
+            AnsiConsole.Markup("\n[bold yellow]Enter the language code to translate FROM (default: auto-detect):[/] ");
+            string sourceLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "";
+            
+            // Validate the source language code if provided
+            if (!string.IsNullOrEmpty(sourceLanguageCode) && !availableLanguages.ContainsKey(sourceLanguageCode))
+            {
+                AnsiConsole.MarkupLine($"[bold red]Language code '{sourceLanguageCode}' not recognized. Auto-detection will be used.[/]");
+                sourceLanguageCode = "";
+            }
+            else if (!string.IsNullOrEmpty(sourceLanguageCode))
+            {
+                AnsiConsole.MarkupLine($"[bold green]Source language:[/] {availableLanguages[sourceLanguageCode]} ({sourceLanguageCode})");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine("[bold green]Source language:[/] Auto-detect");
             }
 
             // Detect root directory location
@@ -158,8 +172,8 @@ public class Program
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
                     
-                    var agents = agentDiscoveryService.DiscoverAgentsAsync(languageCode).GetAwaiter().GetResult();
-                    var workflows = agentDiscoveryService.DiscoverWorkflowsAsync(languageCode).GetAwaiter().GetResult();
+                    var agents = agentDiscoveryService.DiscoverAgentsAsync(targetLanguageCode, sourceLanguageCode).GetAwaiter().GetResult();
+                    var workflows = agentDiscoveryService.DiscoverWorkflowsAsync(targetLanguageCode, sourceLanguageCode).GetAwaiter().GetResult();
                     
                     if (agents.Count == 0)
                     {
@@ -171,8 +185,8 @@ public class Program
                     }
                 });
                 
-            var agents = await agentDiscoveryService.DiscoverAgentsAsync(languageCode);
-            var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync(languageCode);
+            var agents = await agentDiscoveryService.DiscoverAgentsAsync(targetLanguageCode, sourceLanguageCode);
+            var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync(targetLanguageCode, sourceLanguageCode);
             
             if (agents.Count == 0)
             {

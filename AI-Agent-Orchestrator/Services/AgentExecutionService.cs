@@ -152,6 +152,9 @@ public class AgentExecutionService
         
         try
         {
+            // Dictionary to track generated files from each agent
+            var generatedFiles = new Dictionary<string, List<string>>();
+            
             for (int i = 0; i < workflow.Agents.Count; i++)
             {
                 var agent = workflow.Agents[i];
@@ -321,6 +324,9 @@ public class AgentExecutionService
                     }
                 }
                 
+                // Track generated files based on agent type
+                CollectGeneratedFiles(agent, generatedFiles);
+                
                 // If not the last agent, pass output to the next agent if we have a mapping
                 if (!isLastAgent && workflow.OutputMappings.ContainsKey(agent.Name))
                 {
@@ -355,6 +361,13 @@ public class AgentExecutionService
             }
             
             AnsiConsole.MarkupLine($"\n[bold green]Workflow completed successfully:[/] {workflow.Name}");
+            
+            // Display summary of generated files for Complete Audio Learning Assistant workflow
+            if (workflow.Name.Contains("Complete Audio Learning Assistant"))
+            {
+                DisplayWorkflowOutputSummary(generatedFiles);
+            }
+            
             return true;
         }
         catch (Exception ex)
@@ -363,6 +376,297 @@ public class AgentExecutionService
             AnsiConsole.MarkupLine($"[bold red]Error executing workflow:[/] {ex.Message}");
             return false;
         }
+    }
+    
+    private void CollectGeneratedFiles(AgentInfo agent, Dictionary<string, List<string>> generatedFiles)
+    {
+        try
+        {
+            // Check the Speech Translator output directory for all generated files
+            string speechTranslatorOutputDir = Path.Combine(
+                GetSolutionRootDirectory(), 
+                "AI-agent-SpeechTranslator", 
+                "Output");
+                
+            _logger.LogInformation($"Checking for files in Speech Translator output directory: {speechTranslatorOutputDir}");
+            
+            if (agent.Name.Contains("Speech Translator"))
+            {
+                if (Directory.Exists(speechTranslatorOutputDir))
+                {
+                    var files = new List<string>();
+                    var recognizedTranscript = Path.Combine(speechTranslatorOutputDir, "recognized_transcript.txt");
+                    var translatedTranscript = Path.Combine(speechTranslatorOutputDir, "translated_transcript.txt");
+                    
+                    if (File.Exists(recognizedTranscript)) files.Add(recognizedTranscript);
+                    if (File.Exists(translatedTranscript)) files.Add(translatedTranscript);
+                    
+                    if (files.Count > 0)
+                    {
+                        generatedFiles["Speech Translator"] = files;
+                    }
+                }
+            }
+            else if (agent.Name.Contains("Vocabulary Bank"))
+            {
+                // First check the Speech Translator output directory as noted by the user
+                if (Directory.Exists(speechTranslatorOutputDir))
+                {
+                    var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "recognized_transcript_flashcards.json");
+                    if (File.Exists(flashcardsFile))
+                    {
+                        generatedFiles["Vocabulary Bank"] = new List<string> { flashcardsFile };
+                        _logger.LogInformation($"Found Vocabulary Bank output in Speech Translator directory: {flashcardsFile}");
+                    }
+                }
+                
+                // Also check in Vocabulary Bank's own output directory as a backup
+                string vocabularyOutputDir = Path.Combine(agent.WorkingDirectory, "Output");
+                if (Directory.Exists(vocabularyOutputDir))
+                {
+                    var files = Directory.GetFiles(vocabularyOutputDir, "*flashcards*.json")
+                        .OrderByDescending(f => new FileInfo(f).CreationTime)
+                        .ToList();
+                        
+                    if (files.Count > 0)
+                    {
+                        if (!generatedFiles.ContainsKey("Vocabulary Bank"))
+                        {
+                            generatedFiles["Vocabulary Bank"] = files;
+                        }
+                        else
+                        {
+                            generatedFiles["Vocabulary Bank"].AddRange(files);
+                        }
+                        _logger.LogInformation($"Found Vocabulary Bank output in its own directory: {string.Join(", ", files)}");
+                    }
+                }
+            }
+            else if (agent.Name.Contains("Summarization Agent"))
+            {
+                string outputDir = Path.Combine(agent.WorkingDirectory, "data", "outputs");
+                if (Directory.Exists(outputDir))
+                {
+                    var files = Directory.GetFiles(outputDir, "summary_*.json")
+                                        .OrderByDescending(f => new FileInfo(f).CreationTime)
+                                        .Take(1)
+                                        .ToList();
+                    
+                    if (files.Count > 0)
+                    {
+                        generatedFiles["Summarization Agent"] = files;
+                    }
+                }
+            }
+            else if (agent.Name.Contains("Diagram Generator"))
+            {
+                // First check the Speech Translator output directory as noted by the user
+                if (Directory.Exists(speechTranslatorOutputDir))
+                {
+                    var diagramFiles = new List<string>();
+                    
+                    // Look for diagram files with various patterns in Speech Translator Output
+                    var diagramMd = Path.Combine(speechTranslatorOutputDir, "translated_transcript_diagram.md");
+                    var diagramJson = Path.Combine(speechTranslatorOutputDir, "translated_transcript_diagram.json");
+                    var diagramMindmap = Path.Combine(speechTranslatorOutputDir, "*mindmap*.md");
+                    
+                    if (File.Exists(diagramMd)) diagramFiles.Add(diagramMd);
+                    if (File.Exists(diagramJson)) diagramFiles.Add(diagramJson);
+                    
+                    // Find any files matching pattern
+                    diagramFiles.AddRange(
+                        Directory.GetFiles(speechTranslatorOutputDir, "*diagram*.md")
+                        .Union(Directory.GetFiles(speechTranslatorOutputDir, "*diagram*.json"))
+                        .Union(Directory.GetFiles(speechTranslatorOutputDir, "*mindmap*.md"))
+                    );
+                    
+                    if (diagramFiles.Count > 0)
+                    {
+                        generatedFiles["Diagram Generator"] = diagramFiles.Distinct().ToList();
+                        _logger.LogInformation($"Found Diagram Generator output in Speech Translator directory: {string.Join(", ", diagramFiles)}");
+                    }
+                }
+                
+                // Also check in Diagram Generator's own directories
+                string[] outputDirs = new[] {
+                    Path.Combine(agent.WorkingDirectory, "Output"),
+                    Path.Combine(agent.WorkingDirectory, "Diagrams"),
+                    Path.Combine(agent.WorkingDirectory, "output"),
+                    agent.WorkingDirectory
+                };
+                
+                List<string> files = new List<string>();
+                foreach (var dir in outputDirs.Where(Directory.Exists))
+                {
+                    files.AddRange(Directory.GetFiles(dir, "*.png"));
+                    files.AddRange(Directory.GetFiles(dir, "*.svg"));
+                    files.AddRange(Directory.GetFiles(dir, "*.pdf"));
+                    files.AddRange(Directory.GetFiles(dir, "*diagram*.md"));
+                    files.AddRange(Directory.GetFiles(dir, "*mindmap*.md"));
+                }
+                
+                if (files.Count > 0)
+                {
+                    files = files.OrderByDescending(f => new FileInfo(f).CreationTime).Take(5).ToList();
+                    if (!generatedFiles.ContainsKey("Diagram Generator"))
+                    {
+                        generatedFiles["Diagram Generator"] = files;
+                    }
+                    else
+                    {
+                        generatedFiles["Diagram Generator"].AddRange(files);
+                        generatedFiles["Diagram Generator"] = generatedFiles["Diagram Generator"].Distinct().ToList();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error collecting generated files for {agent.Name}");
+        }
+    }
+    
+    private void DisplayWorkflowOutputSummary(Dictionary<string, List<string>> generatedFiles)
+    {
+        AnsiConsole.WriteLine();
+        AnsiConsole.Write(new Rule("[bold blue]Complete Audio Learning Workflow - Generated Documents[/]")
+            .LeftJustified()
+            .RuleStyle("blue dim"));
+        AnsiConsole.WriteLine();
+        
+        // Always check for output files for all agents in the Speech Translator output dir
+        EnsureAllAgentsHaveFiles(generatedFiles);
+        
+        var table = new Table();
+        table.Border(TableBorder.Rounded);
+        table.BorderColor(Color.Blue);
+        table.AddColumn(new TableColumn("[green]Agent[/]"));
+        table.AddColumn(new TableColumn("[green]Generated Files[/]").Centered());
+        
+        // Sort the keys to display in a consistent order
+        var orderedAgents = new List<string> {
+            "Speech Translator",
+            "Vocabulary Bank",
+            "Summarization Agent",
+            "Diagram Generator"
+        };
+        
+        bool isFirstAgent = true;
+        foreach (var agentName in orderedAgents)
+        {
+            if (generatedFiles.ContainsKey(agentName) && generatedFiles[agentName].Count > 0)
+            {
+                // Add separator between agents (except before the first agent)
+                if (!isFirstAgent)
+                {
+                    table.AddRow(
+                        new Markup("[dim]───────────────────────[/]"), 
+                        new Markup("[dim]───────────────────────────────────────────────[/]")
+                    );
+                }
+                
+                isFirstAgent = false;
+                
+                // Format the file paths differently depending on the agent
+                if (agentName == "Speech Translator")
+                {
+                    // Special handling for Speech Translator files
+                    var fileRows = new List<string>();
+                    foreach (var file in generatedFiles[agentName])
+                    {
+                        string label = "";
+                        if (file.Contains("recognized_transcript"))
+                            label = "[bold blue]Original Text:[/] ";
+                        else if (file.Contains("translated_transcript"))
+                            label = "[bold green]Translated Text:[/] ";
+                            
+                        fileRows.Add($"{label}[cyan]{Path.GetFullPath(file)}[/]");
+                    }
+                    
+                    table.AddRow(new Markup($"[yellow]{agentName}[/]"), new Markup(string.Join("\n", fileRows)));
+                }
+                else
+                {
+                    // Standard formatting for other agents
+                    var filesList = string.Join("\n", generatedFiles[agentName].Select(f => $"[cyan]{Path.GetFullPath(f)}[/]"));
+                    table.AddRow(new Markup($"[yellow]{agentName}[/]"), new Markup(filesList));
+                }
+            }
+        }
+        
+        if (table.Rows.Count == 0)
+        {
+            AnsiConsole.MarkupLine("[yellow]No output files were found for this workflow.[/]");
+        }
+        else
+        {
+            AnsiConsole.Write(table);
+        }
+        
+        AnsiConsole.WriteLine();
+    }
+    
+    private void EnsureAllAgentsHaveFiles(Dictionary<string, List<string>> generatedFiles)
+    {
+        // Check Speech Translator output directory for all agent outputs
+        string speechTranslatorOutputDir = Path.Combine(
+            GetSolutionRootDirectory(), 
+            "AI-agent-SpeechTranslator", 
+            "Output");
+            
+        if (Directory.Exists(speechTranslatorOutputDir))
+        {
+            // Look for Vocabulary Bank output
+            if (!generatedFiles.ContainsKey("Vocabulary Bank"))
+            {
+                var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "recognized_transcript_flashcards.json");
+                if (File.Exists(flashcardsFile))
+                {
+                    generatedFiles["Vocabulary Bank"] = new List<string> { flashcardsFile };
+                    _logger.LogInformation($"Added missing Vocabulary Bank output: {flashcardsFile}");
+                }
+            }
+            
+            // Look for Diagram Generator output
+            if (!generatedFiles.ContainsKey("Diagram Generator"))
+            {
+                var diagramFiles = new List<string>();
+                var diagramMd = Path.Combine(speechTranslatorOutputDir, "translated_transcript_diagram.md");
+                
+                if (File.Exists(diagramMd))
+                {
+                    diagramFiles.Add(diagramMd);
+                }
+                else
+                {
+                    // Try to find any diagram files
+                    diagramFiles.AddRange(
+                        Directory.GetFiles(speechTranslatorOutputDir, "*diagram*.md")
+                        .Union(Directory.GetFiles(speechTranslatorOutputDir, "*diagram*.json"))
+                        .Union(Directory.GetFiles(speechTranslatorOutputDir, "*mindmap*.md"))
+                    );
+                }
+                
+                if (diagramFiles.Count > 0)
+                {
+                    generatedFiles["Diagram Generator"] = diagramFiles;
+                    _logger.LogInformation($"Added missing Diagram Generator output: {string.Join(", ", diagramFiles)}");
+                }
+            }
+        }
+    }
+    
+    private string GetSolutionRootDirectory()
+    {
+        // Start with the directory of the executing assembly
+        string currentDir = AppDomain.CurrentDomain.BaseDirectory;
+        
+        // Navigate upwards to find the solution root
+        // Usually 3 levels up from bin/Debug/netX.X
+        string rootDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
+        
+        // If we're already at the solution root, the parent directory is the repo root
+        return Path.GetFullPath(Path.Combine(rootDir, ".."));
     }
     
     private bool PromptContinueWorkflow()

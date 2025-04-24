@@ -291,7 +291,6 @@ public class Program
                         configuration["CosmosDb:ConnectionString"],
                         configuration["CosmosDb:DatabaseName"],
                         configuration["CosmosDb:ContainerName"]);
-                    
 
                     AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Hello! How can I assist you today?");
 
@@ -300,8 +299,6 @@ public class Program
                         var conversations = await cosmosDbService.GetConversationsAsync("user123");
 
                         string conversationHistory = cosmosDbService.ConvertConversationsToString(conversations);
-
-                        logger.LogInformation($"Conversation history: {conversationHistory}");
 
                         AnsiConsole.Markup("[bold cyan]You:[/] ");
                         string userInput = Console.ReadLine();
@@ -312,7 +309,38 @@ public class Program
                             break;
                         }
 
-                        var botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory);
+                        string botResponse = string.Empty;
+
+                        // Suggest an agent or workflow based on user input
+                        var relevantWorkflows = await semanticKernelService.FindRelevantWorkflowsAsync(workflows, userInput);
+                        if (relevantWorkflows.Count > 0)
+                        {
+                            botResponse = "Based on your input, I suggest the following workflow(s):"
+                            AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Based on your input, I suggest the following workflow(s):");
+                            foreach (var workflow in relevantWorkflows)
+                            {
+                                botResponse += $" - {workflow.Name}: {workflow.Description}";
+                                AnsiConsole.MarkupLine($"- [bold yellow]{workflow.Name}[/]: {workflow.Description}");
+                            }
+                        }
+                        else
+                        {
+                            var relevantAgents = await semanticKernelService.FindRelevantAgentsAsync(agents, userInput);
+                            if (relevantAgents.Count > 0)
+                            {
+                                botResponse = "Based on your input, I suggest the following agent(s):";
+                                AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Based on your input, I suggest the following agent(s):");
+                                foreach (var agent in relevantAgents)
+                                {
+                                    botResponse += $" - {agent.Name}: {agent.Description}";
+                                    AnsiConsole.MarkupLine($"- [bold yellow]{agent.Name}[/]: {agent.Description}");
+                                }
+                            }
+                            else
+                            {
+                                botResponse = await semanticKernelService.ChatWithLLMAsync(userInput, conversationHistory)
+                            }
+                        }
 
                         // Store the conversation in Cosmos DB
                         await cosmosDbService.AddConversationAsync("user123", userInput, botResponse, conversations);

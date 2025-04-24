@@ -95,33 +95,54 @@ public class Program
             
             // Prompt the user to select their preferred language
             AnsiConsole.MarkupLine("[bold cyan]Select your preferred language:[/]");
-            var userLanguage = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title("[bold yellow]Choose a language:[/]")
-                    .AddChoices("English", "Spanish", "French", "German", "Chinese", "Japanese", "Hindi", "Other"));
-
-            if (userLanguage == "Other")
+            
+            // Create a translation service to get available languages
+            var translationService = new AzureTranslationService(configuration);
+            
+            // Display retrieving languages message
+            AnsiConsole.Status()
+                .Start("Retrieving available languages...", async ctx => 
+                {
+                    ctx.Spinner(Spinner.Known.Dots);
+                    ctx.SpinnerStyle(Style.Parse("green"));
+                    
+                    // Get available languages
+                    var languages = await translationService.GetAvailableLanguagesAsync();
+                    
+                    AnsiConsole.MarkupLine("\n[bold yellow]Available target languages:[/]");
+                    
+                    // Display languages in a 3-column format
+                    const int columns = 3;
+                    var languageList = languages.ToList();
+                    
+                    for (int i = 0; i < languageList.Count; i += columns)
+                    {
+                        for (int j = 0; j < columns && i + j < languageList.Count; j++)
+                        {
+                            var lang = languageList[i + j];
+                            Console.Write($"{lang.Key}: {lang.Value}".PadRight(30));
+                        }
+                        Console.WriteLine();
+                    }
+                });
+            
+            Console.WriteLine();
+            AnsiConsole.Markup("[bold yellow]Enter the language code to translate to:[/] ");
+            string languageCode = Console.ReadLine()?.Trim().ToLower() ?? "en";
+            
+            // Get languages again to validate the input
+            var availableLanguages = await translationService.GetAvailableLanguagesAsync();
+            
+            // Validate the language code
+            if (!availableLanguages.ContainsKey(languageCode))
             {
-                AnsiConsole.MarkupLine("[bold yellow]Please type your preferred language:[/]");
-                userLanguage = Console.ReadLine();
-            }
-
-            AnsiConsole.MarkupLine($"[bold green]You have selected:[/] {userLanguage}");
-
-            var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                .FirstOrDefault(c => c.EnglishName.Contains(userLanguage ?? "", StringComparison.OrdinalIgnoreCase) || 
-                                    c.NativeName.Contains(userLanguage ?? "", StringComparison.OrdinalIgnoreCase));
-
-            string languageCode;
-            if (culture != null) {
-                languageCode = culture.TwoLetterISOLanguageName;
+                AnsiConsole.MarkupLine($"[bold red]Language code '{languageCode}' not recognized. Defaulting to English (en).[/]");
+                languageCode = "en";
             }
             else
             {
-                AnsiConsole.MarkupLine("[bold red]Language not recognized. Defaulting to English.[/]");
-                languageCode = "en"; // Default to English if the language is not recognized
+                AnsiConsole.MarkupLine($"[bold green]You have selected:[/] {availableLanguages[languageCode]} ({languageCode})");
             }
-            AnsiConsole.MarkupLine($"[bold green]Language code selected:[/] {languageCode}");
 
             // Detect root directory location
             var rootDirectory = GetSolutionRootDirectory();

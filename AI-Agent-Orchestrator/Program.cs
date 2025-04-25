@@ -18,9 +18,9 @@ public class Program
     static async Task Main(string[] args)
     {
         // Load environment variables from .env file if it exists
-        if (File.Exists(".env"))
+        if (File.Exists("../.env"))
         {
-            DotNetEnv.Env.Load();
+            DotNetEnv.Env.Load(@"../.env");
         }
         
         // Build configuration
@@ -30,7 +30,7 @@ public class Program
             .AddEnvironmentVariables()
             .Build();
 
-        if (File.Exists(".env"))
+        if (File.Exists("../.env"))
         {
             var azureOpenAIConfig = new
             {

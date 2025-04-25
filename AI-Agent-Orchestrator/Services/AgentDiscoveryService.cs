@@ -183,14 +183,14 @@ public class AgentDiscoveryService
                     Agents = new List<AgentInfo> { speechTranslator, vocabularyBank, summarizationAgent, diagramGenerator },
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Speech Translator", new List<string> {
-                            "Output/recognized_transcript.txt",
-                            "Output/translated_transcript.txt"
+                            "../AgentData/Recording/recognized_transcript.txt",
+                            "../AgentData/Recording/translated_transcript.txt"
                         } },
                         { "Vocabulary Bank & Flashcards Generator", new List<string> {
-                            "Output/recognized_transcript_flashcards.json"
+                            "../AgentData/Vocabulary/recognized_transcript_flashcards.json"
                         } },
                         { "AI Summarization Agent", new List<string> {
-                            "data/outputs/summary_*.json"
+                            "../AgentData/Summary/summary_*.json"
                         } }
                     },
                     Keywords = new[] { 
@@ -213,8 +213,8 @@ public class AgentDiscoveryService
                             summaryAgent.Arguments = new List<string> { 
                                 "run", "--project", ".",
                                 "--", 
-                                "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
-                                "../AI-agent-SpeechTranslator/Output/recognized_transcript_flashcards.json" 
+                                "../AgentData/Recording/translated_transcript.txt",
+                                "../AgentData/Vocabulary/recognized_transcript_flashcards.json" 
                             };
                             _logger.LogInformation("Updated summarization agent arguments to use translated transcript and vocabulary data");
                         }
@@ -226,8 +226,8 @@ public class AgentDiscoveryService
                             diagramAgent.Arguments = new List<string> { 
                                 "run", "--project", ".",
                                 "--", 
-                                "../AI-agent-SpeechTranslator/Output/translated_transcript.txt",
-                                "../AI-Summarization-agent/data/outputs/latest_summary.json" 
+                                "../AgentData/Recording/translated_transcript.txt",
+                                "../AgentData/Summary/latest_summary.json" 
                             };
                             _logger.LogInformation("Updated diagram generator arguments to use translated transcript and summary output");
                         }
@@ -253,10 +253,10 @@ public class AgentDiscoveryService
                     Agents = agents,
                     OutputMappings = new Dictionary<string, List<string>> { 
                         { "Classroom Board Capture", new List<string> {
-                            "Captures/capture_*.txt",
+                            "../AgentData/Captures/capture_*.txt",
                         }},
                         { "AI Summarization Agent", new List<string> {
-                            "data/output/summary_*.json"
+                            "../AgentData/Summary/summary_*.json"
                         }}
                     },
                     Keywords = new[] { 
@@ -277,7 +277,7 @@ public class AgentDiscoveryService
                             summaryAgent.Arguments = new List<string> { 
                                 "run", "--project", ".",
                                 "--", 
-                                "../AI-Agent-BoardCapture/Captures/translated_text.txt"
+                                "../AgentData/Captures/translated_text.txt"
                             };
                             _logger.LogInformation("Updated summarization agent arguments to use classroom board capture and vocabulary data");
                         }
@@ -288,8 +288,8 @@ public class AgentDiscoveryService
                             diagramAgent.Arguments = new List<string> { 
                                 "run", "--project", ".",
                                 "--", 
-                                "../AI-Agent-BoardCapture/Captures/translated_text.txt",
-                                "../AI-Summarization-agent/data/outputs/latest_summary.json" 
+                                "../AgentData/Captures/translated_text.txt",
+                                "../AgentData/Summary/latest_summary.json" 
                             };
                             _logger.LogInformation("Updated diagram generator arguments to use classroom board capture and summary output");
                         }

@@ -106,7 +106,7 @@ public class AgentExecutionService
         try
         {
             // Find the most recent summary file in the output directory
-            string outputDir = Path.Combine(workingDirectory, "data", "outputs");
+            string outputDir = Path.Combine(workingDirectory, "../AgentData/Summary");
             if (!Directory.Exists(outputDir))
             {
                 await TranslationHelper.MarkupLineAsync("[yellow]No summary output directory found.[/]");
@@ -177,9 +177,9 @@ public class AgentExecutionService
                 if (agent.Name.Contains("AI Summarization Agent") && i > 0)
                 {
                     // Check for the existence of the required files
-                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
-                    string capturedImageDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Agent-BoardCapture", "Captures"));
-                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "recognized_transcript_flashcards.json"));
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AagentData", "Recording", "translated_transcript.txt"));
+                    string capturedImageDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Captures"));
+                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AagentData", "Recording", "recognized_transcript_flashcards.json"));
                     
                     // Verify the files exist before adding them to arguments
                     if (File.Exists(translatedTranscriptPath) && workflow.Name.Contains("Audio"))
@@ -261,8 +261,8 @@ public class AgentExecutionService
                 if (agent.Name.Contains("Diagram Generator") && i > 0)
                 {
                     // Find the latest summary file from the summarization agent
-                    string summaryDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Summarization-agent", "data", "outputs"));
-                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-agent-SpeechTranslator", "Output", "translated_transcript.txt"));
+                    string summaryDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Summarization-agent", "../AgentData/Summary"));
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Recording", "translated_transcript.txt"));
                     
                     if (Directory.Exists(summaryDir))
                     {
@@ -398,8 +398,9 @@ public class AgentExecutionService
             // Check the Speech Translator output directory for all generated files
             string speechTranslatorOutputDir = Path.Combine(
                 GetSolutionRootDirectory(), 
-                "AI-agent-SpeechTranslator", 
-                "Output");
+                "..", 
+                "AgentData", 
+                "Recording");
                 
             _logger.LogInformation($"Checking for files in Speech Translator output directory: {speechTranslatorOutputDir}");
             
@@ -434,7 +435,7 @@ public class AgentExecutionService
                 }
                 
                 // Also check in Vocabulary Bank's own output directory as a backup
-                string vocabularyOutputDir = Path.Combine(agent.WorkingDirectory, "Output");
+                string vocabularyOutputDir = Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Vocabulary");
                 if (Directory.Exists(vocabularyOutputDir))
                 {
                     var files = Directory.GetFiles(vocabularyOutputDir, "*flashcards*.json")
@@ -457,7 +458,7 @@ public class AgentExecutionService
             }
             else if (agent.Name.Contains("Summarization Agent"))
             {
-                string outputDir = Path.Combine(agent.WorkingDirectory, "data", "outputs");
+                string outputDir = Path.Combine(agent.WorkingDirectory, "../AgentData/Summary");
                 if (Directory.Exists(outputDir))
                 {
                     var files = Directory.GetFiles(outputDir, "summary_*.json")
@@ -502,9 +503,9 @@ public class AgentExecutionService
                 
                 // Also check in Diagram Generator's own directories
                 string[] outputDirs = new[] {
-                    Path.Combine(agent.WorkingDirectory, "Output"),
+                    Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Summary"),
                     Path.Combine(agent.WorkingDirectory, "Diagrams"),
-                    Path.Combine(agent.WorkingDirectory, "output"),
+                    Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Summary"),
                     agent.WorkingDirectory
                 };
                 
@@ -632,8 +633,8 @@ public class AgentExecutionService
         // Check Speech Translator output directory for all agent outputs
         string speechTranslatorOutputDir = Path.Combine(
             GetSolutionRootDirectory(), 
-            "AI-agent-SpeechTranslator", 
-            "Output");
+            "AgentData", 
+            "Recording");
             
         if (Directory.Exists(speechTranslatorOutputDir))
         {

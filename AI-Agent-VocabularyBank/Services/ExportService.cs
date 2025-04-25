@@ -426,7 +426,7 @@ namespace VocabularyBank.Services
             {
                 try
                 {
-                    string envFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+                    string envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "../.env");
                     if (File.Exists(envFilePath))
                     {
                         Console.WriteLine($"Reading credentials directly from .env file at {envFilePath}");

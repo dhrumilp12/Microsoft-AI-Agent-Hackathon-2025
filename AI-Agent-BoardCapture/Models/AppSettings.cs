@@ -11,7 +11,7 @@ namespace ClassroomBoardCapture.Models
         /// <summary>
         /// Directory where captured images will be saved
         /// </summary>
-        public string CaptureFolder { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Captures");
+        public string CaptureFolder { get; set; } = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "../AgentData/Captures");
         
         /// <summary>
         /// Interval between image captures in seconds

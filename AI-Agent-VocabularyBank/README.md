@@ -75,9 +75,9 @@ The application follows a modular, service-based architecture designed for exten
      ```
    - (Optional) Add Azure Translator credentials for translation features:
      ```
-     AZURE_TRANSLATOR_KEY=your-translator-key
-     AZURE_TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com/
-     AZURE_TRANSLATOR_REGION=your-region
+     TRANSLATOR_API_KEY=your-translator-key
+     TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com/
+     TRANSLATOR_REGION=your-region
      ```
    - (Optional) Add Microsoft 365 credentials for M365 export:
      ```

@@ -21,7 +21,7 @@ namespace VocabularyBank
         static async Task Main(string[] args)
         {
             // Load environment variables from .env file (ensure this is at the top)
-            DotNetEnv.Env.Load();
+            DotNetEnv.Env.Load(@"../.env");
 
             // Set up console display
             Console.Title = "Vocabulary Bank & Flashcards Generator";

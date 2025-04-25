@@ -25,7 +25,7 @@ namespace ClassroomBoardCapture
         public static async Task Main(string[] args)
         {
             // Load environment variables from .env file (for local development)
-            Env.Load();
+            Env.Load(@"../.env");
             
             // Build and configure the host
             using var host = CreateHostBuilder(args).Build();

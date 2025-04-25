@@ -31,7 +31,7 @@ namespace SpeechTranslator
             string translatorRegion = configuration["TranslatorService:Region"];
 
             // Load .env variables
-            DotEnv.Load(new DotEnvOptions(envFilePaths: [".env"]));
+            DotEnv.Load(new DotEnvOptions(envFilePaths: ["../.env"]));
 
             // Override with .env variables if available
             speechApiKey = Environment.GetEnvironmentVariable("SPEECH_API_KEY") ?? speechApiKey;
@@ -136,14 +136,14 @@ namespace SpeechTranslator
                 Console.WriteLine("==============================\n");
                 Console.ResetColor();
 
-                if(!Directory.Exists("Output"))
-                {
-                    Directory.CreateDirectory("Output");
-                }
+                // if(!Directory.Exists("Output"))
+                // {
+                //     Directory.CreateDirectory("Output");
+                // }
 
                 // Create output files for recognized and translated text
-                string recognizedTextFilePath = "Output/recognized_transcript.txt";
-                string translatedTextFilePath = "Output/translated_transcript.txt";
+                string recognizedTextFilePath = "../AgentData/Recording/recognized_transcript.txt";
+                string translatedTextFilePath = "../AgentData/Recording/translated_transcript.txt";
 
                 using (var recognizedTextWriter = new StreamWriter(recognizedTextFilePath, append: false))
                 {

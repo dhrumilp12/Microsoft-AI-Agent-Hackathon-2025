@@ -74,42 +74,60 @@ namespace SpeechTranslator
                 Console.ReadLine();
 
                 logger.LogInformation("Prompting user for source languages.");
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("\n==============================");
-                Console.WriteLine("Enter the source languages");
-                Console.WriteLine("==============================\n");
-                Console.ResetColor();
-
-                Console.ForegroundColor = ConsoleColor.Magenta;
-                Console.WriteLine("Enter the source language:");
-                Console.ResetColor();
-                string sourceLanguage = Console.ReadLine();
-
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                // Convert the source language into its two-digit ISO code
-                if (string.IsNullOrEmpty(sourceLanguage))
+                
+                // Get target language from args[0] if provided
+                string targetLanguage = args.Length > 0 ? args[0] : "en"; // Default to English if no target language is provided
+                
+                // Get source language from args[1] if provided
+                string sourceLanguage;
+                if (args.Length > 1 && !string.IsNullOrEmpty(args[1]))
                 {
-                    sourceLanguage = "en"; // Default to English if no input is provided
+                    sourceLanguage = args[1];
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"\nUsing source language: {sourceLanguage}");
+                    Console.ResetColor();
                 }
                 else
                 {
-                    try
-                    {
-                        var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                                    .FirstOrDefault(c => c.EnglishName.Contains(sourceLanguage, StringComparison.OrdinalIgnoreCase) ||
-                                                        c.NativeName.Contains(sourceLanguage, StringComparison.OrdinalIgnoreCase));
-                        sourceLanguage = culture.TwoLetterISOLanguageName;
-                    }
-                    catch (CultureNotFoundException)
-                    {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\n==============================");
+                    Console.WriteLine("Enter the source language");
+                    Console.WriteLine("==============================\n");
+                    Console.ResetColor();
 
-                        Console.WriteLine("Invalid language code. Defaulting to English.");
-                        sourceLanguage = "en";
+                    Console.ForegroundColor = ConsoleColor.Magenta;
+                    Console.WriteLine("Enter the source language:");
+                    Console.ResetColor();
+                    sourceLanguage = Console.ReadLine();
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    // Convert the source language into its two-digit ISO code
+                    if (string.IsNullOrEmpty(sourceLanguage))
+                    {
+                        sourceLanguage = "en"; // Default to English if no input is provided
                     }
+                    else
+                    {
+                        try
+                        {
+                            var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
+                                        .FirstOrDefault(c => c.EnglishName.Contains(sourceLanguage, StringComparison.OrdinalIgnoreCase) ||
+                                                            c.NativeName.Contains(sourceLanguage, StringComparison.OrdinalIgnoreCase));
+                            sourceLanguage = culture.TwoLetterISOLanguageName;
+                        }
+                        catch (CultureNotFoundException)
+                        {
+                            Console.WriteLine("Invalid language code. Defaulting to English.");
+                            sourceLanguage = "en";
+                        }
+                    }
+                    Console.ResetColor();
                 }
-                Console.ResetColor();
 
-                string targetLanguage = args.Length > 0 ? args[0] : "en"; // Default to English if no argument is provided
+                // Display target language info
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Target language: {targetLanguage}");
+                Console.ResetColor();
 
                 logger.LogInformation("Starting speech-to-text and translation process.");
                 Console.ForegroundColor = ConsoleColor.Green;

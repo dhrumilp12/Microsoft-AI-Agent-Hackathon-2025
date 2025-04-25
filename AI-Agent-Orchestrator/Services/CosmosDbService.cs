@@ -1,19 +1,20 @@
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 using System;
+using Azure.AI.OpenAI;
 using AI_Agent_Orchestrator.Models;
 
 namespace AI_Agent_Orchestrator.Services;
 
 public class CosmosDbService
 {
-    private readonly CosmosClient _cosmosClient;
     private readonly Container _container;
+    private readonly AzureOpenAIClient _openAIClient;
 
-    public CosmosDbService(string connectionString, string databaseName, string containerName)
+    public CosmosDbService(CosmosClient cosmosClient, string databaseName, string containerName, AzureOpenAIClient openAIClient)
     {
-        _cosmosClient = new CosmosClient(connectionString);
-        _container = _cosmosClient.GetContainer(databaseName, containerName);
+        _container = cosmosClient.GetContainer(databaseName, containerName);
+        _openAIClient = openAIClient;
     }
 
     public async Task AddConversationAsync(string userId, string userQuery, string botResponse, List<LLMConversation> prevConversations)

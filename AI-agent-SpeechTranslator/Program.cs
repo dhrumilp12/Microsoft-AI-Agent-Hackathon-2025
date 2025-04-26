@@ -133,11 +133,6 @@ namespace SpeechTranslator
                 Console.WriteLine("==============================\n");
                 Console.ResetColor();
 
-                // if(!Directory.Exists("Output"))
-                // {
-                //     Directory.CreateDirectory("Output");
-                // }
-
                 // Create output files for recognized and translated text
                 string recognizedTextFilePath = "../AgentData/Recording/recognized_transcript.txt";
                 string translatedTextFilePath = "../AgentData/Recording/translated_transcript.txt";

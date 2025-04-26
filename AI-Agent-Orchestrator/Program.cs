@@ -5,11 +5,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Microsoft.Extensions.Configuration.EnvironmentVariables;
+using System;
 using System.Diagnostics;
 using System.Net;
 using System.Globalization;
 using Serilog;
 using Serilog.Sinks.File;
+using Azure;
+using Azure.AI.OpenAI;
+using Microsoft.Azure.Cosmos;
 
 namespace AI_Agent_Orchestrator;
 
@@ -17,10 +21,15 @@ public class Program
 {
     static async Task Main(string[] args)
     {
-        // Load environment variables from .env file if it exists
-        if (File.Exists("../.env"))
+        // Load environment variables from the centralized .env file
+        var envFilePath = Path.GetFullPath(Path.Combine(GetSolutionRootDirectory(), ".env"));
+
+        Console.WriteLine($"Loading environment variables from: {envFilePath}");
+
+        // Check if the .env file exists
+        if (File.Exists(envFilePath))
         {
-            DotNetEnv.Env.Load(@"../.env");
+            DotNetEnv.Env.Load(envFilePath);
         }
         
         // Build configuration
@@ -53,12 +62,21 @@ public class Program
             configuration["CosmosDb:ContainerName"] = cosmosDBConfig.ContainerName;
         }
 
-        // Check if the configuration is valid
+        // Check if the Azure OpenAI configuration is valid
         if (string.IsNullOrEmpty(configuration["AzureOpenAI:Endpoint"]) ||
             string.IsNullOrEmpty(configuration["AzureOpenAI:ApiKey"]) ||
             string.IsNullOrEmpty(configuration["AzureOpenAI:DeploymentName"]))
         {
             AnsiConsole.MarkupLine("[bold red]Error:[/] Missing Azure OpenAI configuration in appsettings.json or environment variables.");
+            return;
+        }
+
+        // Check if the Cosmos DB configuration is valid
+        if (string.IsNullOrEmpty(configuration["CosmosDb:ConnectionString"]) ||
+            string.IsNullOrEmpty(configuration["CosmosDb:DatabaseName"]) ||
+            string.IsNullOrEmpty(configuration["CosmosDb:ContainerName"]))
+        {
+            AnsiConsole.MarkupLine("[bold red]Error:[/] Missing Cosmos DB configuration in appsettings.json or environment variables.");
             return;
         }
 
@@ -197,6 +215,19 @@ public class Program
                 await TranslationHelper.MarkupLineAsync("[bold red]No agents were discovered.[/]");
                 await TranslationHelper.MarkupLineAsync("[yellow]Please check the project structure and paths.[/]");
                 return;
+            }
+            
+            // Pass the path to the centralized .env file as a command-line argument
+            if (!File.Exists(envFilePath))
+            {
+                Console.WriteLine("Error: .env file not found at " + envFilePath);
+                return;
+            }
+
+            foreach (var agent in agents)
+            {
+                agent.Arguments.Add("--env");
+                agent.Arguments.Add(envFilePath);
             }
             
             while (true)
@@ -351,10 +382,21 @@ public class Program
                     await DisplayChatbotWelcomeAsync();
 
                     // Initialize Cosmos DB service
+                    var openAIClient = new AzureOpenAIClient(
+                        new Uri(configuration["AzureOpenAI:Endpoint"]),
+                        new Azure.AzureKeyCredential(configuration["AzureOpenAI:ApiKey"])
+                    );
+
+                    var cosmosDBClient = new CosmosClient(configuration["CosmosDb:ConnectionString"]);
+
                     var cosmosDbService = new CosmosDbService(
-                        configuration["CosmosDb:ConnectionString"],
+                        cosmosDBClient,
                         configuration["CosmosDb:DatabaseName"],
-                        configuration["CosmosDb:ContainerName"]);
+                        configuration["CosmosDb:ContainerName"],
+                        openAIClient
+                    );
+
+                    var vectorSearchService = new VectorSearchService(cosmosDBClient, configuration["CosmosDb:DatabaseName"], "workflowagentembeddings");
                     
                     var chatbotGreeting = await TranslationHelper.TranslateAsync("Hello! How can I assist you today?");
                     await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {chatbotGreeting}");
@@ -385,19 +427,91 @@ public class Program
                             llmInput = await translationService.TranslateTextAsync(userInput, "en", _targetLanguage);
                         }
 
-                        var botResponse = await semanticKernelService.ChatWithLLMAsync(llmInput, conversationHistory);
-                        
-                        // Translate bot response to target language
-                        string translatedResponse = botResponse;
-                        if (_targetLanguage != "en" && !string.IsNullOrEmpty(_targetLanguage))
+                        string botResponse = string.Empty;
+
+                        // Suggest an agent or workflow based on user input
+                        // Generate embeddings for all workflows asynchronously
+                        var workflowEmbeddings = await Task.WhenAll(workflows.Select(async w =>
                         {
-                            translatedResponse = await translationService.TranslateTextAsync(botResponse, _targetLanguage);
+                            var existingEmbedding = await vectorSearchService.RetrieveEmbeddingsAsync(w.Name);
+                            if (existingEmbedding == null)
+                            {
+                                var newEmbedding = await vectorSearchService.ConvertToEmbeddingAsync(w.Description);
+                                await vectorSearchService.StoreEmbeddingAsync(newEmbedding, w.Name, w.Description);
+                                return new { Workflow = w, Embedding = newEmbedding };
+                            }
+                            return new { Workflow = w, Embedding = existingEmbedding };
+                        }));
+
+                        // Generate embeddings for all agents asynchronously
+                        var agentEmbeddings = await Task.WhenAll(agents.Select(async a =>
+                        {
+                            var existingEmbedding = await vectorSearchService.RetrieveEmbeddingsAsync(a.Name);
+                            if (existingEmbedding == null)
+                            {
+                                var newEmbedding = await vectorSearchService.ConvertToEmbeddingAsync(a.Description);
+                                await vectorSearchService.StoreEmbeddingAsync(newEmbedding, a.Name, a.Description);
+                                return new { Agent = a, Embedding = newEmbedding };
+                            }
+                            return new { Agent = a, Embedding = existingEmbedding };
+                        }));
+
+                        // Generate embedding for user input
+                        var queryEmbedding = await vectorSearchService.ConvertToEmbeddingAsync(userInput);
+
+                        // Perform vector similarity search for workflows
+                        var relevantWorkflows = workflowEmbeddings
+                            .Select(w => new
+                            {
+                                Workflow = w.Workflow,
+                                Similarity = vectorSearchService.ComputeCosineSimilarity(queryEmbedding, w.Embedding)
+                            })
+                            .OrderByDescending(w => w.Similarity)
+                            .Take(3)
+                            .ToList();
+
+                        if (relevantWorkflows.Any())
+                        {
+                            botResponse += $"Based on your input, I suggest the following workflow(s):\n";
+                            AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Based on your input, I suggest the following workflow(s):");
+                            foreach (var workflow in relevantWorkflows)
+                            {
+                                botResponse += $"- {workflow.Workflow.Name}: {workflow.Workflow.Description}\n";
+                                AnsiConsole.MarkupLine($"- [bold yellow]{workflow.Workflow.Name}[/]: {workflow.Workflow.Description}");
+                            }
+                        }
+                        else
+                        {
+                            // Perform vector similarity search for agents
+                            var relevantAgents = agentEmbeddings
+                                .Select(a => new
+                                {
+                                    Agent = a.Agent,
+                                    Similarity = vectorSearchService.ComputeCosineSimilarity(queryEmbedding, a.Embedding)
+                                })
+                                .OrderByDescending(a => a.Similarity)
+                                .Take(3)
+                                .ToList();
+
+                            if (relevantAgents.Any())
+                            {
+                                botResponse += $"Based on your input, I suggest the following agent(s):\n";
+                                AnsiConsole.MarkupLine("[bold green]Chatbot:[/] Based on your input, I suggest the following agent(s):");
+                                foreach (var agent in relevantAgents)
+                                {
+                                    botResponse += $"- {agent.Agent.Name}: {agent.Agent.Description}\n";
+                                    AnsiConsole.MarkupLine($"- [bold yellow]{agent.Agent.Name}[/]: {agent.Agent.Description}");
+                                }
+                            }
+                            else
+                            {
+                                botResponse = await semanticKernelService.ChatWithLLMAsync(llmInput, conversationHistory);
+                                AnsiConsole.MarkupLine($"[bold green]Chatbot:[/] {botResponse}");
+                            }
                         }
 
                         // Store the conversation in Cosmos DB (store original English response for future context)
-                        await cosmosDbService.AddConversationAsync("user123", userInput, botResponse, conversations);
-
-                        await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {translatedResponse}");
+                        await cosmosDbService.AddConversationAsync("user123", llmInput, botResponse, conversations);
                     }
                 }
                 // Wait for user input before continuing

@@ -10,6 +10,14 @@ AgentData/Recording/*
 AgentData/Summary/*
 AgentData/Vocabulary/*
 
+# Except the .gitkeep files
+!AgentData/Captures/.gitkeep
+!AgentData/Diagram/.gitkeep
+!AgentData/Recording/.gitkeep
+!AgentData/Summary/.gitkeep
+!AgentData/Vocabulary/.gitkeep
+
+
 # .NET Core
 bin/
 obj/

@@ -69,11 +69,7 @@ namespace SpeechTranslator
 
                 Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("This application will help you translate spoken language in real-time.");
-                Console.WriteLine("Press Enter to start the process.");
                 Console.ResetColor();
-                Console.ReadLine();
-
-                logger.LogInformation("Prompting user for source languages.");
                 
                 // Get target language from args[0] if provided
                 string targetLanguage = args.Length > 0 ? args[0] : "en"; // Default to English if no target language is provided
@@ -89,6 +85,7 @@ namespace SpeechTranslator
                 }
                 else
                 {
+                    logger.LogInformation("Prompting user for source language.");
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("\n==============================");
                     Console.WriteLine("Enter the source language");
@@ -183,12 +180,27 @@ namespace SpeechTranslator
                 // Initialize speech synthesizer
                 var synthesizer = new SpeechSynthesizer(speechService.GetSpeechConfig());
 
-                // Read and speak the translated text
+                // Read and optionally speak the translated text
                 if (File.Exists(translatedTextFilePath))
                 {
-                    Console.WriteLine("\n[Speaking Translated Text]");
                     var translatedText = await File.ReadAllTextAsync(translatedTextFilePath);
-                    await synthesizer.SpeakTextAsync(translatedText);
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\n==============================");
+                    Console.WriteLine("Do you want to hear the translated text? (Y/[n])");
+                    Console.ResetColor();
+                    var userResponse = Console.ReadLine()?.Trim().ToLower();
+
+                    if (userResponse == "yes" || userResponse == "y" || userResponse == "Y")
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("\n[Speaking Translated Text]");
+                        await synthesizer.SpeakTextAsync(translatedText);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Skipping text-to-speech playback.");
+                    }
+                    Console.ResetColor();
                 }
                 else
                 {

@@ -177,9 +177,9 @@ public class AgentExecutionService
                 if (agent.Name.Contains("AI Summarization Agent") && i > 0)
                 {
                     // Check for the existence of the required files
-                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AagentData", "Recording", "translated_transcript.txt"));
+                    string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Recording", "translated_transcript.txt"));
                     string capturedImageDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Captures"));
-                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AagentData", "Recording", "recognized_transcript_flashcards.json"));
+                    string vocabularyDataPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Vocabulary", "recognized_transcript_flashcards.json"));
                     
                     // Verify the files exist before adding them to arguments
                     if (File.Exists(translatedTranscriptPath) && workflow.Name.Contains("Audio"))
@@ -426,7 +426,7 @@ public class AgentExecutionService
                 // First check the Speech Translator output directory as noted by the user
                 if (Directory.Exists(speechTranslatorOutputDir))
                 {
-                    var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "recognized_transcript_flashcards.json");
+                    var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "..", "Vocabulary", "recognized_transcript_flashcards.json");
                     if (File.Exists(flashcardsFile))
                     {
                         generatedFiles["Vocabulary Bank"] = new List<string> { flashcardsFile };
@@ -641,7 +641,7 @@ public class AgentExecutionService
             // Look for Vocabulary Bank output
             if (!generatedFiles.ContainsKey("Vocabulary Bank"))
             {
-                var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "recognized_transcript_flashcards.json");
+                var flashcardsFile = Path.Combine(speechTranslatorOutputDir, "..", "Vocabulary", "recognized_transcript_flashcards.json");
                 if (File.Exists(flashcardsFile))
                 {
                     generatedFiles["Vocabulary Bank"] = new List<string> { flashcardsFile };
@@ -653,7 +653,7 @@ public class AgentExecutionService
             if (!generatedFiles.ContainsKey("Diagram Generator"))
             {
                 var diagramFiles = new List<string>();
-                var diagramMd = Path.Combine(speechTranslatorOutputDir, "translated_transcript_diagram.md");
+                var diagramMd = Path.Combine(speechTranslatorOutputDir, "..", "Diagram", "translated_transcript_diagram.md");
                 
                 if (File.Exists(diagramMd))
                 {

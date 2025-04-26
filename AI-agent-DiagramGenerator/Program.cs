@@ -164,7 +164,7 @@ namespace DiagramGenerator
             Directory.CreateDirectory(outputDir);
             
             string fileName = Path.GetFileNameWithoutExtension(transcriptPath);
-            string outputPath = Path.Combine(outputDir, $"{fileName}_diagram.md");
+            string outputPath = Path.Combine(outputDir, "..", "Diagram", $"{fileName}_diagram.md");
             
             await File.WriteAllTextAsync(outputPath, diagram);
             return outputPath;

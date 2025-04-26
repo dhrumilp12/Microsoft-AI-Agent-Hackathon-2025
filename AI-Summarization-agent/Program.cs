@@ -45,7 +45,7 @@ class Program
             var summarizationService = serviceProvider.GetRequiredService<SummarizationService>();
 
             // Define file paths for transcript and prompt input
-            var transcriptPath = "data/transcript.txt";
+            var transcriptPath = "../AgentData/recognized_transcript.txt";
             
             // Check if any command line arguments were provided that could be file paths
             if (args.Length > 0 && File.Exists(args[0]))

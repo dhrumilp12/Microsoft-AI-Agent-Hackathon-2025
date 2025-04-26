@@ -58,6 +58,7 @@ namespace VocabularyBank.Services
 
             // Create directory if it doesn't exist
             string? directory = Path.GetDirectoryName(outputPath);
+            Console.WriteLine($"Service output path: {directory}");
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);

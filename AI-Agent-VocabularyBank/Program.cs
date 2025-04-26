@@ -21,7 +21,7 @@ namespace VocabularyBank
         static async Task Main(string[] args)
         {
             // Load environment variables from .env file (ensure this is at the top)
-            DotNetEnv.Env.Load();
+            DotNetEnv.Env.Load(@"../.env");
 
             // Set up console display
             Console.Title = "Vocabulary Bank & Flashcards Generator";
@@ -396,7 +396,8 @@ namespace VocabularyBank
             
             // Default output path
             string defaultPath = Path.Combine(
-                Path.GetDirectoryName(transcriptPath), 
+                Path.GetDirectoryName(transcriptPath),
+                "..","Vocabulary", 
                 Path.GetFileNameWithoutExtension(transcriptPath) + "_flashcards.json"
             );
             
@@ -762,8 +763,8 @@ Deep learning is part of a broader family of machine learning methods based on a
             Console.ResetColor();
             
             // Get the directory of the transcript file to save the translated file in the same location
-            string outputDirectory = Path.GetDirectoryName(transcriptPath);
-
+            string outputDirectory = Path.Combine(Path.GetDirectoryName(transcriptPath), "..", "Vocabulary");
+            Console.WriteLine($"Output directory path {outputDirectory}");
             // Save the translated text to a file in the same location as the transcript
             string translatedFilePath = await SaveTranslatedTextAsync(translatedText, targetLanguage, languages[targetLanguage], outputDirectory);
             Console.WriteLine($"Translated text saved to: {translatedFilePath}");

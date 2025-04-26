@@ -33,7 +33,7 @@ namespace VocabularyBank.Services
             try
             {
                 // Load .env file once at the start - using absolute path to ensure correct location
-                string envPath = Path.GetFullPath(".env");
+                string envPath = Path.GetFullPath("../.env");
                 DotNetEnv.Env.Load(envPath);
                 DotNetEnv.Env.TraversePath().Load();
                 

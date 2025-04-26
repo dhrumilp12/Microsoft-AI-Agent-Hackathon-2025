@@ -58,6 +58,7 @@ namespace VocabularyBank.Services
 
             // Create directory if it doesn't exist
             string? directory = Path.GetDirectoryName(outputPath);
+            Console.WriteLine($"Service output path: {directory}");
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
@@ -426,7 +427,7 @@ namespace VocabularyBank.Services
             {
                 try
                 {
-                    string envFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+                    string envFilePath = Path.Combine(Directory.GetCurrentDirectory(), "../.env");
                     if (File.Exists(envFilePath))
                     {
                         Console.WriteLine($"Reading credentials directly from .env file at {envFilePath}");

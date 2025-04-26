@@ -28,7 +28,7 @@ class Program
             Console.WriteLine("=== AI Summarization Agent ===\n");
 
             // Load environment variables from the .env file
-            Env.Load();
+            Env.Load(@"../.env");
 
             // Set up configuration to pull from environment variables
             var configuration = new ConfigurationBuilder()
@@ -121,7 +121,7 @@ class Program
                 var summary = await summarizationService.SummarizeTextAsync(fullInput);
 
                 // Define output directory and make sure it exists
-                string outputDir = "data/outputs";
+                string outputDir = "../AgentData/Summary";
                 
                 // Create the directory if it doesn't exist
                 if (!Directory.Exists(outputDir))

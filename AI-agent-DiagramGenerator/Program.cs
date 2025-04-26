@@ -13,7 +13,7 @@ namespace DiagramGenerator
         static async Task Main(string[] args)
         {
             // Load environment variables
-            DotNetEnv.Env.Load();
+            DotNetEnv.Env.Load(@"../.env");
             
             // Setup configuration
             var configuration = new ConfigurationBuilder()

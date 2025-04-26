@@ -31,9 +31,9 @@ namespace VocabularyBank.Services
             if (useEnvVars)
             {
                 // Get credentials from environment variables
-                _subscriptionKey = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_KEY") ?? "";
-                _endpoint = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_ENDPOINT") ?? "";
-                _region = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_REGION") ?? "";
+                _subscriptionKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? "";
+                _endpoint = Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT") ?? "";
+                _region = Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? "";
             }
             else
             {

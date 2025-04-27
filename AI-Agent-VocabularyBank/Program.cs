@@ -21,12 +21,22 @@ namespace VocabularyBank
         static async Task Main(string[] args)
         {
             // Load environment variables from .env file (ensure this is at the top)
-            DotNetEnv.Env.Load();
+            DotNetEnv.Env.Load(@"../.env");
 
             // Set up console display
             Console.Title = "Vocabulary Bank & Flashcards Generator";
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Clear();
+            
+            // Try to clear the console, but don't fail if there's no valid console
+            try
+            {
+                Console.Clear();
+            }
+            catch (IOException)
+            {
+                // No valid console handle, possibly running as a child process with redirected output
+                // Just continue without clearing
+            }
             
             DisplayBanner();
             
@@ -44,8 +54,15 @@ namespace VocabularyBank
                 var transcriptProcessor = serviceProvider.GetService<ITranscriptProcessorService>();
                 string transcript = await transcriptProcessor.LoadTranscriptAsync(transcriptPath);
                 
+                // Check if we have a second argument which is likely the translated file
+                string translatedPath = null;
+                if (args.Length > 1 && File.Exists(args[1]))
+                {
+                    translatedPath = args[1];
+                }
+                
                 // Offer translation option
-                TranslatedContent translatedContent = await PromptForTranslationAsync(transcript, transcriptPath, serviceProvider);
+                TranslatedContent translatedContent = await PromptForTranslationAsync(transcript, transcriptPath, serviceProvider, translatedPath);
                 if (translatedContent != null)
                 {
                     // Process both original and translated text for vocabulary extraction
@@ -236,12 +253,21 @@ namespace VocabularyBank
         /// </summary>
         private static void DisplayBanner()
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("╔════════════════════════════════════════════╗");
-            Console.WriteLine("║  Vocabulary Bank & Flashcards Generator    ║");
-            Console.WriteLine("╚════════════════════════════════════════════╝");
-            Console.ResetColor();
-            Console.WriteLine("\nAutomatically extract and define key terms from educational content");
+            try
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("╔════════════════════════════════════════════╗");
+                Console.WriteLine("║  Vocabulary Bank & Flashcards Generator    ║");
+                Console.WriteLine("╚════════════════════════════════════════════╝");
+                Console.ResetColor();
+                Console.WriteLine("\nAutomatically extract and define key terms from educational content");
+            }
+            catch (IOException)
+            {
+                // Fallback for redirected console
+                Console.WriteLine("== Vocabulary Bank & Flashcards Generator ==");
+                Console.WriteLine("Automatically extract and define key terms from educational content");
+            }
         }
         
         /// <summary>
@@ -370,7 +396,8 @@ namespace VocabularyBank
             
             // Default output path
             string defaultPath = Path.Combine(
-                Path.GetDirectoryName(transcriptPath), 
+                Path.GetDirectoryName(transcriptPath),
+                "..","Vocabulary", 
                 Path.GetFileNameWithoutExtension(transcriptPath) + "_flashcards.json"
             );
             
@@ -610,9 +637,61 @@ Deep learning is part of a broader family of machine learning methods based on a
         /// <param name="transcript">The original transcript text</param>
         /// <param name="transcriptPath">The path to the original transcript file</param>
         /// <param name="serviceProvider">The service provider for dependency injection</param>
+        /// <param name="translatedPath">Optional path to an existing translated file</param>
         /// <returns>TranslatedContent if translation was performed, null otherwise</returns>
-        private static async Task<TranslatedContent> PromptForTranslationAsync(string transcript, string transcriptPath, ServiceProvider serviceProvider)
+        private static async Task<TranslatedContent> PromptForTranslationAsync(
+            string transcript, 
+            string transcriptPath, 
+            ServiceProvider serviceProvider, 
+            string translatedPath = null)
         {
+            // If we already have a translated path provided via arguments (from the workflow),
+            // automatically use it without prompting
+            if (!string.IsNullOrEmpty(translatedPath) && File.Exists(translatedPath))
+            {
+                Console.WriteLine($"Using provided translated file: {translatedPath}");
+                
+                // Get the translation service
+                var translationSvc = serviceProvider.GetService<ITranslationService>();
+                
+                // Load the translated content
+                string translatedFileContent = await File.ReadAllTextAsync(translatedPath);
+                
+                if (string.IsNullOrWhiteSpace(translatedFileContent))
+                {
+                    Console.WriteLine("Warning: Translated file is empty. Proceeding with original text only.");
+                    return null;
+                }
+                
+                // Detect the languages
+                DisplayProcessingStage("Detecting source language");
+                string sourceLang = await translationSvc.DetectLanguageAsync(transcript);
+                string translatedLang = await translationSvc.DetectLanguageAsync(translatedFileContent);
+                
+                // Get available languages
+                var availableLanguages = await translationSvc.GetAvailableLanguagesAsync();
+                
+                // Determine language name
+                string translatedLanguageName = availableLanguages.ContainsKey(translatedLang) 
+                    ? availableLanguages[translatedLang]
+                    : translatedLang;
+                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"✓ Using original text in {sourceLang} and translated text in {translatedLanguageName}!");
+                Console.ResetColor();
+                
+                // Return the translated content
+                return new TranslatedContent
+                {
+                    OriginalText = transcript,
+                    OriginalLanguage = sourceLang,
+                    TranslatedText = translatedFileContent,
+                    TargetLanguage = translatedLang,
+                    TargetLanguageDisplayName = translatedLanguageName
+                };
+            }
+            
+            // Otherwise proceed with the normal prompt flow
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\nHow would you like to handle translation?");
             Console.ResetColor();
@@ -684,8 +763,8 @@ Deep learning is part of a broader family of machine learning methods based on a
             Console.ResetColor();
             
             // Get the directory of the transcript file to save the translated file in the same location
-            string outputDirectory = Path.GetDirectoryName(transcriptPath);
-
+            string outputDirectory = Path.Combine(Path.GetDirectoryName(transcriptPath), "..", "Vocabulary");
+            Console.WriteLine($"Output directory path {outputDirectory}");
             // Save the translated text to a file in the same location as the transcript
             string translatedFilePath = await SaveTranslatedTextAsync(translatedText, targetLanguage, languages[targetLanguage], outputDirectory);
             Console.WriteLine($"Translated text saved to: {translatedFilePath}");

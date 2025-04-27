@@ -7,6 +7,8 @@ obj/
 *.exe
 *.pdb
 
+.Output/
+
 # Visual Studio files
 .vs/
 *.user
@@ -33,3 +35,9 @@ project.assets.json
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+
+# Logs
+logs/
+
+# Output folders
+Output/

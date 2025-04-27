@@ -1,0 +1,55 @@
+Alright, welcome everyone! I’m glad to see you all here today. In this session, we’ll be diving into the fascinating world of Machine Learning, with a particular focus on one of its core approaches: Supervised Learning.
+
+Let’s begin by understanding what supervised learning actually means.
+
+In simple terms, supervised learning is a type of machine learning where the algorithm is trained on a labeled dataset. This means that for each input in the dataset, the corresponding correct output is also provided. The model's goal is to learn the mapping function from inputs to outputs so that it can make accurate predictions on new, unseen data.
+
+Think of it like teaching a child how to recognize animals. You show the child several pictures of animals along with their names — "This is a cat", "This is a dog", and so on. Over time, the child learns to associate certain features with certain animals. Similarly, in supervised learning, we give the model many examples of input-output pairs so it can learn the underlying pattern.
+
+There are two main types of supervised learning problems:
+
+Regression – where the output variable is a continuous value.
+
+Classification – where the output variable is a category or class label.
+
+Now, let’s take a look at some of the most commonly used supervised learning algorithms:
+
+Linear Regression: Used for predicting a continuous value. It models the relationship between the dependent variable and one or more independent variables using a straight line.
+
+Logistic Regression: Despite its name, it’s used for classification tasks — especially binary classification problems, like spam vs. not spam.
+
+Support Vector Machines (SVM): These are powerful classifiers that work by finding a hyperplane that best separates the classes.
+
+Decision Trees: These models split the data into subsets based on feature values. They’re easy to understand and visualize.
+
+Random Forests: An ensemble method that builds multiple decision trees and merges their results for better performance and accuracy.
+
+Let’s now take a deeper look at Linear Regression, as it's one of the foundational algorithms in supervised learning. Linear regression is typically used to predict a numerical value — for example, predicting a student’s test score based on the number of hours they studied. The model tries to fit a straight line through the data points in such a way that it best represents the trend.
+
+But building a model isn’t enough. We also need a way to measure how good our model is. This brings us to model evaluation.
+
+In supervised learning, several evaluation metrics are used depending on the type of problem:
+
+For regression, we use metrics such as:
+
+Mean Squared Error (MSE) – measures the average of the squares of the errors between actual and predicted values.
+
+Root Mean Squared Error (RMSE) – the square root of MSE, providing a more interpretable error metric.
+
+R-squared (R²) Value – indicates the proportion of variance in the dependent variable that is predictable from the independent variables.
+
+For classification, we often use:
+
+Accuracy
+
+Precision, Recall, and F1-score
+
+Confusion Matrix
+
+These metrics help us understand how well our model is performing and whether it is ready to be used in real-world scenarios.
+
+Alright, before we go any deeper into performance metrics and dive into the next algorithm, let’s take a quick pause here.
+
+I’d like to conduct a short quiz just to make sure everyone is following along and has a clear understanding of what we’ve discussed so far — especially the core ideas around supervised learning, regression, and basic evaluation techniques.
+
+We’ll continue after this short break.

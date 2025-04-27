@@ -1,0 +1,21 @@
+Good morning, everyone. Today’s lecture is focused on the fundamentals of cybersecurity — an increasingly vital topic in our digital world. Cybersecurity refers to the practice of protecting systems, networks, hardware, and data from cyber threats. These threats come in many forms and are growing more sophisticated by the day, targeting both individuals and organizations.
+
+At the heart of cybersecurity lies the CIA Triad — Confidentiality, Integrity, and Availability. These three principles serve as the foundation for developing secure systems. Confidentiality ensures that sensitive data is accessed only by authorized users. Think of medical records or financial information — if unauthorized individuals gain access, it could lead to identity theft or financial fraud. Integrity ensures that information remains accurate and unaltered, whether it’s in storage, transit, or during processing. Availability guarantees that data and services are accessible when needed, preventing disruptions to operations.
+
+Let’s now explore some common types of cyber threats. **Phishing** is one of the most widespread — it involves tricking users into clicking malicious links or providing personal information through deceptive emails or messages. **Malware**, short for malicious software, includes viruses, worms, spyware, and ransomware. Ransomware attacks, in particular, have surged in recent years, encrypting users’ files and demanding payment for the decryption key.
+
+Another prevalent attack type is the **Denial-of-Service (DoS)** attack, where attackers flood a network or website with traffic, causing it to become slow or completely unavailable. A **Man-in-the-Middle (MitM)** attack is when a third party intercepts communication between two systems without their knowledge — often to steal login credentials or payment information.
+
+To defend against these threats, organizations and individuals employ a variety of tools and best practices. These include **firewalls**, which act as barriers between trusted and untrusted networks; **antivirus and anti-malware software** to detect and remove malicious code; **intrusion detection and prevention systems (IDS/IPS)** to monitor network traffic for suspicious behavior; and **multi-factor authentication (MFA)** to add extra layers of identity verification.
+
+However, technical controls alone are not sufficient. Human error remains a leading cause of security breaches. Therefore, **cybersecurity awareness training** is crucial. Employees must learn how to identify phishing emails, use strong passwords, and understand company policies regarding data handling and device usage.
+
+On a broader level, cybersecurity is governed by various frameworks and regulations. For instance, **GDPR** (General Data Protection Regulation) in Europe ensures data privacy rights, while **HIPAA** in the U.S. protects health information. Standards like **ISO/IEC 27001** offer comprehensive guidelines for information security management.
+
+The cybersecurity landscape is dynamic and constantly evolving. As new technologies like cloud computing, IoT, and AI continue to grow, so do the attack surfaces. This creates a demand for skilled cybersecurity professionals who can anticipate, detect, and respond to threats in real time.
+
+To pursue a career in cybersecurity, foundational knowledge in networking, operating systems, encryption, and threat analysis is essential. Certifications such as **CompTIA Security+**, **Certified Ethical Hacker (CEH)**, **CISSP**, and **Certified Information Security Manager (CISM)** are valuable credentials that can open doors in this competitive field.
+
+To wrap up, cybersecurity is not just a technical challenge — it’s a holistic discipline that intersects with policy, psychology, risk management, and user behavior. Understanding and implementing layered security strategies is key to building resilient systems and protecting critical digital infrastructure.
+
+Thank you for attending today’s lecture. 

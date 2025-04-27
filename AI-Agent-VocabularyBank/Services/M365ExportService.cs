@@ -33,7 +33,7 @@ namespace VocabularyBank.Services
             try
             {
                 // Load .env file once at the start - using absolute path to ensure correct location
-                string envPath = Path.GetFullPath(".env");
+                string envPath = Path.GetFullPath("../.env");
                 DotNetEnv.Env.Load(envPath);
                 DotNetEnv.Env.TraversePath().Load();
                 
@@ -178,7 +178,7 @@ namespace VocabularyBank.Services
             }
         }
         
-                /// <summary>
+        /// <summary>
         /// Creates a folder in OneDrive.
         /// </summary>
         private async Task<string> CreateOneDriveFolderAsync(string folderName)
@@ -189,7 +189,7 @@ namespace VocabularyBank.Services
                 // Rather than the '/me' endpoint which requires delegated permissions
                 
                 // First try to get the drives available to the application
-                var drives = await _graphClient.Drives
+                var drives = await _graphClient?.Drives
                     .Request()
                     .GetAsync();
                 
@@ -200,8 +200,8 @@ namespace VocabularyBank.Services
                 }
                 
                 // Use the first available drive
-                var driveId = drives[0].Id;
-                Console.WriteLine($"Using drive: {drives[0].Name} (ID: {driveId})");
+                var driveId = drives[0]?.Id;
+                Console.WriteLine($"Using drive: {drives[0]?.Name} (ID: {driveId})");
                 
                 var driveItem = new DriveItem
                 {
@@ -237,7 +237,7 @@ namespace VocabularyBank.Services
             try
             {
                 // Need to know which drive we're working with
-                var drives = await _graphClient.Drives
+                var drives = await _graphClient?.Drives
                     .Request()
                     .GetAsync();
                 
@@ -248,7 +248,12 @@ namespace VocabularyBank.Services
                 }
                 
                 // Use the first available drive
-                var driveId = drives[0].Id;
+                var driveId = drives[0]?.Id;
+                if (driveId == null)
+                {
+                    Console.WriteLine("Could not get drive ID.");
+                    return false;
+                }
                 
                 // Prepare content for different file formats
                 var jsonOptions = new JsonSerializerOptions 
@@ -334,7 +339,12 @@ namespace VocabularyBank.Services
                 }
                 
                 // Use the first available drive
-                var driveId = drives[0].Id;
+                var driveId = drives[0]?.Id;
+                if (driveId == null)
+                {
+                    Console.WriteLine("Could not get drive ID.");
+                    return string.Empty;
+                }
                 
                 // Create a sharing link using the available API in v4 with specific drive
                 var permission = await _graphClient.Drives[driveId].Items[folderId]
@@ -542,7 +552,14 @@ namespace VocabularyBank.Services
             {
                 string[] scopes = new[] { "https://graph.microsoft.com/.default" };
                 var result = await _msalClient.AcquireTokenForClient(scopes).ExecuteAsync();
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken);
+                if (result != null && !string.IsNullOrEmpty(result.AccessToken))
+                {
+                    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", result.AccessToken);
+                }
+                else
+                {
+                    Console.WriteLine("Warning: Null or empty access token received");
+                }
             }
             catch (Exception ex)
             {

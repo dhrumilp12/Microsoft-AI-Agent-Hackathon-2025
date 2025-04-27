@@ -1,33 +1,25 @@
-# .NET build artifacts
-.bin/
-obj/
-*.dll
-*.exe
-*.pdb
+# Ignore environment files with sensitive information
+.env
 
-# Visual Studio files
-.vs/
+# .NET Core
+bin/*
+obj/*
 *.user
 *.userosscache
 *.suo
 *.userprefs
+data/outputs/
+.vs/
 
 # Build results
 [Dd]ebug/
+[Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
 x64/
 x86/
-[Aa][Rr][Mm]/
-[Aa][Rr][Mm]64/
-
-# NuGet packages
-*.nupkg
-**/packages/*
-project.lock.json
-project.assets.json
-
-# ReSharper
-_ReSharper*/
-*.[Rr]e[Ss]harper
-*.DotSettings.user
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+msbuild.log

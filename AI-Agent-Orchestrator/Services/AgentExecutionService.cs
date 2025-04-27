@@ -172,7 +172,7 @@ public class AgentExecutionService
             {
                 var agent = workflow.Agents[i];
                 bool isLastAgent = (i == workflow.Agents.Count - 1);
-                
+
                 // Special case handling for summarization agent
                 if (agent.Name.Contains("AI Summarization Agent") && i > 0)
                 {
@@ -263,6 +263,7 @@ public class AgentExecutionService
                     // Find the latest summary file from the summarization agent
                     string summaryDir = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AI-Summarization-agent", "../AgentData/Summary"));
                     string translatedTranscriptPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Recording", "translated_transcript.txt"));
+                    string translatedImageTextPath = Path.GetFullPath(Path.Combine(agent.WorkingDirectory, "..", "AgentData", "Captures", "translated_text.txt"));
                     
                     if (Directory.Exists(summaryDir))
                     {
@@ -309,14 +310,16 @@ public class AgentExecutionService
                     }
                     
                     // Also add translated transcript
-                    if (File.Exists(translatedTranscriptPath))
+                    if (File.Exists(translatedTranscriptPath) || File.Exists(translatedImageTextPath))
                     {
-                        AnsiConsole.MarkupLine($"[green]Found translated transcript for diagram generation:[/] {translatedTranscriptPath}");
+                        // Check if the translated transcript file exists
+                        var translationPath = workflow.Name.Contains("Audio") ? translatedTranscriptPath : translatedImageTextPath;
+                        AnsiConsole.MarkupLine($"[green]Found translated transcript for diagram generation:[/] {translationPath}");
                         
-                        if (!agent.Arguments.Contains(translatedTranscriptPath))
+                        if (!agent.Arguments.Contains(translationPath))
                         {
-                            agent.Arguments.RemoveAll(arg => arg.Contains("transcript"));
-                            agent.Arguments.Add(translatedTranscriptPath);
+                            agent.Arguments.RemoveAll(arg => arg.Contains("translate"));
+                            agent.Arguments.Add(translationPath);
                         }
                     }
                 }

@@ -223,12 +223,6 @@ public class Program
                 Console.WriteLine("Error: .env file not found at " + envFilePath);
                 return;
             }
-
-            foreach (var agent in agents)
-            {
-                agent.Arguments.Add("--env");
-                agent.Arguments.Add(envFilePath);
-            }
             
             while (true)
             {

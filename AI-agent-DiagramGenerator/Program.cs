@@ -12,6 +12,8 @@ namespace DiagramGenerator
     {
         static async Task Main(string[] args)
         {
+            Console.Clear();
+            
             // Load environment variables
             DotNetEnv.Env.Load(@"../.env");
             
@@ -63,13 +65,16 @@ namespace DiagramGenerator
 
                     logger.LogInformation($"Processing file: {filePath}");
 
+                    string fileName = Path.GetFileNameWithoutExtension(filePath);
+                    string fileExtension = Path.GetExtension(filePath).ToLowerInvariant();
+
                     // Process transcript and generate diagram
                     string transcript = await File.ReadAllTextAsync(filePath);
                     logger.LogInformation($"Processing transcript from {filePath}");
 
                     var conceptExtractionProgress = new Progress<int>(percent => 
                     {
-                        Console.Write($"\rExtracting concepts: {percent}% complete");
+                        Console.Write($"\rExtracting concepts from {fileName}{fileExtension}: {percent}% complete");
                         if (percent >= 100) Console.WriteLine();
                     });
 
@@ -81,7 +86,11 @@ namespace DiagramGenerator
                     var diagramProgress = new Progress<int>(percent => 
                     {
                         Console.Write($"\rGenerating {diagramType} diagram: {percent}% complete");
-                        if (percent >= 100) Console.WriteLine();
+                        if (percent >= 100) {
+                            Console.WriteLine();
+                            Console.WriteLine($"Diagram generation complete for {fileName}.{fileExtension}");
+                            Console.WriteLine();
+                        }
                     });
 
                     var diagram = await openAIService.GenerateDiagram(concepts, diagramType, diagramProgress);

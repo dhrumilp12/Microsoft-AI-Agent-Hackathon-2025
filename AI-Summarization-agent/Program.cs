@@ -45,7 +45,7 @@ class Program
             var summarizationService = serviceProvider.GetRequiredService<SummarizationService>();
 
             // Define file paths for transcript and prompt input
-            var transcriptPath = "../AgentData/recognized_transcript.txt";
+            var transcriptPath = "../AgentData/Recording/recognized_transcript.txt";
             
             // Check if any command line arguments were provided that could be file paths
             if (args.Length > 0 && File.Exists(args[0]))
@@ -104,7 +104,7 @@ class Program
 
             // Combine the prompt, transcript, and vocabulary data if available
             string fullInput;
-            if (!string.IsNullOrEmpty(vocabularyData))
+            if (!string.IsNullOrEmpty(vocabularyData) && vocabularyData != "[]")
             {
                 fullInput = $"{prompt}\n\nTranscript:\n{transcript}\n\nVocabulary Data:\n{vocabularyData}";
             }

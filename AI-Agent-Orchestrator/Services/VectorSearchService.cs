@@ -73,8 +73,7 @@ public class VectorSearchService
 
     public async Task<float[]> ConvertToEmbeddingAsync(string query)
     {
-        // Placeholder for actual embedding conversion logic
-        // This should call your embedding model and return the embedding as a float array
+        // Calls the Azure OpenAI embedding model (hard-coded below) and return the embedding as a float array
         var openAIClient = new AzureOpenAIClient(
             new Uri(Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT")),
             new AzureKeyCredential(Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY"))

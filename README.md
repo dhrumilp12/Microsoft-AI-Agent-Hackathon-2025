@@ -1,111 +1,92 @@
-# 🛠️ Setup Guide for Local Development
+# StudyBuddy
 
-Follow these steps to set up and run the refactored application on your local machine:
+StudyBuddy is an AI-powered classroom assistant designed to enhance learning experiences by offering real-time transcription, translation, and personalized insights. It integrates multiple AI agents to provide a seamless and interactive educational environment.
 
 ---
 
-## 1. 📁 Create Project Structure
+## Authors
 
-### Create the project
-dotnet new console -n ClassroomBoardCapture -f net9.0
+This project was developed by:
+- **Pramod K. Singh**
+- **Aashish Anand**
+- **Dhrumil Patel**
+- **Abhishiktha Valavala**
 
-### Navigate to project directory
-cd ClassroomBoardCapture
+---
 
-### Create required directories
-mkdir Services
-mkdir Models
-mkdir Utils
-mkdir Captures
-mkdir tessdata
+## Included Agents
 
+1. **Speech Translator Agent**: Converts speech to text, translates it into a target language, and optionally speaks the translated text back.
+2. **Summarization Agent**: Generates concise summaries from transcripts or text.
+3. **Vocabulary Bank & Flashcards Generator Agent**: Extracts key vocabulary and creates flashcards for learning.
+4. **Diagram Generator Agent**: Creates diagrams based on text or summaries.
+5. **Board Capture Agent**: Captures and analyzes classroom board content.
+6. **Chatbot**: Integrated within the orchestrator, the chatbot provides interactive conversations powered by Azure OpenAI.
 
-## 2. 📦 Install Required Packages
+---
 
-### Core dependencies
-dotnet add package OpenCvSharp4
-dotnet add package OpenCvSharp4.Extensions
-dotnet add package Tesseract
+## Tech Stack
 
-### Configuration and DI packages
-dotnet add package Microsoft.Extensions.Configuration
-dotnet add package Microsoft.Extensions.Configuration.EnvironmentVariables
-dotnet add package Microsoft.Extensions.Configuration.Json
-dotnet add package Microsoft.Extensions.DependencyInjection
-dotnet add package Microsoft.Extensions.Hosting
-dotnet add package Microsoft.Extensions.Logging
-dotnet add package Microsoft.Extensions.Http
+- **Programming Language**: C#
+- **Framework**: .NET 9.0
+- **AI Services**: Azure Cognitive Services (Speech, Translator, Vision)
+- **OCR**: Tesseract
+- **Image Processing**: OpenCV
+- **Dependency Injection**: .NET DI
+- **Configuration Management**: .NET Configuration
 
-### Environment variable loading
-dotnet add package DotNetEnv
+---
 
+## Dependencies
 
-## 3. 📂 Copy Code Files
-Copy the provided code files into the appropriate folders inside your project structure.
+The project relies on the following dependencies:
+- **Microsoft.Extensions.Configuration**: For configuration management.
+- **Microsoft.Extensions.DependencyInjection**: For dependency injection.
+- **Microsoft.Extensions.Logging**: For logging.
+- **DotNetEnv**: For loading environment variables.
+- **Azure Cognitive Services SDKs**: For speech, translation, and vision services.
+- **Spectre.Console**: For building interactive console applications.
+- **Tesseract**: For OCR functionality.
+- **OpenCvSharp4**: For image processing.
 
-## 4. 🔐 Setup Environment Variables
-Create a .env file in the project root (copy from .env.example if available), and add your actual API keys:
+---
 
-### Azure Computer Vision API
-VISION_API_KEY=your_actual_vision_key_here
+## How to Run the Project
 
-### Azure Translator API
-TRANSLATOR_API_KEY=your_actual_translator_key_here
-TRANSLATOR_REGION=eastus
+1. Navigate to the orchestrator directory:
+   ```bash
+   cd AI-Agent-Orchestrator
+   ```
+2. Run the application:
+   ```bash
+   dotnet run
+   ```
+3. Follow the on-screen prompts to select workflows or interact with the chatbot.
 
-### ⚠️ Ensure your .env file is listed in .gitignore to avoid accidental commits of sensitive information.
+---
 
-## 5. 🧠 Setup Tesseract (Optional for OCR Fallback)
-If you want to use Tesseract OCR as a fallback:
+## Environment Variables
 
-Download and install Tesseract OCR for your platform.
+To run the project, ensure the following environment variables are set in a centralized `.env` file located one level above the orchestrator directory:
 
-Download required language data files (e.g., eng.traineddata).
+### Azure Cognitive Services
+- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint.
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key.
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Your Azure OpenAI deployment name.
+- `SPEECH_API_KEY`: Your Azure Speech API key.
+- `SPEECH_REGION`: Your Azure Speech region.
+- `TRANSLATOR_API_KEY`: Your Azure Translator API key.
+- `TRANSLATOR_REGION`: Your Azure Translator region.
+- `VISION_API_KEY`: Your Azure Vision API key.
 
-Place them in the tessdata directory.
+### Cosmos DB
+- `COSMOSDB_CONNECTION_STRING`: Connection string for Cosmos DB.
+- `COSMOSDB_DATABASENAME`: Name of the Cosmos DB database.
+- `COSMOSDB_CONTAINERNAME`: Name of the Cosmos DB container.
 
-## 6. ▶️ Build and Run
+---
 
-### Build the application
-dotnet build
-
-### Run the application
-dotnet run
-
-# Key Improvements Made
-🔧 Modular Architecture
-Clean separation of responsibilities: capture, OCR, translation, analysis.
-
-Services split with well-defined interfaces.
-
-💉 Dependency Injection
-Uses .NET built-in DI for better testability and flexibility.
-
-Mockable services for testing.
-
-⚙️ Configuration Management
-Moved hardcoded values to config files.
-
-Secrets stored securely via environment variables.
-
-🧯 Better Error Handling
-Comprehensive logging and exception handling.
-
-Fallback support (e.g., Tesseract if Azure Vision fails).
-
-🧼 Best Practices
-XML doc comments for public methods.
-
-Proper async/await usage.
-
-Supports cancellation tokens.
-
-Follows SOLID principles.
-
-🔐 Security Improvements
-API keys not hardcoded in source.
-
-Uses .env file for secrets.
-
-.env is excluded from version control.
+## Additional Notes
+- Ensure the `.env` file is located one level above the orchestrator directory.
+- Use the orchestrator to coordinate workflows or interact with individual agents.
 

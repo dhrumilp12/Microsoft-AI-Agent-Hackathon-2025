@@ -27,6 +27,10 @@ public class VectorSearchService
     /// <exception cref="CosmosException">Thrown when there is an error storing the embedding in Cosmos DB.</exception>
     /// <remarks>
     /// This method stores the embedding and metadata in Cosmos DB. It creates a new item in the specified container with the provided id, embedding, and metadata.
+    /// 
+    /// The embedding is expected to be a float array, and the metadata is expected to be a string.
+    /// The id is generated using a GUID to ensure uniqueness.
+    /// Note: Ensure that the Cosmos DB container is set up to accept the structure of the document being stored.
     /// </remarks>
     public async Task StoreEmbeddingAsync(float[] embedding, string name, string description)
     {
@@ -41,6 +45,22 @@ public class VectorSearchService
         await _container.CreateItemAsync(document);
     }
 
+    /// <summary>
+    /// Retrieves the embedding for a given name from Cosmos DB.
+    /// /// </summary>
+    /// <param name="name">The name associated with the embedding.</param>
+    /// <returns>The embedding vector as a float array.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the name is null or empty.</exception>
+    /// <exception cref="CosmosException">Thrown when there is an error retrieving the embedding from Cosmos DB.</exception>
+    /// <remarks>
+    /// This method retrieves the embedding for a given name from Cosmos DB.
+    /// It queries the container for the item with the specified name and returns the embedding vector as a float array.
+    /// 
+    /// The name is expected to be a string, and the embedding is expected to be a float array.
+    /// The method returns null if no embedding is found for the given name.
+    /// 
+    /// Note: Ensure that the Cosmos DB container is set up to accept the structure of the document being stored.
+    /// </remarks>
     public async Task<float[]> RetrieveEmbeddingsAsync(string name)
     {
         var query = new QueryDefinition("SELECT c.embedding FROM c WHERE c.name = @name")
@@ -64,6 +84,23 @@ public class VectorSearchService
         return results[0];
     }
 
+    /// <summary>
+    /// Performs a vector search in Cosmos DB using the provided query and returns the top K results.
+    /// </summary>
+    /// <param name="query">The query string to search for.</param>
+    /// <param name="topK">The number of top results to return.</param>
+    /// <returns>A list of metadata strings representing the top K results.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the query is null or empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when the topK is less than or equal to 0.</exception>
+    /// <remarks>
+    /// This method performs a vector search in Cosmos DB using the provided query and returns the top K results.
+    /// It converts the query to an embedding using the Azure OpenAI embedding model and then performs a vector search in the Cosmos DB container.
+    /// 
+    /// The query is expected to be a string, and the topK is expected to be an integer greater than 0.
+    /// The method returns a list of metadata strings representing the top K results.
+    /// 
+    /// Note: Ensure that the Cosmos DB container is set up to accept the structure of the document being stored.
+    /// </remarks>
     public async Task<List<string>> PerformVectorSearchAsync(string query, int topK = 3)
     {
         // Assuming you have a method to convert the query to an embedding
@@ -71,6 +108,22 @@ public class VectorSearchService
         return await PerformVectorSearchAsync(queryEmbedding, topK);
     }
 
+    /// <summary>
+    /// Converts the provided query string to an embedding using the Azure OpenAI embedding model.
+    /// </summary>
+    /// <param name="query">The query string to convert to an embedding.</param>
+    /// <returns>The embedding vector as a float array.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when the query is null or empty.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when no embedding is returned from the model.</exception>
+    /// <remarks>
+    /// This method converts the provided query string to an embedding using the Azure OpenAI embedding model.
+    /// It calls the Azure OpenAI embedding model and returns the embedding as a float array.
+    /// 
+    /// The query is expected to be a string, and the embedding is expected to be a float array.
+    /// The method returns null if no embedding is found for the given query.
+    /// 
+    /// Note: Ensure that the Azure OpenAI embedding model is set up correctly and accessible.
+    /// </remarks>
     public async Task<float[]> ConvertToEmbeddingAsync(string query)
     {
         // Calls the Azure OpenAI embedding model (hard-coded below) and return the embedding as a float array

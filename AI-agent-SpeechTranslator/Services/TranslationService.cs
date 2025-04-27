@@ -20,6 +20,18 @@ namespace SpeechTranslator.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Asynchronously translates text from source language to target language.
+        /// </summary>
+        /// <param name="sourceLang">The source language code.</param>
+        /// <param name="targetLanguage">The target language code.</param>
+        /// <param name="text">The text to translate.</param>
+        /// <returns>The translated text.</returns>
+        /// <remarks>
+        /// This method uses the Azure Text Translation API to translate text.
+        /// 
+        /// Note: The translation service may have limitations on the number of characters that can be translated in a single request.
+        /// </remarks>
         public async Task<string> TranslateTextAsync(string sourceLang, string targetLanguage, string text)
         {
             if (sourceLang.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase))
@@ -31,6 +43,18 @@ namespace SpeechTranslator.Services
             return response.Value[0].Translations[0].Text;
         }
 
+        /// <summary>
+        /// Asynchronously translates a stream of text from source language to target language.
+        /// </summary>
+        /// <param name="sourceLang">The source language code.</param>
+        /// <param name="targetLanguage">The target language code.</param>
+        /// <param name="textStream">The stream of text to translate.</param>
+        /// <returns>An async enumerable of translated text.</returns>
+        /// <remarks>
+        /// This method uses IAsyncEnumerable to allow for streaming translation of text chunks.
+        /// 
+        /// Note: The translation service may have limitations on the number of characters that can be translated in a single request.
+        /// </remarks>
         public async IAsyncEnumerable<string> TranslateTextStreamAsync(string sourceLang, string targetLanguage, IAsyncEnumerable<string> textStream)
         {
             await foreach (var text in textStream)

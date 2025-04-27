@@ -26,11 +26,20 @@ namespace SpeechTranslator.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Gets the SpeechConfig object.
+        /// </summary>
         public SpeechConfig GetSpeechConfig()
         {
             return _speechConfig;
         }
 
+        /// <summary>
+        /// Asynchronously gets the speech stream and translates it (if necessary).
+        /// </summary>
+        /// <param name="sourceLanguage">The source language code.</param>
+        /// <param name="targetLanguage">The target language code.</param>
+        /// <returns>An async enumerable of recognized speech.</returns>
         public async IAsyncEnumerable<string> GetSpeechStreamAsync(string sourceLanguage, string targetLanguage)
         {
             var speechRecognizer = new SpeechRecognizer(_speechConfig);

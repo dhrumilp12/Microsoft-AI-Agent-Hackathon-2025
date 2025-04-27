@@ -35,15 +35,15 @@ namespace AI_Agent_Orchestrator.Services
 
             // Set values with appropriate fallbacks based on configuration preference
             _subscriptionKey = useEnvVars 
-                ? Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? ""
+                ? Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY") ?? ""
                 : configuration["AzureTranslator:Key"] ?? "";
 
             _endpoint = useEnvVars
-                ? Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT") ?? Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT") ?? TranslationConstants.DefaultTranslatorEndpoint
+                ? Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT") ?? TranslationConstants.DefaultTranslatorEndpoint
                 : configuration["AzureTranslator:Endpoint"] ?? TranslationConstants.DefaultTranslatorEndpoint;
 
             _region = useEnvVars
-                ? Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? ""
+                ? Environment.GetEnvironmentVariable("TRANSLATOR_REGION") ?? ""
                 : configuration["AzureTranslator:Region"] ?? "";
             
             // Always ensure we're using the correct Azure Translator endpoint

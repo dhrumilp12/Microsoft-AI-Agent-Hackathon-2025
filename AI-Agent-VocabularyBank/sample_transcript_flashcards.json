@@ -1,0 +1,142 @@
+[
+  {
+    "Term": "learning",
+    "Definition": "Learning is the process by which a machine adapts and refines its performance by recognizing patterns and making data-driven adjustments without explicit programming.",
+    "Example": "The algorithm learned to classify images more accurately as it processed more examples.",
+    "Context": "In this machine learning context, learning refers to the computer system's ability to improve its tasks through experience with data.",
+    "CreatedDate": "2025-04-20T15:12:33.4244914-07:00"
+  },
+  {
+    "Term": "machine",
+    "Definition": "A machine is a computer system capable of processing data and executing tasks based on programmed algorithms.",
+    "Example": "The machine processed the dataset to identify hidden patterns.",
+    "Context": "Here, 'machine' refers to computer systems that perform learning tasks using statistical methods in machine learning.",
+    "CreatedDate": "2025-04-20T15:12:33.4246707-07:00"
+  },
+  {
+    "Term": "data",
+    "Definition": "Data refers to raw facts or figures that serve as input for analysis and processing.",
+    "Example": "The machine learning model improved its predictions after processing large amounts of data.",
+    "Context": "In machine learning, data is the essential input used for training algorithms without explicit programming.",
+    "CreatedDate": "2025-04-20T15:12:33.4246727-07:00"
+  },
+  {
+    "Term": "input",
+    "Definition": "Input is the raw data or sensory signals provided to a machine learning model or neural network for processing.",
+    "Example": "A stream of pixels from a camera is used as input to train a visual recognition neural network.",
+    "Context": "In machine learning, 'input' refers to the data fed into algorithms, such as raw measurements or sensor readings, which the system processes to learn patterns and make predictions.",
+    "CreatedDate": "2025-04-20T15:12:33.4246734-07:00"
+  },
+  {
+    "Term": "artificial",
+    "Definition": "Artificial refers to human-made or engineered elements, as opposed to naturally occurring phenomena.",
+    "Example": "The artificial intelligence algorithm was designed to learn from vast amounts of data.",
+    "Context": "In this context, 'artificial' characterizes the man-made systems and methods used in machine learning.",
+    "CreatedDate": "2025-04-20T15:12:33.4246748-07:00"
+  },
+  {
+    "Term": "neural",
+    "Definition": "Pertaining to or resembling the structure and function of the nervous system, especially the brain.",
+    "Example": "Neural networks simulate the way neurons signal to one another in the human brain.",
+    "Context": "In machine learning, 'neural' refers to algorithms inspired by the brain's architecture used for pattern recognition.",
+    "CreatedDate": "2025-04-20T15:12:33.4246765-07:00"
+  },
+  {
+    "Term": "networks",
+    "Definition": "Networks are sets of interconnected algorithms that mimic the brain's structure to process data and recognize patterns.",
+    "Example": "Networks can automatically identify features in images for classification tasks.",
+    "Context": "In machine learning, networks, especially neural networks, are used to learn from data and improve pattern recognition without explicit programming.",
+    "CreatedDate": "2025-04-20T15:12:33.4246776-07:00"
+  },
+  {
+    "Term": "supervised",
+    "Definition": "Supervised learning is a machine learning method where a model is trained using labeled data, meaning each input comes with the correct output.",
+    "Example": "For example, a supervised learning algorithm might predict house prices based on past sales data with known prices.",
+    "Context": "In this context, supervised refers to training computer systems using example input-output pairs to enable learning.",
+    "CreatedDate": "2025-04-20T15:12:33.4246782-07:00"
+  },
+  {
+    "Term": "function",
+    "Definition": "A function is a mapping that assigns each input a unique output based on a defined rule.",
+    "Example": "In supervised learning, the algorithm learns a function that maps customer data to credit scores.",
+    "Context": "In machine learning, a function represents the underlying relationship between input data and output predictions learned from example pairs.",
+    "CreatedDate": "2025-04-20T15:12:33.4246789-07:00"
+  },
+  {
+    "Term": "output",
+    "Definition": "The result produced by a machine learning model when processing an input, representing the model's prediction or decision.",
+    "Example": "The neural network generated an output that accurately classified the image.",
+    "Context": "In machine learning, output is the value or result derived from the model based on provided input data.",
+    "CreatedDate": "2025-04-20T15:12:33.4246796-07:00"
+  },
+  {
+    "Term": "labeled",
+    "Definition": "Data that comes with explicit tags or correct answers used for training.",
+    "Example": "The algorithm learned to recognize faces from labeled phototraining samples.",
+    "Context": "In machine learning, 'labeled' refers to training data that includes the correct outcomes for each example.",
+    "CreatedDate": "2025-04-20T15:12:33.4246814-07:00"
+  },
+  {
+    "Term": "training",
+    "Definition": "Training is the process of using labeled data to enable a model to learn patterns and make predictions.",
+    "Example": "The algorithm was trained using thousands of labeled images.",
+    "Context": "In machine learning, training refers to the phase where the model learns from example data to perform inference tasks.",
+    "CreatedDate": "2025-04-20T15:12:33.4246821-07:00"
+  },
+  {
+    "Term": "unsupervised",
+    "Definition": "Unsupervised refers to machine learning methods that infer patterns from datasets without pre-assigned labels.",
+    "Example": "The algorithm applied unsupervised learning to identify distinct clusters in the customer data.",
+    "Context": "In this context, unsupervised learning is used to derive inferences from data where responses are not explicitly provided.",
+    "CreatedDate": "2025-04-20T15:12:33.4246827-07:00"
+  },
+  {
+    "Term": "algorithm",
+    "Definition": "A step-by-step procedure or set of instructions for solving a problem or performing a computation.",
+    "Example": "The neural network algorithm learns to identify patterns in data.",
+    "Context": "In machine learning, algorithms process data to enable computers to learn and make decisions without explicit programming.",
+    "CreatedDate": "2025-04-20T15:12:33.4246832-07:00"
+  },
+  {
+    "Term": "model",
+    "Definition": "A model is an algorithmic representation that learns patterns from data to perform tasks or make predictions.",
+    "Example": "The model accurately classified images after being trained on thousands of examples.",
+    "Context": "In machine learning, a model refers to structures like neural networks that mimic aspects of the human brain to recognize patterns.",
+    "CreatedDate": "2025-04-20T15:12:33.4246839-07:00"
+  },
+  {
+    "Term": "optimization",
+    "Definition": "Optimization is the process of systematically adjusting parameters to minimize errors or maximize performance.",
+    "Example": "In machine learning, optimization algorithms adjust neural network weights to reduce the prediction error.",
+    "Context": "In this context, optimization is essential for refining machine learning models by iteratively improving their accuracy using data.",
+    "CreatedDate": "2025-04-20T15:12:33.4246869-07:00"
+  },
+  {
+    "Term": "prediction",
+    "Definition": "The process of using a trained model to estimate or forecast output values based on new input data.",
+    "Example": "The neural network made a prediction about tomorrow's weather using historical climate data.",
+    "Context": "In machine learning, prediction involves utilizing statistical models, such as neural networks, to infer unseen outcomes from learned patterns.",
+    "CreatedDate": "2025-04-20T15:12:33.4246874-07:00"
+  },
+  {
+    "Term": "regression",
+    "Definition": "Regression is a statistical method used in machine learning for predicting continuous outcomes by modeling relationships between input features and output variables.",
+    "Example": "Linear regression can predict house prices based on factors like size and location.",
+    "Context": "In this machine learning context, regression refers to supervised learning techniques that estimate numerical targets.",
+    "CreatedDate": "2025-04-20T15:12:33.424688-07:00"
+  },
+  {
+    "Term": "classification",
+    "Definition": "Classification is the process of assigning data instances to predefined categories or classes based on input features.",
+    "Example": "An algorithm used classification to categorize emails as 'spam' or 'not spam'.",
+    "Context": "In machine learning, classification is a supervised learning technique where the model learns to label new instances from a set of training examples.",
+    "CreatedDate": "2025-04-20T15:12:33.4246888-07:00"
+  },
+  {
+    "Term": "feature",
+    "Definition": "A feature is an individual measurable property or characteristic of the data used by machine learning algorithms for pattern recognition.",
+    "Example": "In image classification, pixel intensity values are used as features.",
+    "Context": "In machine learning, especially in neural networks, features represent the input variables derived from raw data that help the model learn and make predictions.",
+    "CreatedDate": "2025-04-20T15:12:33.42469-07:00"
+  }
+]

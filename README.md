@@ -77,12 +77,23 @@ To run the project, ensure the following environment variables are set in a cent
 - `SPEECH_REGION`: Your Azure Speech region.
 - `TRANSLATOR_API_KEY`: Your Azure Translator API key.
 - `TRANSLATOR_REGION`: Your Azure Translator region.
+- `TRANSLATOR_ENDPOINT`: Your Azure Translator endpoint.
 - `VISION_API_KEY`: Your Azure Vision API key.
+
+### Microsoft 365 Configuration (if exporting vocab flashcards to Microsoft 365)
+- `M365_CLIENT_ID`: Client ID for Microsoft 365
+- `M365_TENANT_ID`: Tenant ID for Microsoft 365
+- `M365_CLIENT_SECRET`: Client Secret for Microsoft 365
 
 ### Cosmos DB
 - `COSMOSDB_CONNECTION_STRING`: Connection string for Cosmos DB.
 - `COSMOSDB_DATABASENAME`: Name of the Cosmos DB database.
 - `COSMOSDB_CONTAINERNAME`: Name of the Cosmos DB container.
+
+### Diagram Configurations
+- `MERMAID_OUTPUT_DIRECTORY`: The output directory of the diagrams
+- `MAX_TOKENS`: The maximum number of tokens for the OpenAI service
+- `TEMPERATURE`: The temperature parameter for the OpenAI service
 
 ---
 

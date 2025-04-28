@@ -38,24 +38,24 @@ StudyBuddy integrates the following AI agents:
 - .NET 9.0 SDK
 - Azure Cognitive Services account
 - (Optional) Microsoft 365 account for flashcard exports
-- (Optional) Cosmos DB for data storage
+- (For using the chatbot) Cosmos DB for data storage
 
 ## How to Run
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<your-repo>/StudyBuddy.git
+   git clone https://github.com/dhrumilp12/Microsoft-AI-Agent-Hackathon-2025.git
    ```
 2. Navigate to the orchestrator directory:
    ```bash
-   cd StudyBuddy/AI-Agent-Orchestrator
+   cd Microsoft-AI-Agent-Hackathon-2025/AI-Agent-Orchestrator
    ```
 3. Set up environment variables in a `.env` file (see below).
 4. Run the application:
    ```bash
    dotnet run
    ```
-5. Choose a workflow (e.g., transcription, summarization) or interact with the chatbot via the console.
+5. Choose a workflow (Whiteboard Capture, Audio Learning or both, which will run the two workflows in parallel) or interact with the chatbot via the console.
 
 ## Environment Variables
 
@@ -79,7 +79,7 @@ Create a `.env` file one level above the orchestrator directory with the followi
 - `M365_TENANT_ID`: Tenant ID for Microsoft 365
 - `M365_CLIENT_SECRET`: Client Secret for Microsoft 365
 
-### Cosmos DB
+### Cosmos DB (For chatbot use)
 
 - `COSMOSDB_CONNECTION_STRING`: Connection string for Cosmos DB.
 - `COSMOSDB_DATABASENAME`: Name of the Cosmos DB database.
@@ -100,9 +100,12 @@ Create a `.env` file one level above the orchestrator directory with the followi
 ## Project Structure
 
 - `/AI-Agent-Orchestrator`: Main application coordinating all agents
-- `/AI-Agents-*`: Individual AI agent implementations
-- `/Configs`: Configuration files and utilities
-- `AgentData`: Contains translation, summary, images, diagram & vocabulary files created by induvidual agnets
+- `/AI-Agent-BoardCapture`: AI agent that uses your camera to capture text from a board, analyze it, and translate it
+- `/AI-agent-SpeechTranslator`: AI agent that converts speech to text and translates them. Both the original and translated texts are saved as text files.
+- `/AI-Agent-VocabularyBank`: AI agent that handles extraction of key vocabulary terms from both original and translated texts
+- `/AI-Summarization-agent`: AI agent that generates concise summaries from audio transcripts or whiteboard text
+- `/AI-agent-DiagramGenerator`: AI agent that produces visual diagrams from summaries or text.
+- `/AgentData`: Contains translation, summary, images, diagram & vocabulary files created by individual agents
 
 ## License
 

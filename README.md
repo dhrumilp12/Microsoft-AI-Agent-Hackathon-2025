@@ -1,92 +1,93 @@
 # StudyBuddy
 
-StudyBuddy is an AI-powered classroom assistant designed to enhance learning experiences by offering real-time transcription, translation, and personalized insights. It integrates multiple AI agents to provide a seamless and interactive educational environment.
-
----
+**StudyBuddy** is an AI-powered classroom assistant that transforms learning with real-time transcription, translation, and personalized study tools. Powered by multiple AI agents, it creates an interactive and inclusive educational experience for students and educators.
 
 ## Authors
+Developed by:
+- Pramod K. Singh (Lead)
+- Aashish Anand (Speech & Translation Specialist)
+- Dhrumil Patel (Diagram, Image Processing & OCR Expert)
+- Abhishiktha Valavala (AI Chatbot & .NET Developer)
 
-This project was developed by:
-- **Pramod K. Singh**
-- **Aashish Anand**
-- **Dhrumil Patel**
-- **Abhishiktha Valavala**
-
----
-
-## Included Agents
-
-1. **Speech Translator Agent**: Converts speech to text, translates it into a target language, and optionally speaks the translated text back.
-2. **Summarization Agent**: Generates concise summaries from transcripts or text.
-3. **Vocabulary Bank & Flashcards Generator Agent**: Extracts key vocabulary and creates flashcards for learning.
-4. **Diagram Generator Agent**: Creates diagrams based on text or summaries.
-5. **Board Capture Agent**: Captures and analyzes classroom board content.
-6. **Chatbot**: Integrated within the orchestrator, the chatbot provides interactive conversations powered by Azure OpenAI.
-
----
+## Features
+StudyBuddy integrates the following AI agents:
+- **Speech Translator**: Transcribes speech, translates it into a target language, and optionally reads it aloud.
+- **Summarizer**: Creates concise summaries from transcripts or text.
+- **Vocabulary & Flashcards**: Extracts key terms and generates flashcards for study.
+- **Diagram Generator**: Produces visual diagrams from text or summaries.
+- **Board Capture**: Analyzes and digitizes classroom board content.
+- **Chatbot**: Engages users with interactive, Azure OpenAI-powered conversations.
 
 ## Tech Stack
+| Component              | Technology                          |
+|-----------------------|-------------------------------------|
+| **Language**          | C#                                  |
+| **Framework**         | .NET 9.0                            |
+| **AI Services**       | Azure Cognitive Services (Speech, Translator, Vision) |
+| **OCR**               | Tesseract                           |
+| **Image Processing**  | OpenCV (OpenCvSharp4)               |
+| **Dependencies**      | Microsoft.Extensions.*, DotNetEnv, Spectre.Console |
 
-- **Programming Language**: C#
-- **Framework**: .NET 9.0
-- **AI Services**: Azure Cognitive Services (Speech, Translator, Vision)
-- **OCR**: Tesseract
-- **Image Processing**: OpenCV
-- **Dependency Injection**: .NET DI
-- **Configuration Management**: .NET Configuration
+## Prerequisites
+- .NET 9.0 SDK
+- Azure Cognitive Services account
+- (Optional) Microsoft 365 account for flashcard exports
+- (Optional) Cosmos DB for data storage
 
----
-
-## Dependencies
-
-The project relies on the following dependencies:
-- **Microsoft.Extensions.Configuration**: For configuration management.
-- **Microsoft.Extensions.DependencyInjection**: For dependency injection.
-- **Microsoft.Extensions.Logging**: For logging.
-- **DotNetEnv**: For loading environment variables.
-- **Azure Cognitive Services SDKs**: For speech, translation, and vision services.
-- **Spectre.Console**: For building interactive console applications.
-- **Tesseract**: For OCR functionality.
-- **OpenCvSharp4**: For image processing.
-
----
-
-## How to Run the Project
-
-1. Navigate to the orchestrator directory:
+## How to Run
+1. Clone the repository:
    ```bash
-   cd AI-Agent-Orchestrator
+   git clone https://github.com/<your-repo>/StudyBuddy.git
    ```
-2. Run the application:
+2. Navigate to the orchestrator directory:
+   ```bash
+   cd StudyBuddy/AI-Agent-Orchestrator
+   ```
+3. Set up environment variables in a `.env` file (see below).
+4. Run the application:
    ```bash
    dotnet run
    ```
-3. Follow the on-screen prompts to select workflows or interact with the chatbot.
-
----
+5. Choose a workflow (e.g., transcription, summarization) or interact with the chatbot via the console.
 
 ## Environment Variables
-
-To run the project, ensure the following environment variables are set in a centralized `.env` file located one level above the orchestrator directory:
+Create a `.env` file one level above the orchestrator directory with the following:
 
 ### Azure Cognitive Services
-- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint.
-- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key.
-- `AZURE_OPENAI_DEPLOYMENT_NAME`: Your Azure OpenAI deployment name.
-- `SPEECH_API_KEY`: Your Azure Speech API key.
-- `SPEECH_REGION`: Your Azure Speech region.
-- `TRANSLATOR_API_KEY`: Your Azure Translator API key.
-- `TRANSLATOR_REGION`: Your Azure Translator region.
-- `VISION_API_KEY`: Your Azure Vision API key.
+- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI endpoint
+- `AZURE_OPENAI_API_KEY`: Azure OpenAI API key
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Azure OpenAI deployment name
+- `SPEECH_API_KEY`: Azure Speech API key
+- `SPEECH_REGION`: Azure Speech region
+- `TRANSLATOR_API_KEY`: Azure Translator API key
+- `TRANSLATOR_REGION`: Azure Translator region
+- `TRANSLATOR_ENDPOINT`: Azure Translator endpoint
+- `VISION_API_KEY`: Azure Vision API key
 
-### Cosmos DB
-- `COSMOSDB_CONNECTION_STRING`: Connection string for Cosmos DB.
-- `COSMOSDB_DATABASENAME`: Name of the Cosmos DB database.
-- `COSMOSDB_CONTAINERNAME`: Name of the Cosmos DB container.
+### Microsoft 365 (Optional)
+- `M365_CLIENT_ID`: Microsoft 365 client ID
+- `M365_TENANT_ID`: Microsoft 365 tenant ID
+- `M365_CLIENT_SECRET`: Microsoft 365 client secret
 
----
+### Cosmos DB (Optional)
+- `COSMOSDB_CONNECTION_STRING`: Cosmos DB connection string
+- `COSMOSDB_DATABASENAME`: Cosmos DB database name
+- `COSMOSDB_CONTAINERNAME`: Cosmos DB container name
 
-## Additional Notes
-- Ensure the `.env` file is located one level above the orchestrator directory.
-- Use the orchestrator to coordinate workflows or interact with individual agents.
+### Diagram Configurations
+- `MERMAID_OUTPUT_DIRECTORY`: Diagram output directory
+- `MAX_TOKENS`: Max tokens for OpenAI
+- `TEMPERATURE`: Temperature for OpenAI
 
+## Project Structure
+- `/AI-Agent-Orchestrator`: Main application coordinating all agents
+- `/AI-Agents-*`: Individual AI agent implementations
+- `/Configs`: Configuration files and utilities
+- `AgentData`: Contains translation, summary, images, diagram & vocabulary files created by induvidual agnets
+
+
+## License
+This project is licensed under the MIT License. 
+
+## Demo
+Check out a live demo or screenshots at [link-to-demo-or-screenshots].

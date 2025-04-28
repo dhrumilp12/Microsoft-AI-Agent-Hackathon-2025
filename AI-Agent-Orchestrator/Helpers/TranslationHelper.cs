@@ -113,7 +113,7 @@ namespace AI_Agent_Orchestrator.Services
         /// <summary>
         /// Processes and translates markup text while preserving all markup tags intact
         /// </summary>
-        private static async Task<string> TranslateMarkupTextAsync(string markupText)
+        public static async Task<string> TranslateMarkupTextAsync(string markupText)
         {
             try
             {

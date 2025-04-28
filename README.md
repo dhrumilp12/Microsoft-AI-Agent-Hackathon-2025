@@ -3,14 +3,18 @@
 **StudyBuddy** is an AI-powered classroom assistant that transforms learning with real-time transcription, translation, and personalized study tools. Powered by multiple AI agents, it creates an interactive and inclusive educational experience for students and educators.
 
 ## Authors
+
 Developed by:
+
 - Pramod K. Singh (Lead)
 - Aashish Anand (Speech & Translation Specialist)
 - Dhrumil Patel (Diagram, Image Processing & OCR Expert)
 - Abhishiktha Valavala (AI Chatbot & .NET Developer)
 
 ## Features
+
 StudyBuddy integrates the following AI agents:
+
 - **Speech Translator**: Transcribes speech, translates it into a target language, and optionally reads it aloud.
 - **Summarizer**: Creates concise summaries from transcripts or text.
 - **Vocabulary & Flashcards**: Extracts key terms and generates flashcards for study.
@@ -19,22 +23,25 @@ StudyBuddy integrates the following AI agents:
 - **Chatbot**: Engages users with interactive, Azure OpenAI-powered conversations.
 
 ## Tech Stack
-| Component              | Technology                          |
-|-----------------------|-------------------------------------|
-| **Language**          | C#                                  |
-| **Framework**         | .NET 9.0                            |
-| **AI Services**       | Azure Cognitive Services (Speech, Translator, Vision) |
-| **OCR**               | Tesseract                           |
-| **Image Processing**  | OpenCV (OpenCvSharp4)               |
-| **Dependencies**      | Microsoft.Extensions.*, DotNetEnv, Spectre.Console |
+
+| Component            | Technology                                            |
+| -------------------- | ----------------------------------------------------- |
+| **Language**         | C#                                                    |
+| **Framework**        | .NET 9.0                                              |
+| **AI Services**      | Azure Cognitive Services (Speech, Translator, Vision) |
+| **OCR**              | Tesseract                                             |
+| **Image Processing** | OpenCV (OpenCvSharp4)                                 |
+| **Dependencies**     | Microsoft.Extensions.\*, DotNetEnv, Spectre.Console   |
 
 ## Prerequisites
+
 - .NET 9.0 SDK
 - Azure Cognitive Services account
 - (Optional) Microsoft 365 account for flashcard exports
 - (Optional) Cosmos DB for data storage
 
 ## How to Run
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/<your-repo>/StudyBuddy.git
@@ -51,43 +58,56 @@ StudyBuddy integrates the following AI agents:
 5. Choose a workflow (e.g., transcription, summarization) or interact with the chatbot via the console.
 
 ## Environment Variables
+
 Create a `.env` file one level above the orchestrator directory with the following:
 
 ### Azure Cognitive Services
-- `AZURE_OPENAI_ENDPOINT`: Azure OpenAI endpoint
-- `AZURE_OPENAI_API_KEY`: Azure OpenAI API key
-- `AZURE_OPENAI_DEPLOYMENT_NAME`: Azure OpenAI deployment name
-- `SPEECH_API_KEY`: Azure Speech API key
-- `SPEECH_REGION`: Azure Speech region
-- `TRANSLATOR_API_KEY`: Azure Translator API key
-- `TRANSLATOR_REGION`: Azure Translator region
-- `TRANSLATOR_ENDPOINT`: Azure Translator endpoint
-- `VISION_API_KEY`: Azure Vision API key
 
-### Microsoft 365 (Optional)
-- `M365_CLIENT_ID`: Microsoft 365 client ID
-- `M365_TENANT_ID`: Microsoft 365 tenant ID
-- `M365_CLIENT_SECRET`: Microsoft 365 client secret
+- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint.
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key.
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Your Azure OpenAI deployment name.
+- `SPEECH_API_KEY`: Your Azure Speech API key.
+- `SPEECH_REGION`: Your Azure Speech region.
+- `TRANSLATOR_API_KEY`: Your Azure Translator API key.
+- `TRANSLATOR_REGION`: Your Azure Translator region.
+- `TRANSLATOR_ENDPOINT`: Your Azure Translator endpoint.
+- `VISION_API_KEY`: Your Azure Vision API key.
 
-### Cosmos DB (Optional)
-- `COSMOSDB_CONNECTION_STRING`: Cosmos DB connection string
-- `COSMOSDB_DATABASENAME`: Cosmos DB database name
-- `COSMOSDB_CONTAINERNAME`: Cosmos DB container name
+### Microsoft 365 Configuration (if exporting vocab flashcards to Microsoft 365)
+
+- `M365_CLIENT_ID`: Client ID for Microsoft 365
+- `M365_TENANT_ID`: Tenant ID for Microsoft 365
+- `M365_CLIENT_SECRET`: Client Secret for Microsoft 365
+
+### Cosmos DB
+
+- `COSMOSDB_CONNECTION_STRING`: Connection string for Cosmos DB.
+- `COSMOSDB_DATABASENAME`: Name of the Cosmos DB database.
+- `COSMOSDB_CONTAINERNAME`: Name of the Cosmos DB container.
 
 ### Diagram Configurations
+
+- `MERMAID_OUTPUT_DIRECTORY`: The output directory of the diagrams
+- `MAX_TOKENS`: The maximum number of tokens for the OpenAI service
+- `TEMPERATURE`: The temperature parameter for the OpenAI service
+
+### Diagram Configurations
+
 - `MERMAID_OUTPUT_DIRECTORY`: Diagram output directory
 - `MAX_TOKENS`: Max tokens for OpenAI
 - `TEMPERATURE`: Temperature for OpenAI
 
 ## Project Structure
+
 - `/AI-Agent-Orchestrator`: Main application coordinating all agents
 - `/AI-Agents-*`: Individual AI agent implementations
 - `/Configs`: Configuration files and utilities
 - `AgentData`: Contains translation, summary, images, diagram & vocabulary files created by induvidual agnets
 
-
 ## License
-This project is licensed under the MIT License. 
+
+This project is licensed under the MIT License.
 
 ## Demo
+
 Check out a live demo or screenshots at [link-to-demo-or-screenshots].

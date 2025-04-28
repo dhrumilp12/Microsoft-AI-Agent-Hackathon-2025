@@ -8,4 +8,7 @@ public class AgentWorkflow
     public Dictionary<string, List<string>> OutputMappings { get; set; } = new();
     public string[] Keywords { get; set; } = Array.Empty<string>();
     public string Category { get; set; } = string.Empty;
+    public string TargetLanguage { get; set; } = "en";
+    public string SourceLanguage { get; set; } = "en";
+
 }

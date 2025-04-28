@@ -548,7 +548,7 @@ public class AgentExecutionService
     private async Task DisplayWorkflowOutputSummary(Dictionary<string, List<string>> generatedFiles)
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.Write(new Rule(await TranslationHelper.TranslateAsync("[bold blue]Complete Audio Learning Workflow - Generated Documents[/]"))
+        AnsiConsole.Write(new Rule(await TranslationHelper.TranslateMarkupTextAsync("[bold blue]Complete Audio Learning Workflow - Generated Documents[/]"))
             .LeftJustified()
             .RuleStyle("blue dim"));
         AnsiConsole.WriteLine();
@@ -559,8 +559,8 @@ public class AgentExecutionService
         var table = new Table();
         table.Border(TableBorder.Rounded);
         table.BorderColor(Color.Blue);
-        table.AddColumn(new TableColumn(await TranslationHelper.TranslateAsync("[green]Agent[/]")));
-        table.AddColumn(new TableColumn(await TranslationHelper.TranslateAsync("[green]Generated Files[/]")).Centered());
+        table.AddColumn(new TableColumn(await TranslationHelper.TranslateMarkupTextAsync("[green]Agent[/]")));
+        table.AddColumn(new TableColumn(await TranslationHelper.TranslateMarkupTextAsync("[green]Generated Files[/]")).Centered());
 
         // Sort the keys to display in a consistent order
         var orderedAgents = new List<string> {

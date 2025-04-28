@@ -77,6 +77,7 @@ To run the project, ensure the following environment variables are set in a cent
 - `SPEECH_REGION`: Your Azure Speech region.
 - `TRANSLATOR_API_KEY`: Your Azure Translator API key.
 - `TRANSLATOR_REGION`: Your Azure Translator region.
+- `TRANSLATOR_ENDPOINT`: Your Azure Translator endpoint.
 - `VISION_API_KEY`: Your Azure Vision API key.
 
 ### Cosmos DB

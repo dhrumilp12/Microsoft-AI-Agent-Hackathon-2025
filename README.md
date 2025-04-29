@@ -111,4 +111,4 @@ This project is licensed under the MIT License.
 
 ## Demo
 
-Check out a live demo or screenshots at [link-to-demo-or-screenshots].
+Check out the demo of our project [here](https://youtu.be/dUFULvcUJdk).

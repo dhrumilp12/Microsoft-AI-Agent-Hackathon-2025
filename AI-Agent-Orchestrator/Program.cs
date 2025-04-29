@@ -31,7 +31,7 @@ public class Program
         {
             DotNetEnv.Env.Load(envFilePath);
         }
-        
+
         // Build configuration
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -52,7 +52,8 @@ public class Program
             configuration["AzureOpenAI:ApiKey"] = azureOpenAIConfig.ApiKey;
             configuration["AzureOpenAI:DeploymentName"] = azureOpenAIConfig.DeploymentName;
 
-            var cosmosDBConfig = new {
+            var cosmosDBConfig = new
+            {
                 ConnectionString = Environment.GetEnvironmentVariable("COSMOSDB_CONNECTION_STRING"),
                 DatabaseName = Environment.GetEnvironmentVariable("COSMOSDB_DATABASENAME"),
                 ContainerName = Environment.GetEnvironmentVariable("COSMOSDB_CONTAINERNAME")
@@ -102,37 +103,37 @@ public class Program
             .AddSingleton<SemanticKernelService>()
             .AddSingleton<AzureTranslationService>()
             .BuildServiceProvider();
-        
+
         // Get required services
         var agentDiscoveryService = services.GetRequiredService<AgentDiscoveryService>();
         var agentExecutionService = services.GetRequiredService<AgentExecutionService>();
         var semanticKernelService = services.GetRequiredService<SemanticKernelService>();
-        
+
         try
         {
             DisplayWelcomeScreen();
-            
+
             // Create a translation service to get available languages
             var translationService = new AzureTranslationService(configuration, loggerFactory.CreateLogger<AzureTranslationService>());
             var availableLanguages = await translationService.GetAvailableLanguagesAsync();
-            
+
             // Get target language
             await TranslationHelper.MarkupLineAsync("[bold cyan]Select your target language (language to translate to):[/]");
-            
+
             // Display retrieving languages message
             AnsiConsole.Status()
-                .Start("Retrieving available languages...", ctx => 
+                .Start("Retrieving available languages...", ctx =>
                 {
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
                 });
-            
+
             await TranslationHelper.MarkupLineAsync("\n[bold yellow]Available languages:[/]");
-            
+
             // Display languages in a 3-column format
             const int columns = 3;
             var languageList = availableLanguages.ToList();
-            
+
             for (int i = 0; i < languageList.Count; i += columns)
             {
                 for (int j = 0; j < columns && i + j < languageList.Count; j++)
@@ -142,11 +143,11 @@ public class Program
                 }
                 Console.WriteLine();
             }
-            
+
             Console.WriteLine();
             await TranslationHelper.MarkupAsync("[bold yellow]Enter the language code to translate TO:[/] ");
             string targetLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "en";
-            
+
             // Validate the target language code
             if (!availableLanguages.ContainsKey(targetLanguageCode))
             {
@@ -157,11 +158,11 @@ public class Program
             {
                 await TranslationHelper.MarkupLineAsync($"[bold green]Target language:[/] {availableLanguages[targetLanguageCode]} ({targetLanguageCode})");
             }
-            
+
             // Now ask for source language
             await TranslationHelper.MarkupAsync("\n[bold yellow]Enter the language code to translate FROM (default: auto-detect):[/] ");
             string sourceLanguageCode = Console.ReadLine()?.Trim().ToLower() ?? "";
-            
+
             // Validate the source language code if provided
             if (!string.IsNullOrEmpty(sourceLanguageCode) && !availableLanguages.ContainsKey(sourceLanguageCode))
             {
@@ -183,20 +184,20 @@ public class Program
             // Detect root directory location
             var rootDirectory = GetSolutionRootDirectory();
             logger.LogInformation($"Solution root directory: {rootDirectory}");
-            
+
             // Initialize Semantic Kernel in the background
             var semanticKernelInitTask = semanticKernelService.InitializeAsync();
-            
+
             // Discover available agents and workflows
             AnsiConsole.Status()
-                .Start("Discovering AI agents and workflows...", ctx => 
+                .Start("Discovering AI agents and workflows...", ctx =>
                 {
                     ctx.Spinner(Spinner.Known.Dots);
                     ctx.SpinnerStyle(Style.Parse("green"));
-                    
+
                     var agents = agentDiscoveryService.DiscoverAgentsAsync(targetLanguageCode, sourceLanguageCode).GetAwaiter().GetResult();
                     var workflows = agentDiscoveryService.DiscoverWorkflowsAsync(targetLanguageCode, sourceLanguageCode).GetAwaiter().GetResult();
-                    
+
                     if (agents.Count == 0)
                     {
                         ctx.Status("No agents found. Check path configuration.");
@@ -206,24 +207,24 @@ public class Program
                         ctx.Status($"Found {agents.Count} available agents and {workflows.Count} workflows");
                     }
                 });
-                
+
             var agents = await agentDiscoveryService.DiscoverAgentsAsync(targetLanguageCode, sourceLanguageCode);
             var workflows = await agentDiscoveryService.DiscoverWorkflowsAsync(targetLanguageCode, sourceLanguageCode);
-            
+
             if (agents.Count == 0)
             {
                 await TranslationHelper.MarkupLineAsync("[bold red]No agents were discovered.[/]");
                 await TranslationHelper.MarkupLineAsync("[yellow]Please check the project structure and paths.[/]");
                 return;
             }
-            
+
             // Pass the path to the centralized .env file as a command-line argument
             if (!File.Exists(envFilePath))
             {
                 Console.WriteLine("Error: .env file not found at " + envFilePath);
                 return;
             }
-            
+
             while (true)
             {
                 // Display the title without using markup in translated text
@@ -237,14 +238,14 @@ public class Program
                 var translatedChoices = await TranslationHelper.TranslateListAsync(choices);
                 var choiceMap = choices.Zip(translatedChoices, (original, translated) => new { Original = original, Translated = translated })
                                        .ToDictionary(x => x.Translated, x => x.Original);
-                
+
                 // Create a plain selection prompt without translated markup
                 var selectionPrompt = new SelectionPrompt<string>()
                     .Title("") // Don't use title in the prompt itself
                     .PageSize(15)
                     .HighlightStyle(new Style().Foreground(Color.Green))
                     .AddChoices(translatedChoices);
-                
+
                 var userChoice = AnsiConsole.Prompt(selectionPrompt);
 
                 // Map back to original choice for code logic
@@ -268,6 +269,8 @@ public class Program
 
                     if (audioWorkflow != null)
                     {
+                        audioWorkflow.TargetLanguage = targetLanguageCode;
+                        audioWorkflow.SourceLanguage = sourceLanguageCode;
                         var translatedName = await TranslationHelper.TranslateAsync(audioWorkflow.Name);
                         await TranslationHelper.MarkupLineAsync($"[bold green]Executing comprehensive workflow:[/] {translatedName}");
                         var result = await agentExecutionService.ExecuteWorkflowAsync(audioWorkflow);
@@ -299,6 +302,8 @@ public class Program
 
                     if (boardCaptureWorkflow != null)
                     {
+                        boardCaptureWorkflow.TargetLanguage = targetLanguageCode;
+                        boardCaptureWorkflow.SourceLanguage = sourceLanguageCode;
                         var translatedName = await TranslationHelper.TranslateAsync(boardCaptureWorkflow.Name);
                         var result = await agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
@@ -333,7 +338,7 @@ public class Program
                     {
                         var translatedAudioName = await TranslationHelper.TranslateAsync(completeAudioWorkflow.Name);
                         var translatedBoardName = await TranslationHelper.TranslateAsync(boardCaptureWorkflow.Name);
-                        
+
                         var audioTask = agentExecutionService.ExecuteWorkflowAsync(completeAudioWorkflow);
                         var boardTask = agentExecutionService.ExecuteWorkflowAsync(boardCaptureWorkflow);
 
@@ -344,7 +349,7 @@ public class Program
                         {
                             executedAgents.Add(agent.Name);
                         }
-                        
+
                         foreach (var agent in boardCaptureWorkflow.Agents)
                         {
                             executedAgents.Add(agent.Name);
@@ -372,7 +377,7 @@ public class Program
                 else if (originalChoice == "Chat with a Bot")
                 {
                     Console.Clear();
-                    
+
                     await DisplayChatbotWelcomeAsync();
 
                     // Initialize Cosmos DB service
@@ -391,7 +396,7 @@ public class Program
                     );
 
                     var vectorSearchService = new VectorSearchService(cosmosDBClient, configuration["CosmosDb:DatabaseName"], "workflowagentembeddings");
-                    
+
                     var chatbotGreeting = await TranslationHelper.TranslateAsync("Hello! How can I assist you today?");
                     await TranslationHelper.MarkupLineAsync($"[bold green]Chatbot:[/] {chatbotGreeting}");
 
@@ -521,35 +526,35 @@ public class Program
             Console.ReadKey();
         }
     }
-    
+
     // Track language settings as class variables to use throughout the program
     private static string _targetLanguage = "en";
     private static string _sourceLanguage = "";
-    
+
     private static string GetSolutionRootDirectory()
     {
         // Start with the directory of the executing assembly
         string currentDir = AppDomain.CurrentDomain.BaseDirectory;
-        
+
         // Navigate upwards to find the solution root
         // Usually 3 levels up from bin/Debug/netX.X
         string rootDir = Path.GetFullPath(Path.Combine(currentDir, "..", "..", ".."));
-        
+
         // If we're already at the solution root, the parent directory is the repo root
         string repoRoot = Path.GetFullPath(Path.Combine(rootDir, ".."));
-        
+
         return repoRoot;
     }
-    
+
     private static void DisplayWelcomeScreen()
     {
         AnsiConsole.Clear();
-        
+
         var figlet = new FigletText("AI Agent Hub")
             .LeftJustified()
             .Color(Color.Blue);
         AnsiConsole.Write(figlet);
-        
+
         TranslationHelper.MarkupLineAsync("[bold]Welcome to the AI Agent Orchestrator[/]").Wait();
         TranslationHelper.MarkupLineAsync("[dim]Your central hub for accessing all available AI agents[/]").Wait();
         AnsiConsole.WriteLine();
@@ -557,7 +562,7 @@ public class Program
 
     private static async Task DisplayChatbotWelcomeAsync()
     {
-        var figlet = new FigletText("AI Chat") 
+        var figlet = new FigletText("AI Chat")
             .LeftJustified()
             .Color(Color.Green);
 
@@ -566,39 +571,39 @@ public class Program
         await TranslationHelper.MarkupLineAsync("You can type 'exit' to stop the conversation at any time.");
         AnsiConsole.WriteLine();
     }
-    
+
     private static AgentWorkflow? PromptForWorkflowSelectionAsync(List<AgentWorkflow> workflows)
     {
         AnsiConsole.Clear();
-        var figlet = new FigletText("AI Workflow Hub") 
+        var figlet = new FigletText("AI Workflow Hub")
             .LeftJustified()
             .Color(Color.Purple);
         AnsiConsole.Write(figlet);
-        
+
         var selectionPrompt = new SelectionPrompt<string>()
             .Title("Select a workflow to run:")
             .PageSize(15)
             .HighlightStyle(new Style().Foreground(Color.Green));
-            
+
         // Add all workflows
         foreach (var workflow in workflows)
         {
             selectionPrompt.AddChoice(workflow.Name);
         }
-        
+
         // Add exit option
         selectionPrompt.AddChoice("Exit");
-        
+
         var selection = AnsiConsole.Prompt(selectionPrompt);
-        
+
         if (selection == "Exit")
         {
             return null;
         }
-        
+
         return workflows.FirstOrDefault(w => w.Name == selection);
     }
-    
+
     private static AgentInfo? PromptForAgentSelectionAsync(List<AgentInfo> agents)
     {
         AnsiConsole.Clear();
@@ -606,28 +611,28 @@ public class Program
             .LeftJustified()
             .Color(Color.Blue);
         AnsiConsole.Write(figlet);
-        
+
         var selectionPrompt = new SelectionPrompt<string>()
             .Title("Select an agent to run:")
             .PageSize(15)
             .HighlightStyle(new Style().Foreground(Color.Green));
-            
+
         // Add all agents directly - no categories
         foreach (var agent in agents)
         {
             selectionPrompt.AddChoice(agent.Name);
         }
-        
+
         // Add exit option
         selectionPrompt.AddChoice("Exit");
-        
+
         var selection = AnsiConsole.Prompt(selectionPrompt);
-        
+
         if (selection == "Exit")
         {
             return null;
         }
-        
+
         return agents.FirstOrDefault(a => a.Name == selection);
     }
 }

@@ -91,12 +91,6 @@ Create a `.env` file one level above the orchestrator directory with the followi
 - `MAX_TOKENS`: The maximum number of tokens for the OpenAI service
 - `TEMPERATURE`: The temperature parameter for the OpenAI service
 
-### Diagram Configurations
-
-- `MERMAID_OUTPUT_DIRECTORY`: Diagram output directory
-- `MAX_TOKENS`: Max tokens for OpenAI
-- `TEMPERATURE`: Temperature for OpenAI
-
 ## Project Structure
 
 - `/AI-Agent-Orchestrator`: Main application coordinating all agents

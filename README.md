@@ -101,6 +101,10 @@ Create a `.env` file one level above the orchestrator directory with the followi
 - `/AI-agent-DiagramGenerator`: AI agent that produces visual diagrams from summaries or text.
 - `/AgentData`: Contains translation, summary, images, diagram & vocabulary files created by individual agents
 
+## Architecture
+
+![Architecture](StudyBuddyArchitecture.png)
+
 ## License
 
 This project is licensed under the MIT License.

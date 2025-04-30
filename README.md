@@ -22,6 +22,10 @@ StudyBuddy integrates the following AI agents:
 - **Board Capture**: Analyzes and digitizes classroom board content.
 - **Chatbot**: Engages users with interactive, Azure OpenAI-powered conversations.
 
+## Security and Compliance
+
+ - We prioritize security and ethical AI use by mitigating prompt injection risks, following Responsible AI principles, encrypting data at rest and in transit, and leveraging Azure’s cloud security features.
+
 ## Tech Stack
 
 | Component            | Technology                                            |
